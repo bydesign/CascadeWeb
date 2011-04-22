@@ -1,0 +1,113 @@
+html, body {
+	background-color:#444;
+	font-family:"Century Gothic", Helvetica, Arial, sans-serif;
+	color:#ccc;
+}
+a {
+	color:#fff;
+	text-decoration: none;
+}
+ul {
+	padding:0;
+}
+ul li {
+	list-style:none;
+	padding-left:10px;
+}
+.logo {
+	background:url(layout/coDEsign.png);
+	height:35px;
+	width:150px;
+	text-indent:-1000em;
+	margin:10px;
+}
+.slogan {
+	position:absolute;
+	top:5px;
+	left:170px;
+	color:#fff;
+}
+.hd, .ft, .bd {
+	position:absolute;
+	left:0;
+	right:0;
+}
+.hd {
+	height:50px;
+	top:0;
+	background-color:#ccc;
+}
+.ft {
+	height:30px;
+	bottom:0;
+	text-align: center;
+}
+.ft a {
+	font-size:12px;
+}
+.bd {
+	height:auto;
+	top:50px;
+	bottom:20px;
+}
+.holder {
+	position:absolute;
+	top:20px;
+	left:100px;
+	right:270px;
+	bottom:20px;
+	padding:12px;
+	padding-top:36px;
+	background-color:#333;
+	-webkit-border-radius:6px;
+	-moz-border-radius:6px;
+	border-radius:6px;
+	-webkit-box-shadow: inset 0 0 8px #222;
+	-moz-box-shadow: inset 0 0 8px #222;
+	box-shadow: inner 0 0 8px #222;
+}
+iframe.document {
+	width:100%;
+	height:100%;
+	border:none;
+}
+input.search, select.resize {
+	position:absolute;
+	top:6px;
+}
+input.search {
+	left:12px;
+	width:30%;
+}
+select.resize {
+	right:12px;
+}
+.rightnav {
+	position:absolute;
+	top:20px;
+	bottom:0;
+	right:0;
+	overflow:auto;
+	z-index:1000;
+	background-color:#333;
+	width:250px;
+	font-size:12px;
+}
+.sheet {
+	float:right;
+	margin-right:5px;
+}
+.selector {
+	font-weight:bold;
+	color:#fff;
+}
+.sheets li {
+	padding-top:5px;
+}
+.rules li {
+	padding-top:0;
+	padding-bottom:3px;
+}
+.strike {
+	text-decoration: line-through;
+}
