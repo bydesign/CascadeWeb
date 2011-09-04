@@ -37,6 +37,7 @@ function Handle(settings) {
 	this.modifyY = settings.modifyY,
 	this.styles = (settings.handleStyles != undefined) ? settings.handleStyles : {},
 	this.cssClass = settings.cssClass,
+	this.text = (settings.text != undefined) ? settings.text : '',
 	this.objectStyles = {};
 	this.dragClass = 'drag';
 	
@@ -47,7 +48,7 @@ function Handle(settings) {
 Handle.prototype = {
 	makeHandle: function() {
 		var that = this;
-		this.$element = (this.element == undefined) ? $('<span class="handle '+ this.cssClass +'"></span>') : $(this.element);
+		this.$element = (this.element == undefined) ? $('<span class="handle '+ this.cssClass +'">'+ this.text +'</span>') : $(this.element);
 		this.$element.css(this.styles).mousedown(function(event) {
 			that.startDrag(event);
 			return false;
@@ -244,60 +245,165 @@ Selection.prototype = {
 		
 	},
 	makeControls: function() {
-		this.$controls = $('<div id="controls" class="controls margin"><div id="box" class="box"><span class="label">'+this.getLabel()+'</span><div id="padding" class="padding"></div></div></div>')
+		this.$controls = $('<div id="controls" class="controls margin"><div id="box" class="box"><span class="label">'+this.getLabel()+'</span><div id="padding" class="pad"></div></div></div>')
 							.appendTo(this.manager.body);
 		this.$box = this.$controls.find('.box');
-		this.$padding = this.$controls.find('.padding');
+		this.$padding = this.$controls.find('.pad');
 		
 		var cornerDist = '7px';
+		var sizeHandle = new Handle({
+			selection: this,
+			parent: this.$box,
+			object: this.element,
+			modifyX: { 'width':1 },
+			modifyY: { 'height':1 },
+			cssClass: 'bottom right size',
+			text:'WH'
+		});
 		var moveHandle = new Handle({
-			/*startDrag: function(event, target, controls) { },
-			drag: function(event, target, controls) { },
-			endDrag: function(event, target, controls) { },
-			click: function(event, target, controls) { },
-			controls: this.$controls,
-			element: undefined,
-			handleCssClass: 'handle',*/
 			selection: this,
 			parent: this.$box,
 			object: this.element,
 			modifyX: { 'left':1 },
 			modifyY: { 'top':1 },
-			//handleStyles: { 'top':'50%', 'left':'50%', 'margin-left':handleWidth, 'margin-top':handleWidth },
-			cssClass: 'move'
+			cssClass: 'top left',
+			text:'TL'
 		});
-		var rightHandle = new Handle({
+		/*var rightHandle = new Handle({
 			selection: this,
 			parent: this.$box,
 			object: this.element,
 			modifyX: { 'width':1 },
-			handleStyles: { 'right':'-5px', 'top':cornerDist, 'bottom':cornerDist, 'height': 'auto' },
-			cssClass: 'right'
+			cssClass: 'width right',
+			text: 'W'
 		});
 		var bottomHandle = new Handle({
 			selection: this,
 			parent: this.$box,
 			object: this.element,
 			modifyY: { 'height':1 },
-			handleStyles: { 'bottom':'-5px', 'left':cornerDist, 'right':cornerDist, 'width': 'auto' },
-			cssClass: 'bottom'
+			cssClass: 'height bottom',
+			text: 'H'
 		});
 		var topHandle = new Handle({
 			selection: this,
 			parent: this.$box,
 			object: this.element,
-			modifyY: { 'top':1, 'height':-1 },
-			handleStyles: { 'top':'-5px', 'left':cornerDist, 'right':cornerDist, 'width': 'auto' },
-			cssClass: 'top'
+			modifyY: { 'top':1 },
+			cssClass: 'top',
+			text: 'T'
 		});
 		var leftHandle = new Handle({
 			selection: this,
 			parent: this.$box,
 			object: this.element,
-			modifyX: { 'left':1, 'width':-1 },
-			handleStyles: { 'left':'-5px', 'top':cornerDist, 'bottom':cornerDist, 'height': 'auto' },
-			cssClass: 'left'
+			modifyX: { 'left':1 },
+			cssClass: 'left',
+			text: 'L'
+		});*/
+		// padding handles
+		var topRightPadHandle = new Handle({
+			selection: this,
+			parent: this.$padding,
+			object: this.element,
+			modifyY: { 'padding-top':1 },
+			modifyX: { 'padding-right':1 },
+			cssClass: 'top right padding',
+			text: 'P'
 		});
+		var botLeftPadHandle = new Handle({
+			selection: this,
+			parent: this.$padding,
+			object: this.element,
+			modifyY: { 'padding-bottom':1 },
+			modifyX: { 'padding-left':1 },
+			cssClass: 'bottom left padding',
+			text: 'P'
+		});
+		/*var topPadHandle = new Handle({
+			selection: this,
+			parent: this.$padding,
+			object: this.element,
+			modifyY: { 'padding-top':1 },
+			cssClass: 'top padding',
+			text: 'P'
+		});
+		var leftPadHandle = new Handle({
+			selection: this,
+			parent: this.$padding,
+			object: this.element,
+			modifyX: { 'padding-left':1 },
+			cssClass: 'left padding',
+			text: 'P'
+		});
+		var rightPadHandle = new Handle({
+			selection: this,
+			parent: this.$padding,
+			object: this.element,
+			modifyX: { 'padding-right':-1 },
+			cssClass: 'right padding',
+			text: 'P'
+		});
+		var botPadHandle = new Handle({
+			selection: this,
+			parent: this.$padding,
+			object: this.element,
+			modifyY: { 'padding-bottom':-1 },
+			cssClass: 'bottom padding',
+			text: 'P'
+		});*/
+		// margin handles
+		var topRightMarHandle = new Handle({
+			selection: this,
+			parent: this.$padding,
+			object: this.element,
+			modifyY: { 'margin-top':1 },
+			modifyX: { 'margin-right':1 },
+			cssClass: 'top right margin',
+			text: 'M'
+		});
+		var botLeftMarHandle = new Handle({
+			selection: this,
+			parent: this.$padding,
+			object: this.element,
+			modifyY: { 'margin-bottom':1 },
+			modifyX: { 'margin-left':1 },
+			cssClass: 'bottom left margin',
+			text: 'M'
+		});
+		/*var topMarHandle = new Handle({
+			selection: this,
+			parent: this.$controls,
+			object: this.element,
+			modifyY: { 'margin-top':1 },
+			cssClass: 'top margin',
+			text: 'M'
+		});
+		var leftMarHandle = new Handle({
+			selection: this,
+			parent: this.$controls,
+			object: this.element,
+			modifyX: { 'margin-left':1 },
+			cssClass: 'left margin',
+			text: 'M'
+		});
+		var botMarHandle = new Handle({
+			selection: this,
+			parent: this.$controls,
+			object: this.element,
+			modifyY: { 'margin-bottom':1 },
+			cssClass: 'bottom margin',
+			text: 'M'
+		});
+		var rightMarHandle = new Handle({
+			selection: this,
+			parent: this.$controls,
+			object: this.element,
+			modifyX: { 'margin-right':1 },
+			cssClass: 'right margin',
+			text: 'M'
+		});*/
+		
 		/*var cornerHandle = new Handle({
 			selection: this,
 			parent: this.$box,
