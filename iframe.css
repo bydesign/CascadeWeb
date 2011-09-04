@@ -111,7 +111,7 @@ body.hover, html.hover {
 	-moz-border-radius:14px;
 	border-radius:14px;
 	text-align: center;
-	line-height: 20px;
+	line-height: 18px;
 	-webkit-transition:background .2s linear;
 }
 .handle:hover, .handle.drag {
@@ -139,38 +139,41 @@ body.hover, html.hover {
 .handle.right.bottom:hover, .handle.right.bottom.drag {
 	cursor:se-resize;
 }
+.handle.right.top:hover, .handle.right.top.drag {
+	cursor:ne-resize;
+}
+.handle.left.bottom:hover, .handle.left.bottom.drag {
+	cursor:sw-resize;
+}
 
 /* handle specific styles */
 .top {
-    top: -10px;
-    left: 50%;
-    margin-left: -10px;
+    top: 0;
 }
 .left {
-    left: -10px;
-    top: 50%;
-    margin-top: -10px;
+    left: 0;
 }
 .bottom {
-    bottom: -10px;
-    left: 50%;
-    margin-left: -10px;
+    bottom: 0;
 }
 .right {
-    right: -10px;
-    top: 50%;
+    right: 0;
+}
+.top.left.position {
+    margin-left: -10px;
     margin-top: -10px;
 }
-.top.left {
-    top: -8px;
-    left: -8px;
-    margin: 0;
+.right.bottom.size {
+    margin-right: -10px;
+    margin-bottom: -10px;
 }
-.right.bottom {
-    bottom: -8px;
-    right: -8px;
-    top: auto;
-    left: auto;
+.left.bottom.margin {
+    margin-left: -18px;
+    margin-bottom: -18px;
+}
+.right.top.margin {
+    margin-right: -18px;
+    margin-top: -18px;
 }
 .double {
     width: 16px;
