@@ -102,7 +102,6 @@ body.hover, html.hover {
 	/*top:0;
 	left:0;*/
 	background-color:rgba(0,0,0,.3);
-	border: solid 2px rgba(0,0,0,.3);
 	color: #fff;
 	font-size: 12px;
 	font-weight: bold;
@@ -119,7 +118,8 @@ body.hover, html.hover {
 	outline:none;
 }
 .handle.drag {
-    border-color: #fff;
+	background-color:rgba(0,0,0,.8);
+	box-shadow: 0 0 10px #fff;
 }
 .handle.right:hover, .handle.right.drag {
 	cursor:e-resize;
@@ -163,22 +163,15 @@ body.hover, html.hover {
     margin-left: -10px;
     margin-top: -10px;
 }
-.right.bottom.size {
+/*.right.bottom.size {
     margin-right: -10px;
     margin-bottom: -10px;
+}*/
+.right.bottom.margin {
+    margin-right: -20px;
+    margin-bottom: -20px;
 }
-.left.bottom.margin {
-    margin-left: -18px;
-    margin-bottom: -18px;
-}
-.right.top.margin {
-    margin-right: -18px;
-    margin-top: -18px;
-}
-.double {
-    width: 16px;
-    height: 16px;
-    line-height: 16px;
+.handle.double {
     font-size: 9px;
 }
 

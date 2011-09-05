@@ -1,14 +1,25 @@
-function SelectionManager(document, selectedClass, keyManager) {	// SelectionManager
+function SelectionManager(document, selectedClass, keyManager, $messageHolder) {	// SelectionManager
 	this.document = document;
 	this.body = $(document).find('body');
 	this.selection;
 	this.selectedClass = selectedClass;
 	this.Keys = keyManager;
+	this.$messageHolder = $messageHolder;
 };
 SelectionManager.prototype = {
 	select: function(object) {
 		if (this.selection != undefined) this.selection.remove();
 		this.selection = new Selection(this, object);
+	},
+	status: function(attrs) {
+	    var arr = [];
+	    for (var part in attrs) {
+	        arr.push(part);
+	        arr.push(':');
+	        arr.push(attrs[part]);
+	        arr.push('; ');
+	    }
+	    this.$messageHolder.text(arr.join(''));
 	}
 };
 
@@ -85,6 +96,7 @@ Handle.prototype = {
 			this.callFn(this.dragCallback, event);
 			var css = this.getNewProps(this.modifyX, this.modifyY, event.pageX, event.pageY);
 			$(this.object).css(css);
+			this.selection.status(css);
 			this.selection.updateControls();
 		}
 	},
@@ -160,6 +172,9 @@ function Selection(manager, element) {
 	this.$element.addClass(this.manager.selectedClass);
 }
 Selection.prototype = {
+    status: function(attrs) {
+        this.manager.status(attrs);
+    },
 	remove: function() {
 		this.$controls.remove();
 		$(this.element).removeClass(this.manager.selectedClass);
@@ -257,7 +272,7 @@ Selection.prototype = {
 			object: this.element,
 			modifyX: { 'width':1 },
 			modifyY: { 'height':1 },
-			cssClass: 'bottom right size',
+			cssClass: 'bottom right size double',
 			text:'WH'
 		});
 		var moveHandle = new Handle({
@@ -266,45 +281,27 @@ Selection.prototype = {
 			object: this.element,
 			modifyX: { 'left':1 },
 			modifyY: { 'top':1 },
-			cssClass: 'top left position',
+			cssClass: 'top left position double',
 			text:'TL'
 		});
 		// padding handles
-		var topRightPadHandle = new Handle({
+		var paddingHandle = new Handle({
 			selection: this,
 			parent: this.$padding,
 			object: this.element,
-			modifyY: { 'padding-top':1 },
-			modifyX: { 'padding-right':-1 },
+			modifyY: { 'padding-top':1, 'padding-bottom':1 },
+			modifyX: { 'padding-right':-1, 'padding-left':-1 },
 			cssClass: 'top right padding',
 			text: 'P'
 		});
-		var botLeftPadHandle = new Handle({
-			selection: this,
-			parent: this.$padding,
-			object: this.element,
-			modifyY: { 'padding-bottom':-1 },
-			modifyX: { 'padding-left':1 },
-			cssClass: 'bottom left padding',
-			text: 'P'
-		});
 		// margin handles
-		var topRightMarHandle = new Handle({
+		var marginHandle = new Handle({
 			selection: this,
 			parent: this.$controls,
 			object: this.element,
-			modifyY: { 'margin-top':-1 },
-			modifyX: { 'margin-right':1 },
-			cssClass: 'top right margin',
-			text: 'M'
-		});
-		var botLeftMarHandle = new Handle({
-			selection: this,
-			parent: this.$controls,
-			object: this.element,
-			modifyY: { 'margin-bottom':1 },
-			modifyX: { 'margin-left':-1 },
-			cssClass: 'bottom left margin',
+			modifyY: { 'margin-top':.5, 'margin-bottom':.5 },
+			modifyX: { 'margin-right':.5, 'margin-left':.5 },
+			cssClass: 'bottom right margin',
 			text: 'M'
 		});
 		
@@ -532,9 +529,10 @@ var SM,
 	hoverClass = 'hover';
 $(document).ready(function() {
 	var iframe = $('#iframe')[0];
+	var $messageHolder = $('#message');
 	iframe.onload = function() {
 		Keys = new KeyManager($(iframe.contentDocument).add(document));
-		SM = new SelectionManager(iframe.contentDocument, 'active', Keys);
+		SM = new SelectionManager(iframe.contentDocument, 'active', Keys, $messageHolder);
 		var iframeDoc = this.contentDocument;
 		$(iframeDoc).mousedown(function(evt) {
 			SM.select(evt.target);
