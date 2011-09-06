@@ -294,6 +294,34 @@ Selection.prototype = {
 			cssClass: 'top right padding',
 			text: 'P'
 		});
+		var padLeftHandle = new Handle({
+			selection: this,
+			parent: this.$padding,
+			object: this.element,
+			modifyX: { 'padding-left':1 },
+			cssClass: 'left padding subhandle',
+		});
+		var padRightHandle = new Handle({
+			selection: this,
+			parent: this.$padding,
+			object: this.element,
+			modifyX: { 'padding-right':-1 },
+			cssClass: 'right padding subhandle',
+		});
+		var padTopHandle = new Handle({
+			selection: this,
+			parent: this.$padding,
+			object: this.element,
+			modifyY: { 'padding-top':1 },
+			cssClass: 'top padding subhandle',
+		});
+		var padBottomHandle = new Handle({
+			selection: this,
+			parent: this.$padding,
+			object: this.element,
+			modifyY: { 'padding-bottom':-1 },
+			cssClass: 'bottom padding subhandle',
+		});
 		// margin handles
 		var marginHandle = new Handle({
 			selection: this,
@@ -303,6 +331,34 @@ Selection.prototype = {
 			modifyX: { 'margin-right':.5, 'margin-left':.5 },
 			cssClass: 'bottom right margin',
 			text: 'M'
+		});
+		var marginLeftHandle = new Handle({
+			selection: this,
+			parent: this.$controls,
+			object: this.element,
+			modifyX: { 'margin-left':-1 },
+			cssClass: 'left margin subhandle',
+		});
+		var marginRightHandle = new Handle({
+			selection: this,
+			parent: this.$controls,
+			object: this.element,
+			modifyX: { 'margin-right':1 },
+			cssClass: 'right margin subhandle',
+		});
+		var marginTopHandle = new Handle({
+			selection: this,
+			parent: this.$controls,
+			object: this.element,
+			modifyY: { 'margin-top':-1 },
+			cssClass: 'top margin subhandle',
+		});
+		var marginBottomHandle = new Handle({
+			selection: this,
+			parent: this.$controls,
+			object: this.element,
+			modifyY: { 'margin-bottom':1 },
+			cssClass: 'bottom margin subhandle',
 		});
 		
 		// make spans editable
@@ -542,7 +598,7 @@ $(document).ready(function() {
 		}).mouseout(function() {
 			$('.'+hoverClass, iframeDoc).removeClass(hoverClass);
 		});
-		Keys.listen(Keys.X, function(event) {
+		Keys.listen(Keys.CTRL, function(event) {
 			console.log(this);
 			console.log(event);
 		});

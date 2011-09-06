@@ -174,4 +174,30 @@ body.hover, html.hover {
 .handle.double {
     font-size: 9px;
 }
+.handle.subhandle {
+    background-color: rgba(0,0,0,0);
+    border: none;
+}
+.handle.subhandle:hover {
+    background-color: rgba(0,0,0,.3);
+}
+.handle.subhandle.drag {
+    background-color: rgba(0,0,0,.5);
+}
+.handle.subhandle.left, .handle.subhandle.right {
+    top: 15px;
+    bottom: 15px;
+    height: auto;
+    width: 10px;
+}
+.handle.subhandle.top, .handle.subhandle.bottom {
+    left: 15px;
+    right: 15px;
+    width: auto;
+    height: 10px;
+}
+.handle.subhandle.margin.left { left: -10px; }
+.handle.subhandle.margin.right { right: -10px; }
+.handle.subhandle.margin.top { top: -10px; }
+.handle.subhandle.margin.bottom { bottom: -10px; }
 
