@@ -159,6 +159,85 @@ Handle.prototype = {
 	}
 };
 
+function Selector(rule, manager, i) {
+	this.rule = rule;
+	this.manager = manager;
+	this.id = i;
+}
+Selector.prototype = {
+	render: function(selected) {
+		var rule = this.rule;
+		var sheetHref = rule.parentStyleSheet.href.split('/');
+		var sheet = sheetHref[ sheetHref.length-1 ];
+		active = '';
+		if (selected) {
+			active = ' class="active"';
+		}
+		var str = '<li'+active+'>';
+		str += '<span class="sheet">'+ sheet +'</span>';
+		str += '<span class="selector">'+ rule.selectorText +'</span>';
+		str += '</li>';
+		
+		return str;
+	},
+	renderStyles: function() {
+		var rule = this.rule;
+		var str = '<ul class="rules">';
+		for (var i=0; i<rule.style.length; i++) {
+			var attr = rule.style[i];
+			var val = rule.style[attr];
+			str += '<li><label>' + attr + ':</label> <!--<input type="text" name="'+ attr +'" class="attr" value="' + val + '">-->'+ val +'</li>';
+		}
+		str += '</ul>';
+		
+		return str;
+	}
+};
+
+function SelectorManager(rules) {
+	this.rules = rules;
+	this.selectors = [];
+	this.selected = 0;
+	
+	var len = rules.length-1,
+		i,
+		selector;
+	for (i=len; i>=0; i--) {
+		selector = new Selector(rules[i], this, len-i);
+		this.selectors.push(selector);
+	}
+}
+SelectorManager.prototype = {
+	addSelector: function(rule) {
+		var selector = new Selector(rule, this);
+		this.selectors.push(selector);
+		return selector;
+	},
+	render: function() {
+		var i,
+			selector,
+			that = this,
+			len = this.selectors.length,
+			$str = $('<ul class="selectors"></ul>');
+		for (var i=0; i<len; i++) {
+			selector = this.selectors[i];
+			var active = i == this.selected;
+			if (active) {
+				$('.styles').html(selector.renderStyles());
+			}
+			$sel = $(selector.render(active)).bind('click', {id: i}, function(event) {
+				that.select(event.data.id);
+			});
+			$sel.appendTo($str);
+		}
+		$('.selectors').html($str);
+	},
+	select: function(id) {
+		this.selected = id;
+		this.render();
+	}
+};
+
 function Selection(manager, element) {
 	var hoverClass = '';
 	this.element = element,
@@ -181,33 +260,8 @@ Selection.prototype = {
 	},
 	showRules: function() {
 		var rules = this.element.ownerDocument.defaultView.getMatchedCSSRules(this.element, '');
-		var str = '<ul class="sheets">';
-		var ruleObj = {};
-		var sheet = '';
-		for (var i=rules.length-1; i>=0; i--) {
-			var sheetHref = rules[i].parentStyleSheet.href.split('/');
-			var newSheet = sheetHref[ sheetHref.length-1 ];
-			str += '<li>';
-			if (newSheet != sheet) {
-				str += '<span class="sheet">'+ newSheet +'</span>';
-				sheet = newSheet;
-			}
-			str += '<span class="selector">'+ rules[i].selectorText +'</span><ul class="rules">';
-			for (var j=0; j<rules[i].style.length; j++) {
-				var attr = rules[i].style[j];
-				var val = rules[i].style[attr];
-				var strike = '';
-				if (attr in ruleObj) {
-					strike = ' class="strike"';
-				} else {
-					ruleObj[attr] = val;
-				}
-				str += '<li'+strike+'><label>' + attr + ':</label> <!--<input type="text" name="'+ attr +'" class="attr" value="' + val + '">-->'+ val +'</li>';
-			}
-			str += '</ul></li>';
-		}
-		str += '</ul>';
-		var styles = $('.styles').html(str);
+		var SM = new SelectorManager(rules);
+		SM.select(0);
 	},
 	getStyle: function(name) {
 		var el = this.element;

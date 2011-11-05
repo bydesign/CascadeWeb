@@ -13,55 +13,21 @@
 	<div class="doc">
 		<header class="hd">
 			<h1 class="logo">coDEsign</h1>
-			<p class="slogan">design your code</p>
+			<input type="search" class="search" placeholder="div.classname > span (or) font-weight:bold">
 		</header>
-		<section class="bd">
-			<div class="rightnav">
-				<h2>styles</h2>
-				<input type="text" placeholder="new style">
+		<section class="rightnav">
+			<div class="ct">
+				<input class="newStyle" type="text" placeholder="new style">
+				<div class="selectors">
+					<span class="intro">click on an element to style it<br>
+					[stats about this page here]</span>
+				</div>
 				<div class="styles"></div>
 			</div>
-			<div class="leftnav">
-				<ul>
-					<li><a href="#">grids</a></li>
-					<li><a href="#">pages</a></li>
-					<li><a href="#">library</a></li>
-				</ul>
-			</div>
-			<div class="holder">
-				<input type="search" class="search" placeholder="div.classname > span (or) font-weight:bold">
-				
-				<span id="message"></span>
-				
-				<select class="resize">
-					<option value="fluid">fluid width</option>
-					<optgroup label="standard">
-						<option value="960x700">960x700</option>
-						<option value="1024x768">1024x768</option>
-						<option value="1152x864">1152x864</option>
-						<option value="1280x800">1600x1200</option>
-					</optgroup>
-					<optgroup label="widescreen">
-						<option value="1280x800">1280x800</option>
-						<option value="1366x768">1366x768</option>
-						<option value="1440x900">1440x900</option>
-						<option value="1600x900">1600x900</option>
-						<option value="1680x1050">1680x1050</option>
-					</optgroup>
-					<optgroup label="mobile">
-						<option value="320x480">320x480</option>
-						<option value="600x600">800x600</option>
-						<option value="600x600">800x600</option>
-						<option value="600x600">800x600</option>
-						<option value="600x600">800x600</option>
-					</optgroup>
-				</select>
-				
-				<iframe src="iframe.html" class="document" id="iframe"></iframe>
-			</div>
-			
 		</section>
-		<footer class="ft"><a href="http://twitter.com/bydesign">bydesign</a></footer>
+		<div class="holder">
+			<iframe src="iframe.html" class="document" id="iframe"></iframe>
+		</div>
 	</div>
  </body>
 </html>
