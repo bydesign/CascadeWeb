@@ -1,28 +1,3 @@
-function SelectionManager(document, selectedClass, keyManager, $messageHolder) {	// SelectionManager
-	this.document = document;
-	this.body = $(document).find('body');
-	this.selection;
-	this.selectedClass = selectedClass;
-	this.Keys = keyManager;
-	this.$messageHolder = $messageHolder;
-};
-SelectionManager.prototype = {
-	select: function(object) {
-		if (this.selection != undefined) this.selection.remove();
-		this.selection = new Selection(this, object);
-	},
-	status: function(attrs) {
-	    var arr = [];
-	    for (var part in attrs) {
-	        arr.push(part);
-	        arr.push(':');
-	        arr.push(attrs[part]);
-	        arr.push('; ');
-	    }
-	    this.$messageHolder.text(arr.join(''));
-	}
-};
-
 function getStyle(name, el) {
 	return el.ownerDocument.defaultView.getComputedStyle(el,null)[name] || el.style[name] || undefined;
 }
@@ -159,14 +134,325 @@ Handle.prototype = {
 	}
 };
 
-function Selector(rule, manager, i) {
+function StyleAttrList() {
+	this.LAYOUT = {
+		handles: [
+			'padding',
+			'margin',
+			'top',
+			'right',
+			'bottom',
+			'left',
+			'width',
+			'height',
+			'z-index'
+		],
+		forms: {
+			'display': [
+				'none',
+				'inline',
+				'inline-block',
+				'block',
+				'table',
+				'table-cell'
+			],
+			'position': [
+				'static',
+				'relative',
+				'absolute',
+				'fixed'
+			],
+			'float': [
+				'left',
+				'right',
+				'none'
+			],
+			'clear': [
+				'left',
+				'right',
+				'both',
+				'none'
+			],
+			'visibility': [
+				'visible',
+				'hidden',
+				'collapse'
+			],
+			'overflow': [
+				'visible',
+				'hidden',
+				'scroll',
+				'auto'
+			],
+			
+		}
+	};
+	// this one needs more thought!
+	this.DECORATE = {
+		handles: [
+			'border-width',
+			'border-radius',
+			'background-image-position',
+			'box-shadow-offset',
+			'opacity'
+		],
+		forms: [
+			'background-image',
+			'background-image-repeat',
+			'background-image-attach',
+			'background-color',
+			'background-repeat',
+			'border-style',
+			'border-color',
+			'box-shadow-color'
+		]
+	};
+	this.TEXT = {
+		handles: [
+			'font-size',
+			'line-height',
+			'word-spacing',
+			'letter-spacing',
+			'text-indent',
+			'text-shadow',
+			'color'
+		],
+		forms: {
+			'font-family': [],
+			'font-weight': [
+				'normal',
+				'bold'
+			],
+			'font-style': [
+				'normal',
+				'italic'
+			],
+			'text-decoration': [
+				'none',
+				'underline',
+				'strikethrough',
+				'overline'
+			],
+			'font-variant': [
+				'normal',
+				'small-caps'
+			],
+			'text-transform': [
+				'normal',
+				'capitalize',
+				'uppercase',
+				'lowercase'
+			],
+			'whitespace': [
+				'normal',
+				'pre',
+				'nowrap'
+			],
+		}
+	};
+}
+
+function KeyManager(selectors) {
+	this.BACKSPACE = 8;
+	this.TAB = 9;
+	this.ENTER = 13;
+	this.SHIFT = 16;
+	this.CTRL = 17;
+	this.ALT = 18;
+	this.PAUSE = 19;
+	this.CAPS_LOCK = 20;
+	this.ESCAPE = 27;
+	this.PAGEUP = 33;
+	this.SPACE = 33;
+	this.PAGEDOWN = 34;
+	this.END = 35;
+	this.HOME = 36;
+	this.LEFT = 37;
+	this.UP = 38;
+	this.RIGHT = 39;
+	this.DOWN = 40;
+	this.INSERT = 45;
+	this.DELETEKEY = 46;
+	this.NUM0 = 48;
+	this.NUM1 = 49;
+	this.NUM2 = 50;
+	this.NUM3 = 51;
+	this.NUM4 = 52;
+	this.NUM5 = 53;
+	this.NUM6 = 54;
+	this.NUM7 = 55;
+	this.NUM8 = 56;
+	this.NUM9 = 57;
+	this.A = 65;
+	this.B = 66;
+	this.C = 67;
+	this.D = 68;
+	this.E = 69;
+	this.F = 70;
+	this.G = 71;
+	this.H = 72;
+	this.I = 73;
+	this.J = 74;
+	this.K = 75;
+	this.L = 76;
+	this.M = 77;
+	this.N = 78;
+	this.O = 79;
+	this.P = 80;
+	this.Q = 81;
+	this.R = 82;
+	this.S = 83;
+	this.T = 84;
+	this.U = 85;
+	this.V = 86;
+	this.W = 87;
+	this.X = 88;
+	this.Y = 89;
+	this.Z = 90;
+	this.OS_LEFT = 91;
+	this.OS_RIGHT = 92;
+	this.SELECT = 93;
+	this.NUMPAD0 = 96;
+	this.NUMPAD1 = 97;
+	this.NUMPAD2 = 98;
+	this.NUMPAD3 = 99;
+	this.NUMPAD4 = 100;
+	this.NUMPAD5 = 101;
+	this.NUMPAD6 = 102;
+	this.NUMPAD7 = 103;
+	this.NUMPAD8 = 104;
+	this.NUMPAD9 = 105;
+	this.MULTIPLY = 106;
+	this.ADD = 107;
+	this.SUBTRACT = 109;
+	this.DECIMAL_POINT = 110;
+	this.DIVIDE = 111;
+	this.F1 = 112;
+	this.F2 = 113;
+	this.F3 = 114;
+	this.F4 = 115;
+	this.F5 = 116;
+	this.F6 = 117;
+	this.F7 = 118;
+	this.F8 = 119;
+	this.F9 = 120;
+	this.F10 = 121;
+	this.F11 = 122;
+	this.F12 = 123;
+	this.NUM_LOCK = 144;
+	this.SCROLL_LOCK = 145;
+	this.SEMICOLON = 186;
+	this.EQUAL = 187;
+	this.COMMA = 188;
+	this.DASH = 189;
+	this.PERIOD = 190;
+	this.FORWARDSLASH = 191;
+	this.GRACE_ACCENT = 192;
+	this.OPEN_BRACKET = 219;
+	this.BACKSLASH = 220;
+	this.CLOSE_BRACKET = 221;
+	this.SINGLE_QUOTE = 222;
+	
+	this.pressed = [];
+	this.listeners = [];
+	
+	// bind key event functionality
+	var that = this;
+	$(selectors).keydown(function(event) {
+		that.pressed.push(event.keyCode);
+		
+	}).keyup(function(event) {
+		if (that.pressed.indexOf(event.keyCode) != -1) {
+			that.pressed.pop(that.pressed.indexOf(event.keyCode));
+		}
+		var fns = that.listeners[event.keyCode];
+		if (fns != undefined) {
+			for (var i=0; i < fns.length; i++) {
+				fns[i].call(this, event);
+			}
+		}
+		
+	});
+}
+KeyManager.prototype = {
+	is_pressed: function(key) {
+		if (this.pressed.indexOf(key) != -1) return true;
+		return false;
+	},
+	listen: function(keys, fn) {
+		if (keys.length > 0) {
+			for (i=0; i< keys.length; i++) {
+				this.add_listener(keys[i], fn);
+			}
+		} else {
+			this.add_listener(keys, fn);
+		}
+		return this;
+	},
+	add_listener: function(key, fn) {
+		if (this.listeners[key] == undefined) this.listeners[key] = [];
+		this.listeners[key].push(fn);
+	}
+};
+
+// style modes
+LAYOUT = 0, DECORATION = 1, TEXT = 2;
+
+function Dispatch(doc) {
+	this.domrules = doc.styleSheets[0].rules,
+	this.rules = [],
+	this.listeners = {
+		'modifyStyle': [],
+		'modifyRule': [],
+		'selectRule': [],
+		'selectElement': [],
+		'changeStyleMode': [],
+		'search': [],
+	},
+	this.styleMode = LAYOUT, // LAYOUT = 0, DECORATION = 1, TEXT = 2
+	this.selectedRule = 0,
+	this.selectedElement;
+	
+	// INITIATE MODELS
+	for (var i=0, len=this.domrules.length-1, selector; i<len; i++) {
+		selector = new Rule(this.domrules[i], this, i);
+		this.rules.push(selector);
+	}
+	
+	// SETUP MODEL EVENT LISTENERS
+	this.listen('modifyStyle', function(rule, attr, val) {
+		this.rules[rule].set(attr, val);
+	});
+	this.listen('selectRule', function(rule) {
+		console.log('rule selected');
+		this.selectedRule = rule;
+	});
+	this.listen('selectElement', function(el) {
+		console.log('element selected');
+		this.selectedElement = el;
+	});
+}
+Dispatch.prototype = {
+	listen: function(event, fn) {
+		this.listeners[event].push(fn);
+	},
+	call: function(event) {
+		var listeners = this.listeners[event],
+			args = Array.prototype.slice.call(arguments);
+		args.shift();
+		for (var i=0, len=listeners.length; i<len; i++) {
+			listeners[i].apply(this, args);
+		}
+	},
+};
+
+function Rule(rule, manager, i) {
 	this.rule = rule;
 	this.style = rule.style;
-	this.manager = manager;
 	this.id = i;
 }
-Selector.prototype = {
-	render: function(selected) {
+Rule.prototype = {
+	/*render: function(selected) {
 		var rule = this.rule;
 		var sheetHref = rule.parentStyleSheet.href.split('/');
 		var sheet = sheetHref[ sheetHref.length-1 ];
@@ -192,7 +478,7 @@ Selector.prototype = {
 		str += '</ul>';
 		
 		return str;
-	},
+	},*/
 	set: function(attr, val) {
 		this.style.setProperty(attr, val);
 	},
@@ -204,53 +490,32 @@ Selector.prototype = {
 	}
 };
 
-function SelectorManager(rules) {
-	this.rules = rules;
-	this.selectors = [];
-	this.selected = 0;
-	
-	var len = rules.length-1,
-		i,
-		selector;
-	for (i=0; i<len; i++) {
-		selector = new Selector(rules[i], this, i);
-		this.selectors.push(selector);
-	}
-}
-SelectorManager.prototype = {
-	addSelector: function(rule) {
-		var selector = new Selector(rule, this);
-		this.selectors.push(selector);
-		return selector;
+function SelectionController(document, selectedClass, keyManager, $messageHolder) {	// SelectionManager
+	this.document = document;
+	this.body = $(document).find('body');
+	this.selection;
+	this.selectedClass = selectedClass;
+	this.Keys = keyManager;
+	this.$messageHolder = $messageHolder;
+};
+SelectionController.prototype = {
+	select: function(object) {
+		if (this.selection != undefined) this.selection.remove();
+		this.selection = new SelectionView(this, object);
 	},
-	render: function() {
-		var i,
-			selector,
-			that = this,
-			len = this.selectors.length,
-			$str = $('<ul class="selectors"></ul>');
-		console.log(this.selected);
-		console.log(len);
-		for (var i=0; i<len; i++) {
-			selector = this.selectors[i];
-			var active = i == this.selected;
-			if (active) {
-				$('.styles').html(selector.renderStyles());
-			}
-			$sel = $(selector.render(active)).bind('click', {id: i}, function(event) {
-				that.select(event.data.id);
-			});
-			$sel.appendTo($str);
-		}
-		$('.selectors').html($str);
-	},
-	select: function(id) {
-		this.selected = id;
-		this.render();
-	}
+	/*status: function(attrs) {
+	    var arr = [];
+	    for (var part in attrs) {
+	        arr.push(part);
+	        arr.push(':');
+	        arr.push(attrs[part]);
+	        arr.push('; ');
+	    }
+	    this.$messageHolder.text(arr.join(''));
+	}*/
 };
 
-function Selection(manager, element) {
+function SelectionView(manager, element) {
 	var hoverClass = '';
 	this.element = element,
 	this.$element = $(element),
@@ -262,7 +527,7 @@ function Selection(manager, element) {
 		 .live('mouseout', function() { $(this).removeClass(hoverClass); return false; });
 	this.$element.addClass(this.manager.selectedClass);
 }
-Selection.prototype = {
+SelectionView.prototype = {
     status: function(attrs) {
         this.manager.status(attrs);
     },
@@ -500,270 +765,55 @@ Selection.prototype = {
 	}
 }
 
-function StyleAttrList() {
-	this.LAYOUT = {
-		handles: [
-			'padding',
-			'margin',
-			'top',
-			'right',
-			'bottom',
-			'left',
-			'width',
-			'height',
-			'z-index'
-		],
-		forms: {
-			'display': [
-				'none',
-				'inline',
-				'inline-block',
-				'block',
-				'table',
-				'table-cell'
-			],
-			'position': [
-				'static',
-				'relative',
-				'absolute',
-				'fixed'
-			],
-			'float': [
-				'left',
-				'right',
-				'none'
-			],
-			'clear': [
-				'left',
-				'right',
-				'both',
-				'none'
-			],
-			'visibility': [
-				'visible',
-				'hidden',
-				'collapse'
-			],
-			'overflow': [
-				'visible',
-				'hidden',
-				'scroll',
-				'auto'
-			],
-			
-		}
-	};
-	// this one needs more thought!
-	this.DECORATE = {
-		handles: [
-			'border-width',
-			'border-radius',
-			'background-image-position',
-			'box-shadow-offset',
-			'opacity'
-		],
-		forms: {
-			'background-image',
-			'background-image-repeat',
-			'background-image-attach',
-			'background-color',
-			'background-repeat',
-			'border-style',
-			'border-color',
-			'box-shadow-color'
-		}
-	};
-	this.TEXT = {
-		handles: [
-			'font-size',
-			'line-height',
-			'word-spacing',
-			'letter-spacing',
-			'text-indent',
-			'text-shadow',
-			'color'
-		],
-		forms: {
-			'font-family': [],
-			'font-weight': [
-				'normal',
-				'bold'
-			],
-			'font-style': [
-				'normal',
-				'italic'
-			],
-			'text-decoration': [
-				'none',
-				'underline',
-				'strikethrough',
-				'overline'
-			],
-			'font-variant': [
-				'normal',
-				'small-caps'
-			],
-			'text-transform': [
-				'normal',
-				'capitalize',
-				'uppercase',
-				'lowercase'
-			],
-			'whitespace': [
-				'normal',
-				'pre',
-				'nowrap'
-			],
-		}
-	};
-}
-
-function KeyManager(selectors) {
-	this.BACKSPACE = 8;
-	this.TAB = 9;
-	this.ENTER = 13;
-	this.SHIFT = 16;
-	this.CTRL = 17;
-	this.ALT = 18;
-	this.PAUSE = 19;
-	this.CAPS_LOCK = 20;
-	this.ESCAPE = 27;
-	this.PAGEUP = 33;
-	this.SPACE = 33;
-	this.PAGEDOWN = 34;
-	this.END = 35;
-	this.HOME = 36;
-	this.LEFT = 37;
-	this.UP = 38;
-	this.RIGHT = 39;
-	this.DOWN = 40;
-	this.INSERT = 45;
-	this.DELETEKEY = 46;
-	this.NUM0 = 48;
-	this.NUM1 = 49;
-	this.NUM2 = 50;
-	this.NUM3 = 51;
-	this.NUM4 = 52;
-	this.NUM5 = 53;
-	this.NUM6 = 54;
-	this.NUM7 = 55;
-	this.NUM8 = 56;
-	this.NUM9 = 57;
-	this.A = 65;
-	this.B = 66;
-	this.C = 67;
-	this.D = 68;
-	this.E = 69;
-	this.F = 70;
-	this.G = 71;
-	this.H = 72;
-	this.I = 73;
-	this.J = 74;
-	this.K = 75;
-	this.L = 76;
-	this.M = 77;
-	this.N = 78;
-	this.O = 79;
-	this.P = 80;
-	this.Q = 81;
-	this.R = 82;
-	this.S = 83;
-	this.T = 84;
-	this.U = 85;
-	this.V = 86;
-	this.W = 87;
-	this.X = 88;
-	this.Y = 89;
-	this.Z = 90;
-	this.OS_LEFT = 91;
-	this.OS_RIGHT = 92;
-	this.SELECT = 93;
-	this.NUMPAD0 = 96;
-	this.NUMPAD1 = 97;
-	this.NUMPAD2 = 98;
-	this.NUMPAD3 = 99;
-	this.NUMPAD4 = 100;
-	this.NUMPAD5 = 101;
-	this.NUMPAD6 = 102;
-	this.NUMPAD7 = 103;
-	this.NUMPAD8 = 104;
-	this.NUMPAD9 = 105;
-	this.MULTIPLY = 106;
-	this.ADD = 107;
-	this.SUBTRACT = 109;
-	this.DECIMAL_POINT = 110;
-	this.DIVIDE = 111;
-	this.F1 = 112;
-	this.F2 = 113;
-	this.F3 = 114;
-	this.F4 = 115;
-	this.F5 = 116;
-	this.F6 = 117;
-	this.F7 = 118;
-	this.F8 = 119;
-	this.F9 = 120;
-	this.F10 = 121;
-	this.F11 = 122;
-	this.F12 = 123;
-	this.NUM_LOCK = 144;
-	this.SCROLL_LOCK = 145;
-	this.SEMICOLON = 186;
-	this.EQUAL = 187;
-	this.COMMA = 188;
-	this.DASH = 189;
-	this.PERIOD = 190;
-	this.FORWARDSLASH = 191;
-	this.GRACE_ACCENT = 192;
-	this.OPEN_BRACKET = 219;
-	this.BACKSLASH = 220;
-	this.CLOSE_BRACKET = 221;
-	this.SINGLE_QUOTE = 222;
+/*function SelectorManager(rules) {
+	this.rules = rules;
+	this.selectors = [];
+	this.selected = 0;
 	
-	this.pressed = [];
-	this.listeners = [];
-	
-	// bind key event functionality
-	var that = this;
-	$(selectors).keydown(function(event) {
-		that.pressed.push(event.keyCode);
-		
-	}).keyup(function(event) {
-		if (that.pressed.indexOf(event.keyCode) != -1) {
-			that.pressed.pop(that.pressed.indexOf(event.keyCode));
-		}
-		var fns = that.listeners[event.keyCode];
-		if (fns != undefined) {
-			for (var i=0; i < fns.length; i++) {
-				fns[i].call(this, event);
-			}
-		}
-		
-	});
-}
-KeyManager.prototype = {
-	is_pressed: function(key) {
-		if (this.pressed.indexOf(key) != -1) return true;
-		return false;
-	},
-	listen: function(keys, fn) {
-		if (keys.length > 0) {
-			for (i=0; i< keys.length; i++) {
-				this.add_listener(keys[i], fn);
-			}
-		} else {
-			this.add_listener(keys, fn);
-		}
-		return this;
-	},
-	add_listener: function(key, fn) {
-		if (this.listeners[key] == undefined) this.listeners[key] = [];
-		this.listeners[key].push(fn);
+	var len = rules.length-1,
+		i,
+		selector;
+	for (i=0; i<len; i++) {
+		selector = new Rule(rules[i], this, i);
+		this.selectors.push(selector);
 	}
-};
+}
+SelectorManager.prototype = {
+	addSelector: function(rule) {
+		var selector = new Rule(rule, this);
+		this.selectors.push(selector);
+		return selector;
+	},
+	render: function() {
+		var i,
+			selector,
+			that = this,
+			len = this.selectors.length,
+			$str = $('<ul class="selectors"></ul>');
+		console.log(this.selected);
+		console.log(len);
+		for (var i=0; i<len; i++) {
+			selector = this.selectors[i];
+			var active = i == this.selected;
+			if (active) {
+				$('.styles').html(selector.renderStyles());
+			}
+			$sel = $(selector.render(active)).bind('click', {id: i}, function(event) {
+				that.select(event.data.id);
+			});
+			$sel.appendTo($str);
+		}
+		$('.selectors').html($str);
+	},
+	select: function(id) {
+		this.selected = id;
+		this.render();
+	}
+};*/
 
 
-
-var SM,
+var CdDispatch,
+	SM,
 	Keys,
 	Drag,
 	hoverClass = 'hover';
@@ -771,11 +821,14 @@ $(document).ready(function() {
 	var iframe = $('#iframe')[0];
 	var $messageHolder = $('#message');
 	iframe.onload = function() {
+		CdDispatch = new Dispatch(iframe.contentDocument);
+		
 		Keys = new KeyManager($(iframe.contentDocument).add(document));
-		SM = new SelectionManager(iframe.contentDocument, 'active', Keys, $messageHolder);
+		//SM = new SelectionView(iframe.contentDocument, 'active', Keys, $messageHolder);
 		var iframeDoc = this.contentDocument;
 		$(iframeDoc).mousedown(function(evt) {
-			SM.select(evt.target);
+			CdDispatch.call('selectElement', evt.target);
+			//SM.select(evt.target);
 		}).mouseover(function(event) {
 			$('.'+hoverClass, iframeDoc).removeClass(hoverClass);
 			$(event.target).addClass(hoverClass);
