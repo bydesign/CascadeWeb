@@ -161,6 +161,7 @@ Handle.prototype = {
 
 function Selector(rule, manager, i) {
 	this.rule = rule;
+	this.style = rule.style;
 	this.manager = manager;
 	this.id = i;
 }
@@ -191,6 +192,15 @@ Selector.prototype = {
 		str += '</ul>';
 		
 		return str;
+	},
+	set: function(attr, val) {
+		this.style.setProperty(attr, val);
+	},
+	get: function(attr) {
+		return this.style.getPropertyValue(attr);
+	},
+	remove: function(attr) {
+		this.style.removeProperty(attr);
 	}
 };
 
@@ -202,8 +212,8 @@ function SelectorManager(rules) {
 	var len = rules.length-1,
 		i,
 		selector;
-	for (i=len; i>=0; i--) {
-		selector = new Selector(rules[i], this, len-i);
+	for (i=0; i<len; i++) {
+		selector = new Selector(rules[i], this, i);
 		this.selectors.push(selector);
 	}
 }
@@ -219,6 +229,8 @@ SelectorManager.prototype = {
 			that = this,
 			len = this.selectors.length,
 			$str = $('<ul class="selectors"></ul>');
+		console.log(this.selected);
+		console.log(len);
 		for (var i=0; i<len; i++) {
 			selector = this.selectors[i];
 			var active = i == this.selected;
@@ -261,7 +273,7 @@ Selection.prototype = {
 	showRules: function() {
 		var rules = this.element.ownerDocument.defaultView.getMatchedCSSRules(this.element, '');
 		var SM = new SelectorManager(rules);
-		SM.select(0);
+		SM.select(rules.length-2);
 	},
 	getStyle: function(name) {
 		var el = this.element;
@@ -486,6 +498,124 @@ Selection.prototype = {
 		});
 	
 	}
+}
+
+function StyleAttrList() {
+	this.LAYOUT = {
+		handles: [
+			'padding',
+			'margin',
+			'top',
+			'right',
+			'bottom',
+			'left',
+			'width',
+			'height',
+			'z-index'
+		],
+		forms: {
+			'display': [
+				'none',
+				'inline',
+				'inline-block',
+				'block',
+				'table',
+				'table-cell'
+			],
+			'position': [
+				'static',
+				'relative',
+				'absolute',
+				'fixed'
+			],
+			'float': [
+				'left',
+				'right',
+				'none'
+			],
+			'clear': [
+				'left',
+				'right',
+				'both',
+				'none'
+			],
+			'visibility': [
+				'visible',
+				'hidden',
+				'collapse'
+			],
+			'overflow': [
+				'visible',
+				'hidden',
+				'scroll',
+				'auto'
+			],
+			
+		}
+	};
+	// this one needs more thought!
+	this.DECORATE = {
+		handles: [
+			'border-width',
+			'border-radius',
+			'background-image-position',
+			'box-shadow-offset',
+			'opacity'
+		],
+		forms: {
+			'background-image',
+			'background-image-repeat',
+			'background-image-attach',
+			'background-color',
+			'background-repeat',
+			'border-style',
+			'border-color',
+			'box-shadow-color'
+		}
+	};
+	this.TEXT = {
+		handles: [
+			'font-size',
+			'line-height',
+			'word-spacing',
+			'letter-spacing',
+			'text-indent',
+			'text-shadow',
+			'color'
+		],
+		forms: {
+			'font-family': [],
+			'font-weight': [
+				'normal',
+				'bold'
+			],
+			'font-style': [
+				'normal',
+				'italic'
+			],
+			'text-decoration': [
+				'none',
+				'underline',
+				'strikethrough',
+				'overline'
+			],
+			'font-variant': [
+				'normal',
+				'small-caps'
+			],
+			'text-transform': [
+				'normal',
+				'capitalize',
+				'uppercase',
+				'lowercase'
+			],
+			'whitespace': [
+				'normal',
+				'pre',
+				'nowrap'
+			],
+		}
+	};
 }
 
 function KeyManager(selectors) {
