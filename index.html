@@ -6,6 +6,7 @@
  <link href="default.css" media="all" rel="stylesheet">
  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.10/jquery-ui.min.js"></script>
+ <script type="text/javascript" src="underscore.js"></script>
  <script type="text/javascript" src="default.js"></script>
  
  </head>
@@ -16,11 +17,20 @@
 			<input type="search" class="search" placeholder="div.classname > span (or) font-weight:bold">
 		</header>
 		<section class="rightnav">
-			<div class="ct">
+			<div class="ct" id="propertiesModule">
+			<script type="text/template" id="propertiesTemplate">
 				<input class="newStyle" type="text" placeholder="new style">
 				<div class="selectors">
 					<span class="intro">click on an element to style it<br>
 					[stats about this page here]</span>
+					<ul class="selectors">
+					<% _.each(rules, function(rule) { %>
+						<li<%= rule.active %>>
+							<span class="sheet"><%= rule.sheet %></span>
+							<span class="selector"><%= rule.selector %></span>
+						</li>
+					<% }); %>
+					</ul>
 				</div>
 				<div class="tabs">
 					<a href="#">layout</a> | 
@@ -28,6 +38,7 @@
 					<a href="#">text</a>
 				</div>
 				<div class="styles"></div>
+			</script>
 			</div>
 		</section>
 		<div class="holder">

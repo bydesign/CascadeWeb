@@ -448,8 +448,11 @@ Dispatch.prototype = {
 
 function Rule(rule, manager, i) {
 	this.rule = rule;
+	this.sheet = rule.parentStyleSheet;
+	this.selector = rule.selectorText;
 	this.style = rule.style;
 	this.id = i;
+	this.active = false;
 }
 Rule.prototype = {
 	/*render: function(selected) {
@@ -490,6 +493,41 @@ Rule.prototype = {
 	}
 };
 
+function PropertiesModule() {
+	this.$el = $('#propertiesModule');
+	this.template = _.template( $("#propertiesTemplate").html() );
+	console.log(this.template);
+}
+PropertiesModule.prototype = {
+	render: function() {
+		var rules = document.CdDispatch.rules;
+		console.log(document.CdDispatch.rules);
+		console.log(this.template);
+		var rendered = this.template({rules : document.CdDispatch.rules});
+		this.$el.html(rendered);
+	
+		/*var i,
+			selector,
+			that = this,
+			len = this.selectors.length,
+			$str = $('<ul class="selectors"></ul>');
+		console.log(this.selected);
+		console.log(len);
+		for (var i=0; i<len; i++) {
+			selector = this.selectors[i];
+			var active = i == this.selected;
+			if (active) {
+				$('.styles').html(selector.renderStyles());
+			}
+			$sel = $(selector.render(active)).bind('click', {id: i}, function(event) {
+				that.select(event.data.id);
+			});
+			$sel.appendTo($str);
+		}
+		$('.selectors').html($str);*/
+	},
+};
+
 function SelectionController(document, selectedClass, keyManager, $messageHolder) {	// SelectionManager
 	this.document = document;
 	this.body = $(document).find('body');
@@ -514,6 +552,8 @@ SelectionController.prototype = {
 	    this.$messageHolder.text(arr.join(''));
 	}*/
 };
+
+
 
 function SelectionView(manager, element) {
 	var hoverClass = '';
@@ -811,9 +851,8 @@ SelectorManager.prototype = {
 	}
 };*/
 
-
-var CdDispatch,
-	SM,
+document.CdDispatch;
+var SM,
 	Keys,
 	Drag,
 	hoverClass = 'hover';
@@ -821,13 +860,13 @@ $(document).ready(function() {
 	var iframe = $('#iframe')[0];
 	var $messageHolder = $('#message');
 	iframe.onload = function() {
-		CdDispatch = new Dispatch(iframe.contentDocument);
+		document.CdDispatch = new Dispatch(iframe.contentDocument);
 		
 		Keys = new KeyManager($(iframe.contentDocument).add(document));
 		//SM = new SelectionView(iframe.contentDocument, 'active', Keys, $messageHolder);
 		var iframeDoc = this.contentDocument;
 		$(iframeDoc).mousedown(function(evt) {
-			CdDispatch.call('selectElement', evt.target);
+			document.CdDispatch.call('selectElement', evt.target);
 			//SM.select(evt.target);
 		}).mouseover(function(event) {
 			$('.'+hoverClass, iframeDoc).removeClass(hoverClass);
@@ -838,6 +877,11 @@ $(document).ready(function() {
 		Keys.listen(Keys.CTRL, function(event) {
 			console.log(this);
 			console.log(event);
+		});
+		
+		var propertiesPanel = new PropertiesModule();
+		document.CdDispatch.listen('selectElement', function(el) {
+			propertiesPanel.render();
 		});
 	};
 	
