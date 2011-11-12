@@ -412,24 +412,29 @@ function Dispatch(doc) {
 	this.styleMode = LAYOUT, // LAYOUT = 0, DECORATION = 1, TEXT = 2
 	this.selectedRule = 0,
 	this.selectedElement;
+	this.rulesDict = {};
 	
 	// INITIATE MODELS
-	for (var i=0, len=this.domrules.length-1, selector; i<len; i++) {
-		selector = new Rule(this.domrules[i], this, i);
-		this.rules.push(selector);
+	for (var i=0, len=this.domrules.length, rule; i<len; i++) {
+		rule = new Rule(this.domrules[i], this, i);
+		this.rules.push(rule);
+		this.rulesDict[rule.selector] = rule;
 	}
 	
 	// SETUP MODEL EVENT LISTENERS
 	this.listen('modifyStyle', function(rule, attr, val) {
 		this.rules[rule].set(attr, val);
 	});
-	this.listen('selectRule', function(rule) {
-		console.log('rule selected');
-		this.selectedRule = rule;
+	this.listen('selectRule', function(ruleId) {
+		this.selectRule(ruleId);
 	});
 	this.listen('selectElement', function(el) {
 		console.log('element selected');
 		this.selectedElement = el;
+	});
+	this.listen('changeStyleMode', function(mode) {
+		console.log('change style mode');
+		this.styleMode = mode;
 	});
 }
 Dispatch.prototype = {
@@ -444,44 +449,42 @@ Dispatch.prototype = {
 			listeners[i].apply(this, args);
 		}
 	},
+	//	this method gets the browser's list of matched rules
+	//	and returns corresponding internal rules
+	//	it also selects a rule if the selected rule
+	//	doesn't apply to the selected element
+	getElementRules: function() {
+		var el = this.selectedElement;
+		var matchRules = el.ownerDocument.defaultView.getMatchedCSSRules(el, '');
+		var rules = [];
+		var hasSelected = false;
+		for (var i=0, len=matchRules.length; i<len; i++) {
+			var rule = this.rulesDict[matchRules[i].selectorText];
+			rules.push(rule);
+			if (rule.id == this.selectedRule) hasSelected = true;
+		}
+		if (!hasSelected) this.selectRule(rule.id);
+		return rules;
+	},
+	selectRule: function(ruleId) {
+		this.rules[this.selectedRule].deactivate();
+		this.selectedRule = ruleId;
+		this.rules[ruleId].activate();
+	},
 };
 
 function Rule(rule, manager, i) {
 	this.rule = rule;
-	this.sheet = rule.parentStyleSheet;
 	this.selector = rule.selectorText;
 	this.style = rule.style;
 	this.id = i;
 	this.active = false;
+	this.activeClass = 'inactive';
+	
+	var sheetParts = rule.parentStyleSheet.href.split('/');
+	this.sheet = sheetParts[sheetParts.length-1];
 }
 Rule.prototype = {
-	/*render: function(selected) {
-		var rule = this.rule;
-		var sheetHref = rule.parentStyleSheet.href.split('/');
-		var sheet = sheetHref[ sheetHref.length-1 ];
-		active = '';
-		if (selected) {
-			active = ' class="active"';
-		}
-		var str = '<li'+active+'>';
-		str += '<span class="sheet">'+ sheet +'</span>';
-		str += '<span class="selector">'+ rule.selectorText +'</span>';
-		str += '</li>';
-		
-		return str;
-	},
-	renderStyles: function() {
-		var rule = this.rule;
-		var str = '<ul class="rules">';
-		for (var i=0; i<rule.style.length; i++) {
-			var attr = rule.style[i];
-			var val = rule.style[attr];
-			str += '<li><label>' + attr + ':</label> <!--<input type="text" name="'+ attr +'" class="attr" value="' + val + '">-->'+ val +'</li>';
-		}
-		str += '</ul>';
-		
-		return str;
-	},*/
 	set: function(attr, val) {
 		this.style.setProperty(attr, val);
 	},
@@ -490,41 +493,39 @@ Rule.prototype = {
 	},
 	remove: function(attr) {
 		this.style.removeProperty(attr);
+	},
+	activate: function() {
+		this.active = true;
+		this.activeClass = 'active';
+	},
+	deactivate: function() {
+		this.active = false;
+		this.activeClass = 'inactive';
 	}
 };
 
 function PropertiesModule() {
 	this.$el = $('#propertiesModule');
 	this.template = _.template( $("#propertiesTemplate").html() );
-	console.log(this.template);
 }
 PropertiesModule.prototype = {
 	render: function() {
-		var rules = document.CdDispatch.rules;
-		console.log(document.CdDispatch.rules);
-		console.log(this.template);
-		var rendered = this.template({rules : document.CdDispatch.rules});
-		this.$el.html(rendered);
-	
-		/*var i,
-			selector,
-			that = this,
-			len = this.selectors.length,
-			$str = $('<ul class="selectors"></ul>');
-		console.log(this.selected);
-		console.log(len);
-		for (var i=0; i<len; i++) {
-			selector = this.selectors[i];
-			var active = i == this.selected;
-			if (active) {
-				$('.styles').html(selector.renderStyles());
-			}
-			$sel = $(selector.render(active)).bind('click', {id: i}, function(event) {
-				that.select(event.data.id);
-			});
-			$sel.appendTo($str);
-		}
-		$('.selectors').html($str);*/
+		var allRules = document.CdDispatch.rules;
+		var rules = document.CdDispatch.getElementRules();
+		var $rendered = $(this.template( {
+			rules: rules,
+			styles: allRules[document.CdDispatch.selectedRule].style,
+			curMode: document.CdDispatch.styleMode,
+		} ));
+		$rendered.find('.selectors > li').click(function() {
+			var id = Number( $(this).attr('id').replace('rule','') );
+			document.CdDispatch.call('selectRule', id);
+		}).end().find('#modes a').click(function(evt) {
+			evt.preventDefault();
+			var mode = Number( $(this).attr('id').replace('mode','') );
+			document.CdDispatch.call('changeStyleMode', mode);
+		});
+		this.$el.html($rendered);
 	},
 };
 
@@ -578,7 +579,7 @@ SelectionView.prototype = {
 	showRules: function() {
 		var rules = this.element.ownerDocument.defaultView.getMatchedCSSRules(this.element, '');
 		var SM = new SelectorManager(rules);
-		SM.select(rules.length-2);
+		SM.select(rules.length-1);
 	},
 	getStyle: function(name) {
 		var el = this.element;
@@ -881,6 +882,12 @@ $(document).ready(function() {
 		
 		var propertiesPanel = new PropertiesModule();
 		document.CdDispatch.listen('selectElement', function(el) {
+			propertiesPanel.render();
+		});
+		document.CdDispatch.listen('selectRule', function(rule) {
+			propertiesPanel.render();
+		});
+		document.CdDispatch.listen('changeStyleMode', function(mode) {
 			propertiesPanel.render();
 		});
 	};

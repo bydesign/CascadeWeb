@@ -18,26 +18,35 @@
 		</header>
 		<section class="rightnav">
 			<div class="ct" id="propertiesModule">
-			<script type="text/template" id="propertiesTemplate">
 				<input class="newStyle" type="text" placeholder="new style">
-				<div class="selectors">
-					<span class="intro">click on an element to style it<br>
-					[stats about this page here]</span>
+				<span class="intro">click on an element to style it<br>
+				[stats about this page here]</span>
+			<script type="text/template" id="propertiesTemplate">
+			<div>
+				<div class="selectorsHolder">
 					<ul class="selectors">
 					<% _.each(rules, function(rule) { %>
-						<li<%= rule.active %>>
+						<li class="<%= rule.activeClass %>" id="rule<%= rule.id %>">
 							<span class="sheet"><%= rule.sheet %></span>
 							<span class="selector"><%= rule.selector %></span>
 						</li>
 					<% }); %>
 					</ul>
 				</div>
-				<div class="tabs">
-					<a href="#">layout</a> | 
-					<a href="#">decoration</a> | 
-					<a href="#">text</a>
+				<div class="tabs modes" id="modes">
+					<a href="#" id="mode0"<% if (curMode == 0) { %> class="active"<% } %>>layout</a> | 
+					<a href="#" id="mode1"<% if (curMode == 1) { %> class="active"<% } %>>decoration</a> | 
+					<a href="#" id="mode2"<% if (curMode == 2) { %> class="active"<% } %>>text</a>
 				</div>
-				<div class="styles"></div>
+				<div class="styles">
+					<ul class="rules">
+					<% _.each(styles, function(style) { %>
+						<li><label><%= style %></label> : 
+						<span class="val"><%= styles[style] %></li>
+					<% }); %>
+					</ul>
+				</div>
+			</div>
 			</script>
 			</div>
 		</section>

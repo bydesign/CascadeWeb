@@ -75,7 +75,7 @@ input.search {
 	border-bottom: 1px solid #333;
 	position: relative;
 }
-.selectors li.active {
+.active {
 	background-color: #666;
 	border-radius: 3px;
 }

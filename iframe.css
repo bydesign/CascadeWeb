@@ -13,6 +13,7 @@ body {
 	height:100px;
 	width:100px;
 	top:0;
+	background-color:#eee !important;
 }
 .block1 {
 	top:30px;
