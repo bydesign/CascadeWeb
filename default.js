@@ -158,7 +158,7 @@ function Dispatch(doc) {
 		'search': [],
 	},
 	this.styleMode = LAYOUT, // LAYOUT = 0, DECORATION = 1, TEXT = 2
-	this.selectedRule = 0,
+	this.selectedRule,
 	this.selectedElement,
 	this.$selectedElement,
 	this.rulesDict = {};
@@ -218,11 +218,13 @@ Dispatch.prototype = {
 			rules.push(rule);
 			if (rule.id == this.selectedRule) hasSelected = true;
 		}
-		if (!hasSelected) this.selectRule(rule.id);
+		if (!hasSelected) this.selectRule(rules[rules.length-1].id);
 		return rules;
 	},
 	selectRule: function(ruleId) {
-		this.rules[this.selectedRule].deactivate();
+		if (this.selectedRule != undefined) {
+			this.rules[this.selectedRule].deactivate();
+		}
 		this.selectedRule = ruleId;
 		this.rules[ruleId].activate();
 	},
@@ -287,7 +289,7 @@ PropertiesModule.prototype = {
 		}).end().find('select.prop').change(function() {
 			var attr = $(this).attr('name'),
 				val = $(this).val();
-			disp.call('modifyStyle', disp.selectedRule, attr, val);
+			disp.call('modifyStyle', attr, val);
 		});
 		
 		this.$el.html($rendered);
