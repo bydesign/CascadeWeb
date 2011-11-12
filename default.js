@@ -1,129 +1,3 @@
-function Handle(settings) {
-	this.$controls = settings.controls,
-	this.parent = settings.parent || settings.controls,
-	this.startDragCallback = settings.startDrag,
-	this.dragCallback = settings.drag,
-	this.endDragCallback = settings.endDrag,
-	this.clickCallback = settings.click,
-	this.selection = settings.selection,
-	this.object = settings.object,
-	this.element = settings.element,
-	this.handleCssClass = settings.handleCssClass,
-	this.modifyX = settings.modifyX,
-	this.modifyY = settings.modifyY,
-	this.styles = (settings.handleStyles != undefined) ? settings.handleStyles : {},
-	this.cssClass = settings.cssClass,
-	this.text = (settings.text != undefined) ? settings.text : '',
-	this.objectStyles = {};
-	this.dragClass = 'drag';
-	
-	this.makeHandle();
-	
-	this.$body = $(this.element.ownerDocument).find('html');
-}
-Handle.prototype = {
-	makeHandle: function() {
-		var that = this;
-		this.$element = (this.element == undefined) ? $('<span class="handle '+ this.cssClass +'">'+ this.text +'</span>') : $(this.element);
-		this.$element.css(this.styles).mousedown(function(event) {
-			that.startDrag(event);
-			return false;
-		}).click(function(event) {
-			that.click(event);
-			return false;
-		});
-		this.$element.appendTo(this.parent);
-		this.element = this.$element[0];
-		
-		return false;
-	},
-	startDrag: function(event) {
-		this.isDragging = true;
-		this.startMouseX = event.pageX;
-		this.startMouseY = event.pageY;
-		this.target = event.target;
-		this.$target = $(this.target).addClass(this.dragClass);
-		this.$body.addClass(this.dragClass).addClass(this.cssClass);
-		this.saveInitialProps(this.modifyX);
-		this.saveInitialProps(this.modifyY);
-		
-		var that = this;
-		this.$body.mousemove(function(event) { that.drag(event); })
-				  .mouseup(function() { that.endDrag(event); });
-		var Keys = this.selection.manager.Keys;
-		Keys.listen(Keys.ESCAPE, function(event) {
-			that.cancelDrag(event);
-		});
-		this.callFn(this.startDragCallback, event);
-	},
-	drag: function(event) {
-		if (this.isDragging) {
-			this.callFn(this.dragCallback, event);
-			var css = this.getNewProps(this.modifyX, this.modifyY, event.pageX, event.pageY);
-			$(this.object).css(css);
-			this.selection.status(css);
-			this.selection.updateControls();
-		}
-	},
-	endDrag: function(event) {
-		this.isDragging = false;
-		this.$body.unbind('mousemove').unbind('mouseup');
-		this.objectStyles = {};
-		this.callFn(this.endDragCallback, event);
-		this.$body.removeClass(this.dragClass).removeClass(this.cssClass);
-		this.$target.removeClass(this.dragClass);
-	},
-	cancelDrag: function(event) {
-		$(this.object).css(this.getInitialProps());
-		this.selection.updateControls();
-		this.endDrag();
-	},
-	saveInitialProps: function(obj) {
-		for (var prop in obj) {
-			console.log(prop);
-			console.log(getStyleNum(prop, this.object));
-			this.objectStyles[prop] = getStyleNum(prop, this.object);
-		}
-	},
-	getInitialProps: function() {
-		var css = {};
-		for (var prop in this.modifyX) {
-			css[prop] = this.objectStyles[prop];
-		}
-		for (var prop in this.modifyY) {
-			css[prop] = this.objectStyles[prop];
-		}
-		return css;
-	},
-	getNewProps: function(objX, objY, mouseX, mouseY) {
-		var css = {};
-		for (var prop in this.modifyX) {
-			css[prop] = this.objectStyles[prop] - (this.startMouseX - mouseX) * this.getPropModX(prop);
-		}
-		for (var prop in this.modifyY) {
-			css[prop] = this.objectStyles[prop] - (this.startMouseY - mouseY) * this.getPropModY(prop);
-		}
-		return css;
-	},
-	getPropModX: function(prop) {
-		return this.getPropMod(this.modifyX, prop);
-	},
-	getPropModY: function(prop) {
-		return this.getPropMod(this.modifyY, prop);
-	},
-	getPropMod: function(dir, prop) {
-		if (dir != undefined && dir[prop] != undefined) return dir[prop];
-		return 1;
-	},
-	
-	click: function(event) {
-		this.callFn(this.clickCallback, event);
-	},
-	callFn: function(fn, event) {
-		if (fn != undefined) fn.call(this, event, $(this.object));
-	}
-};
-
 function KeyManager(selectors) {
 	this.BACKSPACE = 8;
 	this.TAB = 9;
@@ -276,6 +150,7 @@ function Dispatch(doc) {
 	this.rules = [],
 	this.listeners = {
 		'modifyStyle': [],
+		'modifyStyles': [],
 		'modifyRule': [],
 		'selectRule': [],
 		'selectElement': [],
@@ -295,8 +170,15 @@ function Dispatch(doc) {
 	}
 	
 	// SETUP MODEL EVENT LISTENERS
-	this.listen('modifyStyle', function(rule, attr, val) {
-		this.rules[rule].set(attr, val);
+	this.listen('modifyStyle', function(attr, val) {
+		this.rules[this.selectedRule].set(attr, val);
+	});
+	this.listen('modifyStyles', function(styles) {
+		console.log('modify styles');
+		var rule = this.rules[this.selectedRule];
+		for (var attr in styles) {
+			rule.set(attr, styles[attr]);
+		}
 	});
 	this.listen('selectRule', function(ruleId) {
 		this.selectRule(ruleId);
@@ -359,7 +241,10 @@ function Rule(rule, manager, i) {
 }
 Rule.prototype = {
 	set: function(attr, val) {
+		console.log(attr + ': ' + val);
+		console.log(this.style);
 		this.style.setProperty(attr, val);
+		console.log(this.style.getPropertyValue(attr));
 	},
 	get: function(attr) {
 		return this.style.getPropertyValue(attr);
@@ -423,6 +308,27 @@ HandleModule.prototype = {
 		this.$controls = $('#controls').appendTo(this.$el);
 		this.$box = $('#box');
 		this.$padding = $('#padding');
+		var containers = {
+			'controls': this.$controls,
+			'box': this.$box,
+			'padding': this.$padding,
+		};
+		// add layout handles
+		var handleDefs = document.CdDispatch.StyleAttributes[0].handles;
+		var layoutHandles = [];
+		var that = this;
+		for (var i=0, len=handleDefs.length; i<len; i++) {
+			var handle = new Handle({
+				module: that,
+				text: handleDefs[i].text,
+				parent: containers[handleDefs[i].parent],
+				//object: this.element,
+				modifyX: handleDefs[i].modifyX,
+				modifyY: handleDefs[i].modifyY,
+				cssClass: handleDefs[i].cssClass,
+			});
+			layoutHandles.push(handle);
+		}
 	},
 	// make controls align with selected element
 	update: function() {
@@ -435,22 +341,22 @@ HandleModule.prototype = {
 		var offset = $el.offset(),
 			w = $el.width(),
 			h = $el.height(),
-			t = this.getStyleNum('top', el),
-			r = this.getStyleNum('right', el),
-			b = this.getStyleNum('bottom', el),
-			l = this.getStyleNum('left', el),
-			mt = this.getStyleNum('marginTop', el),
-			mr = this.getStyleNum('marginRight', el),
-			mb = this.getStyleNum('marginBottom', el),
-			ml = this.getStyleNum('marginLeft', el),
-			pt = this.getStyleNum('paddingTop', el),
-			pr = this.getStyleNum('paddingRight', el),
-			pb = this.getStyleNum('paddingBottom', el),
-			pl = this.getStyleNum('paddingLeft', el),
-			bt = this.getStyleNum('borderWidthTop', el),
-			br = this.getStyleNum('borderWidthRight', el),
-			bb = this.getStyleNum('borderWidthBottom', el),
-			bl = this.getStyleNum('borderWidthLeft', el);
+			t = getStyleNum('top', el),
+			r = getStyleNum('right', el),
+			b = getStyleNum('bottom', el),
+			l = getStyleNum('left', el),
+			mt = getStyleNum('marginTop', el),
+			mr = getStyleNum('marginRight', el),
+			mb = getStyleNum('marginBottom', el),
+			ml = getStyleNum('marginLeft', el),
+			pt = getStyleNum('paddingTop', el),
+			pr = getStyleNum('paddingRight', el),
+			pb = getStyleNum('paddingBottom', el),
+			pl = getStyleNum('paddingLeft', el),
+			bt = getStyleNum('borderWidthTop', el),
+			br = getStyleNum('borderWidthRight', el),
+			bb = getStyleNum('borderWidthBottom', el),
+			bl = getStyleNum('borderWidthLeft', el);
 		this.$controls.css({
 			'top': offset.top-bt-mt+(mt>0 ? 0 : 1)-scrollTop+'px',
 			'left': offset.left-bl-ml+(ml>0 ? 0 : 1)-scrollLeft+'px',
@@ -478,15 +384,159 @@ HandleModule.prototype = {
 			'border-left-width': pl>0 ? '1px' : '0'
 		});
 	},
-	getStyle: function(name, el) {
-		return el.ownerDocument.defaultView.getComputedStyle(el,null)[name] || el.style[name] || undefined;
+};
+
+function getStyle(name, el) {
+	return el.ownerDocument.defaultView.getComputedStyle(el,null)[name] || el.style[name] || undefined;
+}
+function getStyleNum(name, el) {
+	var value = getStyle(name, el);
+	if (value == undefined) value = 0;
+	else value = Number(value.replace('px',''));
+	return value;
+}
+
+
+function Handle(settings) {
+	//this.$controls = settings.controls,
+	this.parent = settings.parent,
+	this.module = settings.module,
+	console.log(this.module);
+	//this.startDragCallback = settings.startDrag,
+	//this.dragCallback = settings.drag,
+	//this.endDragCallback = settings.endDrag,
+	//this.clickCallback = settings.click,
+	//this.selection = settings.selection,
+	//this.object = settings.object,
+	//this.element = settings.element,
+	this.handleCssClass = settings.handleCssClass,
+	this.modifyX = settings.modifyX,
+	this.modifyY = settings.modifyY,
+	this.styles = (settings.handleStyles != undefined) ? settings.handleStyles : {},
+	this.cssClass = settings.cssClass,
+	this.text = (settings.text != undefined) ? settings.text : '',
+	this.objectStyles = {};
+	this.dragClass = 'drag';
+	this.$element = $('<span class="handle '+ this.cssClass +'">'+ this.text +'</span>');
+	
+	var that = this;
+	this.$element.css(this.styles).mousedown(function(event) {
+		that.startDrag(event);
+		return false;
+	}).click(function(event) {
+		that.click(event);
+		return false;
+	});
+	this.$element.appendTo(this.parent);
+	//this.makeHandle();
+	
+	this.$body = $(document.CdDispatch.doc).find('html');
+}
+Handle.prototype = {
+	/*makeHandle: function() {
+		var that = this;
+		//this.$element = (this.element == undefined) ? $('<span class="handle '+ this.cssClass +'">'+ this.text +'</span>') : $(this.element);
+		this.$element.css(this.styles).mousedown(function(event) {
+			that.startDrag(event);
+			return false;
+		}).click(function(event) {
+			that.click(event);
+			return false;
+		});
+		this.$element.appendTo(this.parent);
+		//this.element = this.$element[0];
+		
+		//return false;
+	},*/
+	startDrag: function(event) {
+		this.isDragging = true;
+		this.startMouseX = event.pageX;
+		this.startMouseY = event.pageY;
+		this.target = event.target;
+		//this.$target = $(this.target).addClass(this.dragClass);
+		//this.$body.addClass(this.dragClass).addClass(this.cssClass);
+		this.saveInitialProps(this.modifyX);
+		this.saveInitialProps(this.modifyY);
+		
+		var that = this;
+		this.$body.mousemove(function(event) { that.drag(event); })
+				  .mouseup(function() { that.endDrag(event); });
+		var Keys = document.CdDispatch.Keys;
+		Keys.listen(Keys.ESCAPE, function(event) {
+			that.cancelDrag(event);
+		});
+		//this.callFn(this.startDragCallback, event);
 	},
-	getStyleNum: function(name, el) {
-		var value = this.getStyle(name, el);
-		if (value == undefined) value = 0;
-		else value = Number(value.replace('px',''));
-		return value;
-	}
+	drag: function(event) {
+		if (this.isDragging) {
+			console.log('dragging');
+			//this.callFn(this.dragCallback, event);
+			var css = this.getNewProps(this.modifyX, this.modifyY, event.pageX, event.pageY);
+			document.CdDispatch.call('modifyStyles', css);
+			//$(this.object).css(css);
+			//this.selection.status(css);
+			//this.selection.updateControls();
+		}
+	},
+	endDrag: function(event) {
+		this.isDragging = false;
+		this.$body.unbind('mousemove').unbind('mouseup');
+		this.objectStyles = {};
+		//this.callFn(this.endDragCallback, event);
+		//this.$body.removeClass(this.dragClass).removeClass(this.cssClass);
+		//this.$target.removeClass(this.dragClass);
+	},
+	cancelDrag: function(event) {
+		//$(this.object).css(this.getInitialProps());
+		document.CdDispatch.call('modifyStyles', this.getInitialProps());
+		//this.selection.updateControls();
+		this.endDrag();
+	},
+	saveInitialProps: function(obj) {
+		for (var prop in obj) {
+			console.log(prop);
+			console.log(getStyleNum(prop, document.CdDispatch.selectedElement));
+			this.objectStyles[prop] = getStyleNum(prop, document.CdDispatch.selectedElement);
+		}
+	},
+	getInitialProps: function() {
+		var css = {};
+		for (var prop in this.modifyX) {
+			css[prop] = this.objectStyles[prop];
+		}
+		for (var prop in this.modifyY) {
+			css[prop] = this.objectStyles[prop];
+		}
+		return css;
+	},
+	getNewProps: function(objX, objY, mouseX, mouseY) {
+		var css = {};
+		for (var prop in this.modifyX) {
+			css[prop] = this.objectStyles[prop] - (this.startMouseX - mouseX) * this.getPropModX(prop);
+		}
+		for (var prop in this.modifyY) {
+			css[prop] = this.objectStyles[prop] - (this.startMouseY - mouseY) * this.getPropModY(prop);
+		}
+		return css;
+	},
+	getPropModX: function(prop) {
+		return this.getPropMod(this.modifyX, prop);
+	},
+	getPropModY: function(prop) {
+		return this.getPropMod(this.modifyY, prop);
+	},
+	getPropMod: function(dir, prop) {
+		if (dir != undefined && dir[prop] != undefined) return dir[prop];
+		return 1;
+	},
+	
+	click: function(event) {
+		//this.callFn(this.clickCallback, event);
+		console.log('handle clicked');
+	},
+	/*callFn: function(fn, event) {
+		if (fn != undefined) fn.call(this, event, $(this.object));
+	}*/
 };
 
 
@@ -692,15 +742,81 @@ function CssProp(attr, values) {
 Dispatch.prototype.StyleAttributes = [
 	{	// LAYOUT
 		handles: [
-			'padding',
-			'margin',
-			'top',
-			'right',
-			'bottom',
-			'left',
-			'width',
-			'height',
-			'z-index'
+			// width/height
+			{
+				text:'WH',
+				parent: 'box',
+				modifyX: { 'width':1 },
+				modifyY: { 'height':1 },
+				cssClass: 'bottom right size double',
+			},
+			// top/left
+			{
+				text:'TL',
+				parent: 'box',
+				modifyX: { 'left':1 },
+				modifyY: { 'top':1 },
+				cssClass: 'top left position double',
+			},
+			// add bottom/right here
+			
+			// padding handles
+			{
+				text: 'P',
+				parent: 'padding',
+				modifyY: { 'padding-top':1, 'padding-bottom':1 },
+				modifyX: { 'padding-right':-1, 'padding-left':-1 },
+				cssClass: 'top right padding',
+			},
+			{
+				parent: 'padding',
+				modifyX: { 'padding-left':1 },
+				cssClass: 'left padding subhandle',
+			},
+			{
+				parent: 'padding',
+				modifyX: { 'padding-right':-1 },
+				cssClass: 'right padding subhandle',
+			},
+			{
+				parent: 'padding',
+				modifyY: { 'padding-top':1 },
+				cssClass: 'top padding subhandle',
+			},
+			{
+				parent: 'padding',
+				modifyY: { 'padding-bottom':-1 },
+				cssClass: 'bottom padding subhandle',
+			},
+			// margin handles
+			{
+				text: 'M',
+				parent: 'controls',
+				modifyY: { 'margin-top':.5, 'margin-bottom':.5 },
+				modifyX: { 'margin-right':.5, 'margin-left':.5 },
+				cssClass: 'bottom right margin',
+			},
+			{
+				parent: 'controls',
+				modifyX: { 'margin-left':-1 },
+				cssClass: 'left margin subhandle',
+			},
+			{
+				parent: 'controls',
+				modifyX: { 'margin-right':1 },
+				cssClass: 'right margin subhandle',
+			},
+			{
+				parent: 'controls',
+				modifyY: { 'margin-top':-1 },
+				cssClass: 'top margin subhandle',
+			},
+			{
+				parent: 'controls',
+				modifyY: { 'margin-bottom':1 },
+				cssClass: 'bottom margin subhandle',
+			},
+			//'z-index'
 		],
 		properties: [
 			new CssProp('display', [
@@ -821,11 +937,11 @@ $(document).ready(function() {
 	iframe.onload = function() {
 		document.CdDispatch = new Dispatch(iframe.contentDocument);
 		
-		Keys = new KeyManager($(iframe.contentDocument).add(document));
-		Keys.listen(Keys.CTRL, function(event) {
+		document.CdDispatch.Keys = new KeyManager($(iframe.contentDocument).add(document));
+		/*document.CdDispatch.Keys.listen(Keys.CTRL, function(event) {
 			console.log(this);
 			console.log(event);
-		});
+		});*/
 		
 		var propertiesPanel = new PropertiesModule();
 		function renderPropertiesPanel(arg) {
