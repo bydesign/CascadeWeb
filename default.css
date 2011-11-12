@@ -97,6 +97,10 @@ input.search {
 	right: 5px;
 	display: none;
 }
+.modes a {
+	display:inline-block;
+	padding: 4px 8px;
+}
 li:hover .sheet {
 	display: inline;
 }

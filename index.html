@@ -39,12 +39,23 @@
 					<a href="#" id="mode2"<% if (curMode == 2) { %> class="active"<% } %>>text</a>
 				</div>
 				<div class="styles">
-					<ul class="rules">
+					<ul class="props">
+					<% _.each(properties, function(prop) { %>
+						<li><label><%= prop.attr %></label> : 
+						<select name="<%= prop.attr %>" class="prop">
+							<option value="">---------</option>
+							<% _.each(prop.values, function(val) { %>
+							<option<% if(styles[prop.attr] == val) {%> selected<%}%> value="<%= val %>"><%= val %></option>
+							<% }); %>
+						</select>
+					<% }); %>
+					</ul>
+					<!--<ul class="rules">
 					<% _.each(styles, function(style) { %>
 						<li><label><%= style %></label> : 
 						<span class="val"><%= styles[style] %></li>
 					<% }); %>
-					</ul>
+					</ul>-->
 				</div>
 			</div>
 			</script>

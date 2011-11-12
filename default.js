@@ -134,124 +134,6 @@ Handle.prototype = {
 	}
 };
 
-function StyleAttrList() {
-	this.LAYOUT = {
-		handles: [
-			'padding',
-			'margin',
-			'top',
-			'right',
-			'bottom',
-			'left',
-			'width',
-			'height',
-			'z-index'
-		],
-		forms: {
-			'display': [
-				'none',
-				'inline',
-				'inline-block',
-				'block',
-				'table',
-				'table-cell'
-			],
-			'position': [
-				'static',
-				'relative',
-				'absolute',
-				'fixed'
-			],
-			'float': [
-				'left',
-				'right',
-				'none'
-			],
-			'clear': [
-				'left',
-				'right',
-				'both',
-				'none'
-			],
-			'visibility': [
-				'visible',
-				'hidden',
-				'collapse'
-			],
-			'overflow': [
-				'visible',
-				'hidden',
-				'scroll',
-				'auto'
-			],
-			
-		}
-	};
-	// this one needs more thought!
-	this.DECORATE = {
-		handles: [
-			'border-width',
-			'border-radius',
-			'background-image-position',
-			'box-shadow-offset',
-			'opacity'
-		],
-		forms: [
-			'background-image',
-			'background-image-repeat',
-			'background-image-attach',
-			'background-color',
-			'background-repeat',
-			'border-style',
-			'border-color',
-			'box-shadow-color'
-		]
-	};
-	this.TEXT = {
-		handles: [
-			'font-size',
-			'line-height',
-			'word-spacing',
-			'letter-spacing',
-			'text-indent',
-			'text-shadow',
-			'color'
-		],
-		forms: {
-			'font-family': [],
-			'font-weight': [
-				'normal',
-				'bold'
-			],
-			'font-style': [
-				'normal',
-				'italic'
-			],
-			'text-decoration': [
-				'none',
-				'underline',
-				'strikethrough',
-				'overline'
-			],
-			'font-variant': [
-				'normal',
-				'small-caps'
-			],
-			'text-transform': [
-				'normal',
-				'capitalize',
-				'uppercase',
-				'lowercase'
-			],
-			'whitespace': [
-				'normal',
-				'pre',
-				'nowrap'
-			],
-		}
-	};
-}
-
 function KeyManager(selectors) {
 	this.BACKSPACE = 8;
 	this.TAB = 9;
@@ -510,21 +392,30 @@ function PropertiesModule() {
 }
 PropertiesModule.prototype = {
 	render: function() {
-		var allRules = document.CdDispatch.rules;
-		var rules = document.CdDispatch.getElementRules();
+		var disp = document.CdDispatch,
+			allRules = disp.rules,
+			rules = disp.getElementRules();
+			
 		var $rendered = $(this.template( {
 			rules: rules,
-			styles: allRules[document.CdDispatch.selectedRule].style,
-			curMode: document.CdDispatch.styleMode,
+			styles: allRules[disp.selectedRule].style,
+			curMode: disp.styleMode,
+			properties: disp.StyleAttributes[disp.styleMode].properties,
 		} ));
+		
 		$rendered.find('.selectors > li').click(function() {
 			var id = Number( $(this).attr('id').replace('rule','') );
-			document.CdDispatch.call('selectRule', id);
+			disp.call('selectRule', id);
 		}).end().find('#modes a').click(function(evt) {
 			evt.preventDefault();
 			var mode = Number( $(this).attr('id').replace('mode','') );
-			document.CdDispatch.call('changeStyleMode', mode);
+			disp.call('changeStyleMode', mode);
+		}).end().find('select.prop').change(function() {
+			var attr = $(this).attr('name'),
+				val = $(this).val();
+			disp.call('modifyStyle', disp.selectedRule, attr, val);
 		});
+		
 		this.$el.html($rendered);
 	},
 };
@@ -806,51 +697,131 @@ SelectionView.prototype = {
 	}
 }
 
-/*function SelectorManager(rules) {
-	this.rules = rules;
-	this.selectors = [];
-	this.selected = 0;
-	
-	var len = rules.length-1,
-		i,
-		selector;
-	for (i=0; i<len; i++) {
-		selector = new Rule(rules[i], this, i);
-		this.selectors.push(selector);
-	}
+function CssProp(attr, values) {
+	this.attr = attr,
+	this.values = values;
 }
-SelectorManager.prototype = {
-	addSelector: function(rule) {
-		var selector = new Rule(rule, this);
-		this.selectors.push(selector);
-		return selector;
+
+Dispatch.prototype.StyleAttributes = [
+	{	// LAYOUT
+		handles: [
+			'padding',
+			'margin',
+			'top',
+			'right',
+			'bottom',
+			'left',
+			'width',
+			'height',
+			'z-index'
+		],
+		properties: [
+			new CssProp('display', [
+				'none',
+				'inline',
+				'inline-block',
+				'block',
+				'table',
+				'table-cell'
+			]),
+			new CssProp('position', [
+				'static',
+				'relative',
+				'absolute',
+				'fixed'
+			]),
+			new CssProp('float', [
+				'left',
+				'right',
+				'none'
+			]),
+			new CssProp('clear', [
+				'left',
+				'right',
+				'both',
+				'none'
+			]),
+			new CssProp('visibility', [
+				'visible',
+				'hidden',
+				'collapse'
+			]),
+			new CssProp('overflow', [
+				'visible',
+				'hidden',
+				'scroll',
+				'auto'
+			]),
+			
+		]
 	},
-	render: function() {
-		var i,
-			selector,
-			that = this,
-			len = this.selectors.length,
-			$str = $('<ul class="selectors"></ul>');
-		console.log(this.selected);
-		console.log(len);
-		for (var i=0; i<len; i++) {
-			selector = this.selectors[i];
-			var active = i == this.selected;
-			if (active) {
-				$('.styles').html(selector.renderStyles());
-			}
-			$sel = $(selector.render(active)).bind('click', {id: i}, function(event) {
-				that.select(event.data.id);
-			});
-			$sel.appendTo($str);
-		}
-		$('.selectors').html($str);
+	// this one needs more thought!
+	{	// DECORATION
+		handles: [
+			'border-width',
+			'border-radius',
+			'background-image-position',
+			'box-shadow-offset',
+			'opacity'
+		],
+		properties: [
+			'background-image',
+			'background-image-repeat',
+			'background-image-attach',
+			'background-color',
+			'background-repeat',
+			'border-style',
+			'border-color',
+			'box-shadow-color'
+		]
 	},
-	select: function(id) {
-		this.selected = id;
-		this.render();
+	{	// TEXT
+		handles: [
+			'font-size',
+			'line-height',
+			'word-spacing',
+			'letter-spacing',
+			'text-indent',
+			'text-shadow',
+			'color'
+		],
+		properties: [
+			new CssProp('font-family', [
+				'Helvetica, Arial, sans-serif',
+				'Georgia, Times, serif'
+			]),
+			new CssProp('font-weight', [
+				'normal',
+				'bold'
+			]),
+			new CssProp('font-style', [
+				'normal',
+				'italic'
+			]),
+			new CssProp('text-decoration', [
+				'none',
+				'underline',
+				'line-through',
+				'overline'
+			]),
+			new CssProp('font-variant', [
+				'normal',
+				'small-caps'
+			]),
+			new CssProp('text-transform', [
+				'normal',
+				'capitalize',
+				'uppercase',
+				'lowercase'
+			]),
+			new CssProp('whitespace', [
+				'normal',
+				'pre',
+				'nowrap'
+			]),
+		]
 	}
-};*/
+];
 
 document.CdDispatch;
 var SM,
