@@ -1,13 +1,3 @@
-function getStyle(name, el) {
-	return el.ownerDocument.defaultView.getComputedStyle(el,null)[name] || el.style[name] || undefined;
-}
-function getStyleNum(name, el) {
-	var value = getStyle(name, el);
-	if (value == undefined) value = 0;
-	else value = Number(value.replace('px',''));
-	return value;
-}
-
 function Handle(settings) {
 	this.$controls = settings.controls,
 	this.parent = settings.parent || settings.controls,
@@ -281,6 +271,7 @@ KeyManager.prototype = {
 LAYOUT = 0, DECORATION = 1, TEXT = 2;
 
 function Dispatch(doc) {
+	this.doc = doc,
 	this.domrules = doc.styleSheets[0].rules,
 	this.rules = [],
 	this.listeners = {
@@ -429,12 +420,72 @@ function HandleModule() {
 HandleModule.prototype = {
 	render: function() {
 		console.log('render handles');
-		this.$controls = $('<div id="controls" class="controls margin"><div id="box" class="box"><div id="padding" class="pad"></div></div></div>').appendTo(this.$el);
-		this.$box = this.$controls.find('.box');
-		this.$padding = this.$controls.find('.pad');
+		this.$controls = $('#controls').appendTo(this.$el);
+		this.$box = $('#box');
+		this.$padding = $('#padding');
 	},
+	// make controls align with selected element
 	update: function() {
 		console.log('update handles');
+		var $doc = $(document.CdDispatch.doc);
+		var scrollTop = $doc.scrollTop();
+		var scrollLeft = $doc.scrollLeft();
+		var el = document.CdDispatch.selectedElement;
+		var $el = $(el);
+		var offset = $el.offset(),
+			w = $el.width(),
+			h = $el.height(),
+			t = this.getStyleNum('top', el),
+			r = this.getStyleNum('right', el),
+			b = this.getStyleNum('bottom', el),
+			l = this.getStyleNum('left', el),
+			mt = this.getStyleNum('marginTop', el),
+			mr = this.getStyleNum('marginRight', el),
+			mb = this.getStyleNum('marginBottom', el),
+			ml = this.getStyleNum('marginLeft', el),
+			pt = this.getStyleNum('paddingTop', el),
+			pr = this.getStyleNum('paddingRight', el),
+			pb = this.getStyleNum('paddingBottom', el),
+			pl = this.getStyleNum('paddingLeft', el),
+			bt = this.getStyleNum('borderWidthTop', el),
+			br = this.getStyleNum('borderWidthRight', el),
+			bb = this.getStyleNum('borderWidthBottom', el),
+			bl = this.getStyleNum('borderWidthLeft', el);
+		this.$controls.css({
+			'top': offset.top-bt-mt+(mt>0 ? 0 : 1)-scrollTop+'px',
+			'left': offset.left-bl-ml+(ml>0 ? 0 : 1)-scrollLeft+'px',
+			'width': w+pl+pr+bl+br+ml+mr-2+'px',
+			'height': h+pt+pb+bt+bb+mt+mb-2+'px',
+			'border-top-width': mt>0 ? '1px' : '0',
+			'border-right-width': mr>0 ? '1px' : '0',
+			'border-bottom-width': mb>0 ? '1px' : '0',
+			'border-left-width': ml>0 ? '1px' : '0'
+		});
+		this.$box.css({
+			'top': mt+bt-1+'px',
+			'left': ml+bl-1+'px',
+			'right': mr+br-1+'px',
+			'bottom': mb+bb-1+'px'
+		});
+		this.$padding.css({
+			'top': pt-1+'px',
+			'left': pl-1+'px',
+			'right': pr-1+'px',
+			'bottom': pb-1+'px',
+			'border-top-width': pt>0 ? '1px' : '0',
+			'border-right-width': pr>0 ? '1px' : '0',
+			'border-bottom-width': pb>0 ? '1px' : '0',
+			'border-left-width': pl>0 ? '1px' : '0'
+		});
+	},
+	getStyle: function(name, el) {
+		return el.ownerDocument.defaultView.getComputedStyle(el,null)[name] || el.style[name] || undefined;
+	},
+	getStyleNum: function(name, el) {
+		var value = this.getStyle(name, el);
+		if (value == undefined) value = 0;
+		else value = Number(value.replace('px',''));
+		return value;
 	}
 };
 
@@ -467,10 +518,6 @@ SelectionView.prototype = {
 	getStyle: function(name) {
 		var el = this.element;
 		return getStyle(name, el);
-	},
-	getStylePixels: function(name) {
-		var el = this.element;
-		return getStyleNum(name, el);
 	},
 	getLabel: function() {
 		var label = this.element.tagName;
@@ -635,58 +682,6 @@ SelectionView.prototype = {
 		});
 		this.updateControls();
 	},
-	updateControls: function() {
-		// make controls align with selected element
-		var $element = this.$element;
-		var offset = $element.offset(),
-			w = $element.width(),
-			h = $element.height(),
-			t = this.getStylePixels('top'),
-			r = this.getStylePixels('right'),
-			b = this.getStylePixels('bottom'),
-			l = this.getStylePixels('left'),
-			mt = this.getStylePixels('marginTop'),
-			mr = this.getStylePixels('marginRight'),
-			mb = this.getStylePixels('marginBottom'),
-			ml = this.getStylePixels('marginLeft'),
-			pt = this.getStylePixels('paddingTop'),
-			pr = this.getStylePixels('paddingRight'),
-			pb = this.getStylePixels('paddingBottom'),
-			pl = this.getStylePixels('paddingLeft'),
-			bt = this.getStylePixels('borderWidthTop'),
-			br = this.getStylePixels('borderWidthRight'),
-			bb = this.getStylePixels('borderWidthBottom'),
-			bl = this.getStylePixels('borderWidthLeft');
-		this.$controls.css({
-			'top': offset.top-bt-mt+(mt>0 ? 0 : 1)+'px',
-			'left': offset.left-bl-ml+(ml>0 ? 0 : 1)+'px',
-			'width': w+pl+pr+bl+br+ml+mr-2+'px',
-			'height': h+pt+pb+bt+bb+mt+mb-2+'px',
-			'border-top-width': mt>0 ? '1px' : '0',
-			'border-right-width': mr>0 ? '1px' : '0',
-			'border-bottom-width': mb>0 ? '1px' : '0',
-			'border-left-width': ml>0 ? '1px' : '0'
-			
-		});
-		this.$box.css({
-			'top': mt+bt-1+'px',
-			'left': ml+bl-1+'px',
-			'right': mr+br-1+'px',
-			'bottom': mb+bb-1+'px'
-			
-		});
-		this.$padding.css({
-			'top': pt-1+'px',
-			'left': pl-1+'px',
-			'right': pr-1+'px',
-			'bottom': pb-1+'px',
-			'border-top-width': pt>0 ? '1px' : '0',
-			'border-right-width': pr>0 ? '1px' : '0',
-			'border-bottom-width': pb>0 ? '1px' : '0',
-			'border-left-width': pl>0 ? '1px' : '0'
-		});
-	
-	}
 }
 
 function CssProp(attr, values) {
@@ -827,43 +822,37 @@ $(document).ready(function() {
 		document.CdDispatch = new Dispatch(iframe.contentDocument);
 		
 		Keys = new KeyManager($(iframe.contentDocument).add(document));
-		//SM = new SelectionView(iframe.contentDocument, 'active', Keys, $messageHolder);
-		var iframeDoc = this.contentDocument;
-		$(iframeDoc).mousedown(function(evt) {
-			document.CdDispatch.call('selectElement', evt.target);
-			//SM.select(evt.target);
-		}).mouseover(function(event) {
-			$('.'+hoverClass, iframeDoc).removeClass(hoverClass);
-			$(event.target).addClass(hoverClass);
-		}).mouseout(function() {
-			$('.'+hoverClass, iframeDoc).removeClass(hoverClass);
-		});
 		Keys.listen(Keys.CTRL, function(event) {
 			console.log(this);
 			console.log(event);
 		});
 		
 		var propertiesPanel = new PropertiesModule();
-		document.CdDispatch.listen('selectElement', function(el) {
+		function renderPropertiesPanel(arg) {
 			propertiesPanel.render();
-		});
-		document.CdDispatch.listen('selectRule', function(rule) {
-			propertiesPanel.render();
-		});
-		document.CdDispatch.listen('changeStyleMode', function(mode) {
-			propertiesPanel.render();
-		});
+		}
+		document.CdDispatch.listen('selectElement', renderPropertiesPanel);
+		document.CdDispatch.listen('selectRule', renderPropertiesPanel);
+		document.CdDispatch.listen('changeStyleMode', renderPropertiesPanel);
 		
 		var handleModule = new HandleModule();
-		document.CdDispatch.listen('selectElement', function(mode) {
-			handleModule.render();
-		});
-		document.CdDispatch.listen('changeStyleMode', function(mode) {
-			handleModule.render();
-		});
-		document.CdDispatch.listen('modifyStyle', function(mode) {
+		handleModule.render();
+		function updateHandleModule(arg) {
 			handleModule.update();
-		});
+		}
+		document.CdDispatch.listen('selectElement', updateHandleModule);
+		document.CdDispatch.listen('changeStyleMode', updateHandleModule);
+		document.CdDispatch.listen('modifyStyle', updateHandleModule);
+		
+		var iframeDoc = this.contentDocument;
+		$(iframeDoc).mousedown(function(evt) {
+			document.CdDispatch.call('selectElement', evt.target);
+		}).mouseover(function(event) {
+			$('.'+hoverClass, iframeDoc).removeClass(hoverClass);
+			$(event.target).addClass(hoverClass);
+		}).mouseout(function() {
+			$('.'+hoverClass, iframeDoc).removeClass(hoverClass);
+		}).scroll(updateHandleModule);
 	};
 	
 	

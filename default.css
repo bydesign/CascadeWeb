@@ -36,6 +36,10 @@ ul li {
 	left:0;
 	right: 240px;
 	bottom:0;
+	overflow:hidden;
+}
+iframe {
+	overflow:auto;
 }
 iframe.document {
 	width:100%;
@@ -118,3 +122,153 @@ li:hover .sheet {
 .strike {
 	text-decoration: line-through;
 }
+.controls, .box, .pad {
+	position:absolute;
+}
+.controls.hover, .box.hover, .pad.hover {
+	outline:none;
+	/*border:solid 1px rgba(0,0,0,0.6);*/
+}
+.box .label {
+	position:absolute;
+	top:-16px;
+	left:-1px;
+	height:16px;
+	color:rgba(0,0,0,0.4);
+	line-height: 16px;
+	font-family: "Myriad Pro", Helvetica, Arial, sans-serif;
+	font-size:11px;
+}
+.label.hover, .label * {
+	outline:none;
+}
+/*.box.hover {
+	border-color:rgba(0,0,0,0.8);
+}*/
+.label .meta {
+	display:none;
+}
+.label:hover .meta {
+	display:inline;
+}
+.label input {
+	margin-top:-2px;
+	height:8px;
+}
+.margin {
+	border:dotted 1px rgba(0,0,0,.3);
+}
+.box {
+	border:solid 1px rgba(0,0,0,.4);
+}
+.pad {
+	border:dotted 1px rgba(0,0,0,.3);
+}
+.handle {
+	display:block;
+	position:absolute;
+	height:20px;
+	width:20px;
+	/*top:0;
+	left:0;*/
+	background-color:rgba(0,0,0,.3);
+	color: #fff;
+	font-size: 12px;
+	font-weight: bold;
+	font-family: Helvetica, Arial, sans-serif;
+	-webkit-border-radius:14px;
+	-moz-border-radius:14px;
+	border-radius:14px;
+	text-align: center;
+	line-height: 18px;
+	-webkit-transition:background .2s linear;
+}
+.handle:hover, .handle.drag {
+	background-color:rgba(0,0,0,.5);
+	outline:none;
+}
+.handle.drag {
+	background-color:rgba(0,0,0,.8);
+	box-shadow: 0 0 10px #fff;
+}
+.handle.right:hover, .handle.right.drag {
+	cursor:e-resize;
+}
+.handle.bottom:hover, .handle.bottom.drag {
+	cursor:s-resize;
+}
+.handle.top:hover, .handle.top.drag {
+	cursor:n-resize;
+}
+.handle.left:hover, .handle.left.drag {
+	cursor:w-resize;
+}
+.handle.top.left:hover, .handle.top.left.drag {
+	cursor:move;
+}
+.handle.right.bottom:hover, .handle.right.bottom.drag {
+	cursor:se-resize;
+}
+.handle.right.top:hover, .handle.right.top.drag {
+	cursor:ne-resize;
+}
+.handle.left.bottom:hover, .handle.left.bottom.drag {
+	cursor:sw-resize;
+}
+
+/* handle specific styles */
+.top {
+    top: 0;
+}
+.left {
+    left: 0;
+}
+.bottom {
+    bottom: 0;
+}
+.right {
+    right: 0;
+}
+.top.left.position {
+    margin-left: -10px;
+    margin-top: -10px;
+}
+/*.right.bottom.size {
+    margin-right: -10px;
+    margin-bottom: -10px;
+}*/
+.right.bottom.margin {
+    margin-right: -20px;
+    margin-bottom: -20px;
+}
+.handle.double {
+    font-size: 9px;
+}
+.handle.subhandle {
+    background-color: rgba(0,0,0,0);
+    border: none;
+}
+.handle.subhandle:hover {
+    background-color: rgba(0,0,0,.3);
+}
+.handle.subhandle.drag {
+    background-color: rgba(0,0,0,.5);
+}
+.handle.subhandle.left, .handle.subhandle.right {
+    top: 15px;
+    bottom: 15px;
+    height: auto;
+    width: 10px;
+}
+.handle.subhandle.top, .handle.subhandle.bottom {
+    left: 15px;
+    right: 15px;
+    width: auto;
+    height: 10px;
+}
+.handle.subhandle.margin.left { left: -10px; }
+.handle.subhandle.margin.right { right: -10px; }
+.handle.subhandle.margin.top { top: -10px; }
+.handle.subhandle.margin.bottom { bottom: -10px; }
+
+
