@@ -174,7 +174,6 @@ function Dispatch(doc) {
 		this.rules[this.selectedRule].set(attr, val);
 	});
 	this.listen('modifyStyles', function(styles) {
-		console.log('modify styles');
 		var rule = this.rules[this.selectedRule];
 		for (var attr in styles) {
 			rule.set(attr, styles[attr]);
@@ -184,7 +183,6 @@ function Dispatch(doc) {
 		this.selectRule(ruleId);
 	});
 	this.listen('selectElement', function(el) {
-		console.log('element selected');
 		this.selectedElement = el;
 	});
 	this.listen('changeStyleMode', function(mode) {
@@ -241,10 +239,7 @@ function Rule(rule, manager, i) {
 }
 Rule.prototype = {
 	set: function(attr, val) {
-		console.log(attr + ': ' + val);
-		console.log(this.style);
 		this.style.setProperty(attr, val);
-		console.log(this.style.getPropertyValue(attr));
 	},
 	get: function(attr) {
 		return this.style.getPropertyValue(attr);
@@ -332,7 +327,6 @@ HandleModule.prototype = {
 	},
 	// make controls align with selected element
 	update: function() {
-		console.log('update handles');
 		var $doc = $(document.CdDispatch.doc);
 		var scrollTop = $doc.scrollTop();
 		var scrollLeft = $doc.scrollLeft();
@@ -398,17 +392,8 @@ function getStyleNum(name, el) {
 
 
 function Handle(settings) {
-	//this.$controls = settings.controls,
 	this.parent = settings.parent,
 	this.module = settings.module,
-	console.log(this.module);
-	//this.startDragCallback = settings.startDrag,
-	//this.dragCallback = settings.drag,
-	//this.endDragCallback = settings.endDrag,
-	//this.clickCallback = settings.click,
-	//this.selection = settings.selection,
-	//this.object = settings.object,
-	//this.element = settings.element,
 	this.handleCssClass = settings.handleCssClass,
 	this.modifyX = settings.modifyX,
 	this.modifyY = settings.modifyY,
@@ -428,33 +413,15 @@ function Handle(settings) {
 		return false;
 	});
 	this.$element.appendTo(this.parent);
-	//this.makeHandle();
 	
 	this.$body = $(document.CdDispatch.doc).find('html');
 }
 Handle.prototype = {
-	/*makeHandle: function() {
-		var that = this;
-		//this.$element = (this.element == undefined) ? $('<span class="handle '+ this.cssClass +'">'+ this.text +'</span>') : $(this.element);
-		this.$element.css(this.styles).mousedown(function(event) {
-			that.startDrag(event);
-			return false;
-		}).click(function(event) {
-			that.click(event);
-			return false;
-		});
-		this.$element.appendTo(this.parent);
-		//this.element = this.$element[0];
-		
-		//return false;
-	},*/
 	startDrag: function(event) {
 		this.isDragging = true;
 		this.startMouseX = event.pageX;
 		this.startMouseY = event.pageY;
 		this.target = event.target;
-		//this.$target = $(this.target).addClass(this.dragClass);
-		//this.$body.addClass(this.dragClass).addClass(this.cssClass);
 		this.saveInitialProps(this.modifyX);
 		this.saveInitialProps(this.modifyY);
 		
@@ -465,37 +432,24 @@ Handle.prototype = {
 		Keys.listen(Keys.ESCAPE, function(event) {
 			that.cancelDrag(event);
 		});
-		//this.callFn(this.startDragCallback, event);
 	},
 	drag: function(event) {
 		if (this.isDragging) {
-			console.log('dragging');
-			//this.callFn(this.dragCallback, event);
 			var css = this.getNewProps(this.modifyX, this.modifyY, event.pageX, event.pageY);
 			document.CdDispatch.call('modifyStyles', css);
-			//$(this.object).css(css);
-			//this.selection.status(css);
-			//this.selection.updateControls();
 		}
 	},
 	endDrag: function(event) {
 		this.isDragging = false;
 		this.$body.unbind('mousemove').unbind('mouseup');
 		this.objectStyles = {};
-		//this.callFn(this.endDragCallback, event);
-		//this.$body.removeClass(this.dragClass).removeClass(this.cssClass);
-		//this.$target.removeClass(this.dragClass);
 	},
 	cancelDrag: function(event) {
-		//$(this.object).css(this.getInitialProps());
 		document.CdDispatch.call('modifyStyles', this.getInitialProps());
-		//this.selection.updateControls();
 		this.endDrag();
 	},
 	saveInitialProps: function(obj) {
 		for (var prop in obj) {
-			console.log(prop);
-			console.log(getStyleNum(prop, document.CdDispatch.selectedElement));
 			this.objectStyles[prop] = getStyleNum(prop, document.CdDispatch.selectedElement);
 		}
 	},
@@ -512,12 +466,17 @@ Handle.prototype = {
 	getNewProps: function(objX, objY, mouseX, mouseY) {
 		var css = {};
 		for (var prop in this.modifyX) {
-			css[prop] = this.objectStyles[prop] - (this.startMouseX - mouseX) * this.getPropModX(prop);
+			var val = this.objectStyles[prop] - (this.startMouseX - mouseX) * this.getPropModX(prop);
+			css[prop] = this.getPixelValue(val);
 		}
 		for (var prop in this.modifyY) {
-			css[prop] = this.objectStyles[prop] - (this.startMouseY - mouseY) * this.getPropModY(prop);
+			var val = this.objectStyles[prop] - (this.startMouseY - mouseY) * this.getPropModY(prop);
+			css[prop] = this.getPixelValue(val);
 		}
 		return css;
+	},
+	getPixelValue: function(val) {
+		return Math.round(val) + 'px';
 	},
 	getPropModX: function(prop) {
 		return this.getPropMod(this.modifyX, prop);
@@ -531,208 +490,9 @@ Handle.prototype = {
 	},
 	
 	click: function(event) {
-		//this.callFn(this.clickCallback, event);
 		console.log('handle clicked');
-	},
-	/*callFn: function(fn, event) {
-		if (fn != undefined) fn.call(this, event, $(this.object));
-	}*/
+	}
 };
-
-
-function SelectionView(manager, element) {
-	var hoverClass = '';
-	this.element = element,
-	this.$element = $(element),
-	this.manager = manager;
-	this.$element.removeClass(hoverClass);
-	this.makeControls();
-	this.showRules();
-	$('#controls, #box, #padding').live('mouseover', function() { $(this).addClass(hoverClass); return false; })
-		 .live('mouseout', function() { $(this).removeClass(hoverClass); return false; });
-	this.$element.addClass(this.manager.selectedClass);
-}
-SelectionView.prototype = {
-    status: function(attrs) {
-        this.manager.status(attrs);
-    },
-	remove: function() {
-		this.$controls.remove();
-		$(this.element).removeClass(this.manager.selectedClass);
-	},
-	showRules: function() {
-		var rules = this.element.ownerDocument.defaultView.getMatchedCSSRules(this.element, '');
-		var SM = new SelectorManager(rules);
-		SM.select(rules.length-1);
-	},
-	getStyle: function(name) {
-		var el = this.element;
-		return getStyle(name, el);
-	},
-	getLabel: function() {
-		var label = this.element.tagName;
-		var id = this.$element.attr('id');
-		var classes = this.$element.attr('class');
-		label += '<span class="meta">';
-		if (id != undefined) label += '#' + id;
-		if (classes != undefined) label += '.' + classes.replace(' ', '.');
-		label += '</span>';
-		return label;
-	},
-	modifyElement: function($label, selector) {
-		var selParts = selector.split(/\.|\#/);
-		var tagname = selParts[0];
-		var replace = false;
-		if (tagname != this.element.tagName) replace = true;
-		var id;
-		var hash = selector.indexOf('#');
-		if (hash != -1) {
-			id = selector.substr(hash+1).split('.')[0];
-			if (!replace) this.$element.attr('id', id);
-		}
-		var dot = selector.indexOf('.');
-		var classes;
-		if (dot != -1) {
-			classes = selector.substr(dot+1).split('.');
-			if (!replace) this.$element.attr('class', classes.join(' '));
-		}
-		if (replace) {
-			var html = this.$element.html();
-			var string = '<' + tagname;
-			if (id != undefined) string += ' id="' + id + '"';
-			if (classes != undefined) string += ' class="' + classes.join(' ') + '"';
-			string += '>' + html + '</' + tagname + '>';
-			var $string = $(string);
-			this.$element.replaceWith($string);
-			this.$element = $string;
-			this.element = this.$element[0];
-		}
-		console.log(this.getLabel());
-		$label.html(this.getLabel());
-		
-	},
-	makeControls: function() {
-		this.$controls = $('<div id="controls" class="controls margin"><div id="box" class="box"><span class="label">'+this.getLabel()+'</span><div id="padding" class="pad"></div></div></div>')
-							.appendTo(this.manager.body);
-		this.$box = this.$controls.find('.box');
-		this.$padding = this.$controls.find('.pad');
-		
-		var cornerDist = '7px';
-		var sizeHandle = new Handle({
-			selection: this,
-			parent: this.$box,
-			object: this.element,
-			modifyX: { 'width':1 },
-			modifyY: { 'height':1 },
-			cssClass: 'bottom right size double',
-			text:'WH'
-		});
-		var moveHandle = new Handle({
-			selection: this,
-			parent: this.$box,
-			object: this.element,
-			modifyX: { 'left':1 },
-			modifyY: { 'top':1 },
-			cssClass: 'top left position double',
-			text:'TL'
-		});
-		// padding handles
-		var paddingHandle = new Handle({
-			selection: this,
-			parent: this.$padding,
-			object: this.element,
-			modifyY: { 'padding-top':1, 'padding-bottom':1 },
-			modifyX: { 'padding-right':-1, 'padding-left':-1 },
-			cssClass: 'top right padding',
-			text: 'P'
-		});
-		var padLeftHandle = new Handle({
-			selection: this,
-			parent: this.$padding,
-			object: this.element,
-			modifyX: { 'padding-left':1 },
-			cssClass: 'left padding subhandle',
-		});
-		var padRightHandle = new Handle({
-			selection: this,
-			parent: this.$padding,
-			object: this.element,
-			modifyX: { 'padding-right':-1 },
-			cssClass: 'right padding subhandle',
-		});
-		var padTopHandle = new Handle({
-			selection: this,
-			parent: this.$padding,
-			object: this.element,
-			modifyY: { 'padding-top':1 },
-			cssClass: 'top padding subhandle',
-		});
-		var padBottomHandle = new Handle({
-			selection: this,
-			parent: this.$padding,
-			object: this.element,
-			modifyY: { 'padding-bottom':-1 },
-			cssClass: 'bottom padding subhandle',
-		});
-		// margin handles
-		var marginHandle = new Handle({
-			selection: this,
-			parent: this.$controls,
-			object: this.element,
-			modifyY: { 'margin-top':.5, 'margin-bottom':.5 },
-			modifyX: { 'margin-right':.5, 'margin-left':.5 },
-			cssClass: 'bottom right margin',
-			text: 'M'
-		});
-		var marginLeftHandle = new Handle({
-			selection: this,
-			parent: this.$controls,
-			object: this.element,
-			modifyX: { 'margin-left':-1 },
-			cssClass: 'left margin subhandle',
-		});
-		var marginRightHandle = new Handle({
-			selection: this,
-			parent: this.$controls,
-			object: this.element,
-			modifyX: { 'margin-right':1 },
-			cssClass: 'right margin subhandle',
-		});
-		var marginTopHandle = new Handle({
-			selection: this,
-			parent: this.$controls,
-			object: this.element,
-			modifyY: { 'margin-top':-1 },
-			cssClass: 'top margin subhandle',
-		});
-		var marginBottomHandle = new Handle({
-			selection: this,
-			parent: this.$controls,
-			object: this.element,
-			modifyY: { 'margin-bottom':1 },
-			cssClass: 'bottom margin subhandle',
-		});
-		
-		// make spans editable
-		var that = this;
-		
-		$(this.manager.body).find('span.label').click(function() {
-			if ($(this).find('input').length > 0) return false;
-			var $label = $(this);
-			var attr = $label.attr('class').replace(' edit');
-			var text = $label.text();
-			$label.html('');
-			$input = $('<input type="text" name="element" value="'+ text +'">').appendTo($label).blur(function() {
-				that.modifyElement($label, $input.val());
-			}).keyup(function(event) {
-				if (event.keyCode == 13) that.modifyElement($label, $input.val());
-			});
-			console.log('label clicked');
-			return false;
-		});
-		this.updateControls();
-	},
-}
 
 function CssProp(attr, values) {
 	this.attr = attr,
@@ -938,10 +698,6 @@ $(document).ready(function() {
 		document.CdDispatch = new Dispatch(iframe.contentDocument);
 		
 		document.CdDispatch.Keys = new KeyManager($(iframe.contentDocument).add(document));
-		/*document.CdDispatch.Keys.listen(Keys.CTRL, function(event) {
-			console.log(this);
-			console.log(event);
-		});*/
 		
 		var propertiesPanel = new PropertiesModule();
 		function renderPropertiesPanel(arg) {
@@ -959,6 +715,7 @@ $(document).ready(function() {
 		document.CdDispatch.listen('selectElement', updateHandleModule);
 		document.CdDispatch.listen('changeStyleMode', updateHandleModule);
 		document.CdDispatch.listen('modifyStyle', updateHandleModule);
+		document.CdDispatch.listen('modifyStyles', updateHandleModule);
 		
 		var iframeDoc = this.contentDocument;
 		$(iframeDoc).mousedown(function(evt) {
