@@ -159,7 +159,8 @@ function Dispatch(doc) {
 	},
 	this.styleMode = LAYOUT, // LAYOUT = 0, DECORATION = 1, TEXT = 2
 	this.selectedRule = 0,
-	this.selectedElement;
+	this.selectedElement,
+	this.$selectedElement,
 	this.rulesDict = {};
 	
 	// INITIATE MODELS
@@ -184,6 +185,7 @@ function Dispatch(doc) {
 	});
 	this.listen('selectElement', function(el) {
 		this.selectedElement = el;
+		this.$selectedElement = $(el);
 	});
 	this.listen('changeStyleMode', function(mode) {
 		console.log('change style mode');
@@ -240,6 +242,7 @@ function Rule(rule, manager, i) {
 Rule.prototype = {
 	set: function(attr, val) {
 		this.style.setProperty(attr, val);
+		//$(document.CdDispatch.selectedElement).css(attr, val);
 	},
 	get: function(attr) {
 		return this.style.getPropertyValue(attr);
@@ -295,11 +298,16 @@ function HandleModule() {
 	this.$el = $('#pageHolder'),
 	this.$controls,
 	this.$box,
-	this.$padding;
+	this.$padding,
+	this.$doc = $(document.CdDispatch.doc);
+	
+	this.updateScroll();
+	var that = this;
+	this.$doc.scroll(function() { that.updateScroll(); });
+	this.$coverSheet = $('#coverSheet');
 }
 HandleModule.prototype = {
 	render: function() {
-		console.log('render handles');
 		this.$controls = $('#controls').appendTo(this.$el);
 		this.$box = $('#box');
 		this.$padding = $('#padding');
@@ -317,7 +325,6 @@ HandleModule.prototype = {
 				module: that,
 				text: handleDefs[i].text,
 				parent: containers[handleDefs[i].parent],
-				//object: this.element,
 				modifyX: handleDefs[i].modifyX,
 				modifyY: handleDefs[i].modifyY,
 				cssClass: handleDefs[i].cssClass,
@@ -325,13 +332,21 @@ HandleModule.prototype = {
 			layoutHandles.push(handle);
 		}
 	},
+	lockCanvas: function() {
+		this.$coverSheet.show();
+	},
+	unlockCanvas: function() {
+		this.$coverSheet.hide();
+	},
+	updateScroll: function() {
+		this.scrollTop = this.$doc.scrollTop();
+		this.scrollLeft = this.$doc.scrollLeft();
+	},
 	// make controls align with selected element
 	update: function() {
-		var $doc = $(document.CdDispatch.doc);
-		var scrollTop = $doc.scrollTop();
-		var scrollLeft = $doc.scrollLeft();
-		var el = document.CdDispatch.selectedElement;
-		var $el = $(el);
+		var el = document.CdDispatch.selectedElement,
+			$el = document.CdDispatch.$selectedElement,
+			getStyleNum = document.getStyleNum;
 		var offset = $el.offset(),
 			w = $el.width(),
 			h = $el.height(),
@@ -352,8 +367,8 @@ HandleModule.prototype = {
 			bb = getStyleNum('borderWidthBottom', el),
 			bl = getStyleNum('borderWidthLeft', el);
 		this.$controls.css({
-			'top': offset.top-bt-mt+(mt>0 ? 0 : 1)-scrollTop+'px',
-			'left': offset.left-bl-ml+(ml>0 ? 0 : 1)-scrollLeft+'px',
+			'top': offset.top-bt-mt+(mt>0 ? 0 : 1)-this.scrollTop+'px',
+			'left': offset.left-bl-ml+(ml>0 ? 0 : 1)-this.scrollLeft+'px',
 			'width': w+pl+pr+bl+br+ml+mr-2+'px',
 			'height': h+pt+pb+bt+bb+mt+mb-2+'px',
 			'border-top-width': mt>0 ? '1px' : '0',
@@ -380,11 +395,8 @@ HandleModule.prototype = {
 	},
 };
 
-function getStyle(name, el) {
-	return el.ownerDocument.defaultView.getComputedStyle(el,null)[name] || el.style[name] || undefined;
-}
-function getStyleNum(name, el) {
-	var value = getStyle(name, el);
+document.getStyleNum = function(name, el) {
+	var value = el.ownerDocument.defaultView.getComputedStyle(el,null)[name] || el.style[name] || undefined;
 	if (value == undefined) value = 0;
 	else value = Number(value.replace('px',''));
 	return value;
@@ -415,6 +427,7 @@ function Handle(settings) {
 	this.$element.appendTo(this.parent);
 	
 	this.$body = $(document.CdDispatch.doc).find('html');
+	this.$doc = $(document);
 }
 Handle.prototype = {
 	startDrag: function(event) {
@@ -426,12 +439,14 @@ Handle.prototype = {
 		this.saveInitialProps(this.modifyY);
 		
 		var that = this;
-		this.$body.mousemove(function(event) { that.drag(event); })
+		this.$doc.mousemove(function(event) { that.drag(event); })
 				  .mouseup(function() { that.endDrag(event); });
+		
 		var Keys = document.CdDispatch.Keys;
 		Keys.listen(Keys.ESCAPE, function(event) {
 			that.cancelDrag(event);
 		});
+		this.module.lockCanvas();
 	},
 	drag: function(event) {
 		if (this.isDragging) {
@@ -440,6 +455,7 @@ Handle.prototype = {
 		}
 	},
 	endDrag: function(event) {
+		this.module.unlockCanvas();
 		this.isDragging = false;
 		this.$body.unbind('mousemove').unbind('mouseup');
 		this.objectStyles = {};
@@ -450,7 +466,7 @@ Handle.prototype = {
 	},
 	saveInitialProps: function(obj) {
 		for (var prop in obj) {
-			this.objectStyles[prop] = getStyleNum(prop, document.CdDispatch.selectedElement);
+			this.objectStyles[prop] = document.getStyleNum(prop, document.CdDispatch.selectedElement);
 		}
 	},
 	getInitialProps: function() {
@@ -521,13 +537,13 @@ Dispatch.prototype.StyleAttributes = [
 			// add bottom/right here
 			
 			// padding handles
-			{
+			/*{
 				text: 'P',
 				parent: 'padding',
 				modifyY: { 'padding-top':1, 'padding-bottom':1 },
 				modifyX: { 'padding-right':-1, 'padding-left':-1 },
 				cssClass: 'top right padding',
-			},
+			},*/
 			{
 				parent: 'padding',
 				modifyX: { 'padding-left':1 },
@@ -549,13 +565,13 @@ Dispatch.prototype.StyleAttributes = [
 				cssClass: 'bottom padding subhandle',
 			},
 			// margin handles
-			{
+			/*{
 				text: 'M',
 				parent: 'controls',
 				modifyY: { 'margin-top':.5, 'margin-bottom':.5 },
 				modifyX: { 'margin-right':.5, 'margin-left':.5 },
 				cssClass: 'bottom right margin',
-			},
+			},*/
 			{
 				parent: 'controls',
 				modifyX: { 'margin-left':-1 },
@@ -717,7 +733,10 @@ $(document).ready(function() {
 		document.CdDispatch.listen('modifyStyle', updateHandleModule);
 		document.CdDispatch.listen('modifyStyles', updateHandleModule);
 		
-		var iframeDoc = this.contentDocument;
+		var sleeping = false,
+			timer,
+			$body = $(document).find('body'),
+			iframeDoc = this.contentDocument;
 		$(iframeDoc).mousedown(function(evt) {
 			document.CdDispatch.call('selectElement', evt.target);
 		}).mouseover(function(event) {
@@ -726,6 +745,23 @@ $(document).ready(function() {
 		}).mouseout(function() {
 			$('.'+hoverClass, iframeDoc).removeClass(hoverClass);
 		}).scroll(updateHandleModule);
+		
+		$(document).mouseover(function() {
+			$('.'+hoverClass, iframeDoc).removeClass(hoverClass);
+		});
+		
+		// do fadeout when no activity happening -- css commented due to challenges
+		$(iframeDoc).mousemove(function() {
+			if (!sleeping) {
+				timer = setTimeout(function() {
+					$body.addClass('sleep');
+					sleeping = true;
+				}, 5000);
+			} else {
+				$body.removeClass('sleep');
+				sleeping = false;
+			}
+		});
 	};
 	
 	

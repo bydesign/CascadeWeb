@@ -23,33 +23,33 @@ body {
 	height:100px;
 	width:100px;
 	top:0;
-	background-color:#eee !important;
+	/*background-color:#eee !important;*/
 }
 .block1 {
 	top:30px;
 	left:500px;
-	background-color:blue;
+	background-color:#ccc;
 	margin:10px 8px 15px 30px;
 	padding:10px 8px 15px 30px;
 }
 .block2 {
 	top:50px;
 	left:300px;
-	background-color:aqua;
+	background-color:#eee;
 	padding: 10px;
 	margin:20px 30px;
 }
 .block3 {
 	top:350px;
 	left:500px;
-	background-color:fuchsia;
+	background-color:#666;
 	padding:1px;
 	margin:1px;
 }
 .block4 {
 	top:350px;
 	left:150px;
-	background-color:fuchsia;
+	background-color:#999;
 	padding:0;
 	margin:0;
 }

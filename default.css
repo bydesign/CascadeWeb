@@ -30,11 +30,19 @@ ul li {
 	right: 0;
 	bottom: 0;
 }
+
+/*** future feature of having editing interface fadout during pause ***/
+/*.hd, .controls, .rightnav {
+	-webkit-transition: opacity ease-in-out .5s;
+}
+body.sleep .hd, body.sleep .rightnav { opacity:.2; }
+body.sleep .controls { opacity:0; }*/
+
 .holder {
 	position:absolute;
 	top: 35px;
 	left:0;
-	right: 240px;
+	right: 250px;
 	bottom:0;
 	overflow:hidden;
 }
@@ -66,6 +74,14 @@ input.search {
 }
 .rightnav .ct {
 	padding: 0 10px;
+}
+.coverSheet {
+	position:absolute;
+	top:0;
+	left:0;
+	right:0;
+	bottom:0;
+	display:none;
 }
 .selectors {
 	background-color: #444;
