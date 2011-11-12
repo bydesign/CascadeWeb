@@ -420,31 +420,23 @@ PropertiesModule.prototype = {
 	},
 };
 
-function SelectionController(document, selectedClass, keyManager, $messageHolder) {	// SelectionManager
-	this.document = document;
-	this.body = $(document).find('body');
-	this.selection;
-	this.selectedClass = selectedClass;
-	this.Keys = keyManager;
-	this.$messageHolder = $messageHolder;
-};
-SelectionController.prototype = {
-	select: function(object) {
-		if (this.selection != undefined) this.selection.remove();
-		this.selection = new SelectionView(this, object);
+function HandleModule() {
+	this.$el = $('#pageHolder'),
+	this.$controls,
+	this.$box,
+	this.$padding;
+}
+HandleModule.prototype = {
+	render: function() {
+		console.log('render handles');
+		this.$controls = $('<div id="controls" class="controls margin"><div id="box" class="box"><div id="padding" class="pad"></div></div></div>').appendTo(this.$el);
+		this.$box = this.$controls.find('.box');
+		this.$padding = this.$controls.find('.pad');
 	},
-	/*status: function(attrs) {
-	    var arr = [];
-	    for (var part in attrs) {
-	        arr.push(part);
-	        arr.push(':');
-	        arr.push(attrs[part]);
-	        arr.push('; ');
-	    }
-	    this.$messageHolder.text(arr.join(''));
-	}*/
+	update: function() {
+		console.log('update handles');
+	}
 };
-
 
 
 function SelectionView(manager, element) {
@@ -860,6 +852,17 @@ $(document).ready(function() {
 		});
 		document.CdDispatch.listen('changeStyleMode', function(mode) {
 			propertiesPanel.render();
+		});
+		
+		var handleModule = new HandleModule();
+		document.CdDispatch.listen('selectElement', function(mode) {
+			handleModule.render();
+		});
+		document.CdDispatch.listen('changeStyleMode', function(mode) {
+			handleModule.render();
+		});
+		document.CdDispatch.listen('modifyStyle', function(mode) {
+			handleModule.update();
 		});
 	};
 	
