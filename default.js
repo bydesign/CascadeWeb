@@ -296,42 +296,60 @@ PropertiesModule.prototype = {
 	},
 };
 
-function HandleModule() {
+function HandleModule(doc) {
+	var disp = document.CdDispatch;
+	this.doc = doc,
 	this.$el = $('#pageHolder'),
-	this.$controls,
-	this.$box,
-	this.$padding,
-	this.$doc = $(document.CdDispatch.doc);
-	
+	this.$controls = $('#controls'),
+	this.$box = $('#box'),
+	this.$padding = $('#padding'),
+	this.$doc = $(disp.doc),
+	this.layoutHandles = [];
 	this.updateScroll();
 	var that = this;
 	this.$doc.scroll(function() { that.updateScroll(); });
 	this.$coverSheet = $('#coverSheet');
+	
+	function updateControls() {
+		that.update();
+	}
+	disp.listen('selectElement', updateControls);
+	//disp.listen('changeStyleMode', updateControls);
+	disp.listen('modifyStyle', updateControls);
+	disp.listen('modifyStyles', updateControls);
+	
+	var $controls = this.$controls;
+	disp.listen('changeStyleMode', function(mode) {
+		console.log('change style mode');
+		var modeClasses = ['layoutMode', 'decorateMode', 'textMode'];
+		$controls.removeClass(modeClasses.join(' '));
+		$controls.addClass(modeClasses[disp.styleMode]);
+	});
 }
 HandleModule.prototype = {
 	render: function() {
-		this.$controls = $('#controls').appendTo(this.$el);
-		this.$box = $('#box');
-		this.$padding = $('#padding');
+		this.addHandles('layout', document.CdDispatch.StyleAttributes[0].handles);
+		//console.log(document.CdDispatch.StyleAttributes[2].handles);
+		//this.addHandles('text', document.CdDispatch.StyleAttributes[2].handles);
+	},
+	addHandles: function(name, defs) {
 		var containers = {
 			'controls': this.$controls,
 			'box': this.$box,
 			'padding': this.$padding,
-		};
-		// add layout handles
-		var handleDefs = document.CdDispatch.StyleAttributes[0].handles;
-		var layoutHandles = [];
-		var that = this;
-		for (var i=0, len=handleDefs.length; i<len; i++) {
+			},
+			that = this;
+		for (var i=0, len=defs.length; i<len; i++) {
 			var handle = new Handle({
+				title: defs[i].title,
 				module: that,
-				text: handleDefs[i].text,
-				parent: containers[handleDefs[i].parent],
-				modifyX: handleDefs[i].modifyX,
-				modifyY: handleDefs[i].modifyY,
-				cssClass: handleDefs[i].cssClass,
+				text: defs[i].text,
+				parent: containers[defs[i].parent],
+				modifyX: defs[i].modifyX,
+				modifyY: defs[i].modifyY,
+				cssClass: defs[i].cssClass + ' ' + name,
 			});
-			layoutHandles.push(handle);
+			this.layoutHandles.push(handle);
 		}
 	},
 	lockCanvas: function() {
@@ -406,6 +424,7 @@ document.getStyleNum = function(name, el) {
 
 
 function Handle(settings) {
+	this.title = settings.title,
 	this.parent = settings.parent,
 	this.module = settings.module,
 	this.handleCssClass = settings.handleCssClass,
@@ -416,7 +435,7 @@ function Handle(settings) {
 	this.text = (settings.text != undefined) ? settings.text : '',
 	this.objectStyles = {};
 	this.dragClass = 'drag';
-	this.$element = $('<span class="handle '+ this.cssClass +'">'+ this.text +'</span>');
+	this.$element = $('<span class="handle '+ this.cssClass +'" title="'+ this.title +'">'+ this.text +'</span>');
 	
 	var that = this;
 	this.$element.css(this.styles).mousedown(function(event) {
@@ -522,6 +541,7 @@ Dispatch.prototype.StyleAttributes = [
 		handles: [
 			// width/height
 			{
+				title:'width/height',
 				text:'WH',
 				parent: 'box',
 				modifyX: { 'width':1 },
@@ -530,6 +550,7 @@ Dispatch.prototype.StyleAttributes = [
 			},
 			// top/left
 			{
+				title:'top/left',
 				text:'TL',
 				parent: 'box',
 				modifyX: { 'left':1 },
@@ -547,21 +568,25 @@ Dispatch.prototype.StyleAttributes = [
 				cssClass: 'top right padding',
 			},*/
 			{
+				title:'padding-left',
 				parent: 'padding',
 				modifyX: { 'padding-left':1 },
 				cssClass: 'left padding subhandle',
 			},
 			{
+				title:'padding-right',
 				parent: 'padding',
 				modifyX: { 'padding-right':-1 },
 				cssClass: 'right padding subhandle',
 			},
 			{
+				title:'padding-top',
 				parent: 'padding',
 				modifyY: { 'padding-top':1 },
 				cssClass: 'top padding subhandle',
 			},
 			{
+				title:'padding-bottom',
 				parent: 'padding',
 				modifyY: { 'padding-bottom':-1 },
 				cssClass: 'bottom padding subhandle',
@@ -575,21 +600,25 @@ Dispatch.prototype.StyleAttributes = [
 				cssClass: 'bottom right margin',
 			},*/
 			{
+				title:'margin-left',
 				parent: 'controls',
 				modifyX: { 'margin-left':-1 },
 				cssClass: 'left margin subhandle',
 			},
 			{
+				title:'margin-right',
 				parent: 'controls',
 				modifyX: { 'margin-right':1 },
 				cssClass: 'right margin subhandle',
 			},
 			{
+				title:'margin-top',
 				parent: 'controls',
 				modifyY: { 'margin-top':-1 },
 				cssClass: 'top margin subhandle',
 			},
 			{
+				title:'margin-bottom',
 				parent: 'controls',
 				modifyY: { 'margin-bottom':1 },
 				cssClass: 'bottom margin subhandle',
@@ -658,13 +687,21 @@ Dispatch.prototype.StyleAttributes = [
 	},
 	{	// TEXT
 		handles: [
-			'font-size',
+			{
+				title:'font-size',
+				text:'FS',
+				parent: 'box',
+				modifyX: { 'font-size':1 },
+				modifyY: { 'font-size':1 },
+				cssClass: 'top left text double',
+			},
+			/*'font-size',
 			'line-height',
 			'word-spacing',
 			'letter-spacing',
 			'text-indent',
 			'text-shadow',
-			'color'
+			'color'*/
 		],
 		properties: [
 			new CssProp('font-family', [
@@ -725,15 +762,8 @@ $(document).ready(function() {
 		document.CdDispatch.listen('selectRule', renderPropertiesPanel);
 		document.CdDispatch.listen('changeStyleMode', renderPropertiesPanel);
 		
-		var handleModule = new HandleModule();
+		var handleModule = new HandleModule(this.contentDocument);
 		handleModule.render();
-		function updateHandleModule(arg) {
-			handleModule.update();
-		}
-		document.CdDispatch.listen('selectElement', updateHandleModule);
-		document.CdDispatch.listen('changeStyleMode', updateHandleModule);
-		document.CdDispatch.listen('modifyStyle', updateHandleModule);
-		document.CdDispatch.listen('modifyStyles', updateHandleModule);
 		
 		var sleeping = false,
 			timer,
@@ -746,7 +776,7 @@ $(document).ready(function() {
 			$(event.target).addClass(hoverClass);
 		}).mouseout(function() {
 			$('.'+hoverClass, iframeDoc).removeClass(hoverClass);
-		}).scroll(updateHandleModule);
+		});
 		
 		$(document).mouseover(function() {
 			$('.'+hoverClass, iframeDoc).removeClass(hoverClass);

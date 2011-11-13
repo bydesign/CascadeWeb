@@ -181,12 +181,9 @@ li:hover .sheet {
 	border:dotted 1px rgba(0,0,0,.3);
 }
 .handle {
-	display:block;
 	position:absolute;
 	height:20px;
 	width:20px;
-	/*top:0;
-	left:0;*/
 	background-color:rgba(0,0,0,.3);
 	color: #fff;
 	font-size: 12px;
@@ -198,7 +195,12 @@ li:hover .sheet {
 	text-align: center;
 	line-height: 18px;
 	-webkit-transition:background .2s linear;
+	display:none;
 }
+.layoutMode .layout.handle { display:block; }
+.decorateMode .decorate.handle { display:block; }
+.textMode .text.handle { display:block; }
+
 .handle:hover, .handle.drag {
 	background-color:rgba(0,0,0,.5);
 	outline:none;
