@@ -104,8 +104,9 @@ function KeyManager(selectors) {
 	
 	// bind key event functionality
 	var that = this;
+	console.log(selectors);
 	$(selectors).keydown(function(event) {
-		that.pressed.push(event.keyCode);
+		console.log(event.keyCode);
 		
 	}).keyup(function(event) {
 		if (that.pressed.indexOf(event.keyCode) != -1) {
@@ -188,7 +189,6 @@ function Dispatch(doc) {
 		this.$selectedElement = $(el);
 	});
 	this.listen('changeStyleMode', function(mode) {
-		console.log('change style mode');
 		this.styleMode = mode;
 	});
 }
@@ -314,13 +314,11 @@ function HandleModule(doc) {
 		that.update();
 	}
 	disp.listen('selectElement', updateControls);
-	//disp.listen('changeStyleMode', updateControls);
 	disp.listen('modifyStyle', updateControls);
 	disp.listen('modifyStyles', updateControls);
 	
 	var $controls = this.$controls;
 	disp.listen('changeStyleMode', function(mode) {
-		console.log('change style mode');
 		var modeClasses = ['layoutMode', 'decorateMode', 'textMode'];
 		$controls.removeClass(modeClasses.join(' '));
 		$controls.addClass(modeClasses[disp.styleMode]);
@@ -329,8 +327,8 @@ function HandleModule(doc) {
 HandleModule.prototype = {
 	render: function() {
 		this.addHandles('layout', document.CdDispatch.StyleAttributes[0].handles);
-		//console.log(document.CdDispatch.StyleAttributes[2].handles);
-		//this.addHandles('text', document.CdDispatch.StyleAttributes[2].handles);
+		this.addHandles('decorate', document.CdDispatch.StyleAttributes[1].handles);
+		this.addHandles('text', document.CdDispatch.StyleAttributes[2].handles);
 	},
 	addHandles: function(name, defs) {
 		var containers = {
@@ -382,13 +380,13 @@ HandleModule.prototype = {
 			pr = getStyleNum('paddingRight', el),
 			pb = getStyleNum('paddingBottom', el),
 			pl = getStyleNum('paddingLeft', el),
-			bt = getStyleNum('borderWidthTop', el),
-			br = getStyleNum('borderWidthRight', el),
-			bb = getStyleNum('borderWidthBottom', el),
-			bl = getStyleNum('borderWidthLeft', el);
+			bt = getStyleNum('borderTopWidth', el),
+			br = getStyleNum('borderRightWidth', el),
+			bb = getStyleNum('borderBottomWidth', el),
+			bl = getStyleNum('borderLeftWidth', el);
 		this.$controls.css({
-			'top': offset.top-bt-mt+(mt>0 ? 0 : 1)-this.scrollTop+'px',
-			'left': offset.left-bl-ml+(ml>0 ? 0 : 1)-this.scrollLeft+'px',
+			'top': offset.top-mt+(mt>0 ? 0 : 1)-this.scrollTop+'px',
+			'left': offset.left-ml+(ml>0 ? 0 : 1)-this.scrollLeft+'px',
 			'width': w+pl+pr+bl+br+ml+mr-2+'px',
 			'height': h+pt+pb+bt+bb+mt+mb-2+'px',
 			'border-top-width': mt>0 ? '1px' : '0',
@@ -419,6 +417,7 @@ document.getStyleNum = function(name, el) {
 	var value = el.ownerDocument.defaultView.getComputedStyle(el,null)[name] || el.style[name] || undefined;
 	if (value == undefined) value = 0;
 	else value = Number(value.replace('px',''));
+	if (isNaN(value)) value = 0;
 	return value;
 }
 
@@ -668,11 +667,43 @@ Dispatch.prototype.StyleAttributes = [
 	// this one needs more thought!
 	{	// DECORATION
 		handles: [
-			'border-width',
-			'border-radius',
-			'background-image-position',
-			'box-shadow-offset',
-			'opacity'
+			{
+				title:'border-left-width',
+				parent: 'box',
+				modifyX: { 'border-left-width':-1 },
+				cssClass: 'left margin subhandle',
+			},
+			{
+				title:'border-right-width',
+				parent: 'box',
+				modifyX: { 'border-right-width':1 },
+				cssClass: 'right margin subhandle',
+			},
+			{
+				title:'border-top-width',
+				parent: 'box',
+				modifyY: { 'border-top-width':-1 },
+				cssClass: 'top margin subhandle',
+			},
+			{
+				title:'border-bottom-width',
+				parent: 'box',
+				modifyY: { 'border-bottom-width':1 },
+				cssClass: 'bottom margin subhandle',
+			},
+			{
+				title:'border-radius',
+				text:'BR',
+				parent: 'box',
+				modifyX: { 'border-radius':.5 },
+				modifyY: { 'border-radius':.5 },
+				cssClass: 'bottom right size double',
+			},
+			//'border-width',
+			//'border-radius',
+			//'background-image-position',
+			//'box-shadow-offset',
+			//'opacity'
 		],
 		properties: [
 			'background-image',
@@ -691,9 +722,33 @@ Dispatch.prototype.StyleAttributes = [
 				title:'font-size',
 				text:'FS',
 				parent: 'box',
-				modifyX: { 'font-size':1 },
-				modifyY: { 'font-size':1 },
+				//modifyX: { 'font-size':1 },
+				modifyY: { 'font-size':.25 },
 				cssClass: 'top left text double',
+			},
+			{
+				title:'line-height',
+				text:'LH',
+				parent: 'box',
+				//modifyX: { 'font-size':1 },
+				modifyY: { 'line-height':.25 },
+				cssClass: 'top right text double',
+			},
+			{
+				title:'letter-spacing',
+				text:'LS',
+				parent: 'box',
+				//modifyX: { 'font-size':1 },
+				modifyX: { 'letter-spacing':.25 },
+				cssClass: 'bottom right text double',
+			},
+			{
+				title:'word-spacing',
+				text:'WS',
+				parent: 'box',
+				//modifyX: { 'font-size':1 },
+				modifyX: { 'word-spacing':.25 },
+				cssClass: 'bottom left text double',
 			},
 			/*'font-size',
 			'line-height',
@@ -750,17 +805,18 @@ $(document).ready(function() {
 	var iframe = $('#iframe')[0];
 	var $messageHolder = $('#message');
 	iframe.onload = function() {
-		document.CdDispatch = new Dispatch(iframe.contentDocument);
+		var disp = new Dispatch(iframe.contentDocument);
+		document.CdDispatch = disp;
 		
-		document.CdDispatch.Keys = new KeyManager($(iframe.contentDocument).add(document));
+		disp.Keys = new KeyManager($(iframe.contentDocument).add(document));
 		
 		var propertiesPanel = new PropertiesModule();
 		function renderPropertiesPanel(arg) {
 			propertiesPanel.render();
 		}
-		document.CdDispatch.listen('selectElement', renderPropertiesPanel);
-		document.CdDispatch.listen('selectRule', renderPropertiesPanel);
-		document.CdDispatch.listen('changeStyleMode', renderPropertiesPanel);
+		disp.listen('selectElement', renderPropertiesPanel);
+		disp.listen('selectRule', renderPropertiesPanel);
+		disp.listen('changeStyleMode', renderPropertiesPanel);
 		
 		var handleModule = new HandleModule(this.contentDocument);
 		handleModule.render();
@@ -770,6 +826,7 @@ $(document).ready(function() {
 			$body = $(document).find('body'),
 			iframeDoc = this.contentDocument;
 		$(iframeDoc).mousedown(function(evt) {
+			$body.focus();
 			document.CdDispatch.call('selectElement', evt.target);
 		}).mouseover(function(event) {
 			$('.'+hoverClass, iframeDoc).removeClass(hoverClass);
@@ -780,6 +837,10 @@ $(document).ready(function() {
 		
 		$(document).mouseover(function() {
 			$('.'+hoverClass, iframeDoc).removeClass(hoverClass);
+		});
+		
+		disp.Keys.listen(disp.Keys.GRACE_ACCENT, function(event) {
+			disp.call('changeStyleMode', (disp.styleMode + 1) % 3 );
 		});
 		
 		// do fadeout when no activity happening -- css commented due to challenges

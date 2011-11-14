@@ -24,6 +24,7 @@ body {
 	width:100px;
 	top:0;
 	/*background-color:#eee !important;*/
+	border: solid 0 blue;
 }
 .block1 {
 	top:30px;
