@@ -309,6 +309,16 @@ function HandleModule(doc) {
 	var that = this;
 	this.$doc.scroll(function() { that.updateScroll(); });
 	this.$coverSheet = $('#coverSheet');
+	this.$grid = $('#grid');
+	this.gridX = 12;
+	this.gridY = 12;
+	this.gridSnap = true;
+	this.docOffset = this.$el.offset();
+	
+	this.$el.bind('click mousedown mouseup', function forwardEvents(evt) {
+		var isHandle = $(evt.target).hasClass('handle');
+		if (!isHandle) that.forwardMouseEvent(evt);
+	});
 	
 	function updateControls() {
 		that.update();
@@ -323,6 +333,7 @@ function HandleModule(doc) {
 		$controls.removeClass(modeClasses.join(' '));
 		$controls.addClass(modeClasses[disp.styleMode]);
 	});
+	this.renderGrid();
 }
 HandleModule.prototype = {
 	render: function() {
@@ -349,6 +360,41 @@ HandleModule.prototype = {
 			});
 			this.layoutHandles.push(handle);
 		}
+	},
+	renderGrid: function() {
+		var w = this.$el.width(),
+			h = this.$el.height(),
+			x = this.gridX,
+			y = this.gridY,
+			gridH = '',
+			gridV = '';
+		for (var i=0, len=Math.round(w/x/2); i<len; i++) {
+			gridH += '<div style="left:'+(x*2*i)+'px; width:'+x+'px" class="gridH"></div>';
+		}
+		this.$grid.append(gridH);
+		
+		for (var i=0, len=Math.round(h/y/2); i<len; i++) {
+			gridV += '<div style="top:'+(y*2*i)+'px; height:'+y+'px" class="gridV"></div>';
+		}
+		this.$grid.append(gridV);
+	},
+	forwardMouseEvent: function(event) {
+		if (this.showGrid) this.$grid.hide();
+		this.$controls.hide();
+		
+		var mouseX = event.pageX - this.docOffset.left,
+			mouseY = event.pageY - this.docOffset.top;
+		var docElement = this.doc.elementFromPoint(mouseX, mouseY);
+		$(docElement).trigger(event.type);
+		
+		if (this.showGrid) this.$grid.show();
+		this.$controls.show();
+	},
+	showGrid: function() {
+		this.$grid.fadeIn('fast');
+	},
+	hideGrid: function() {
+		this.$grid.fadeOut('fast');
 	},
 	lockCanvas: function() {
 		this.$coverSheet.show();
@@ -467,6 +513,7 @@ Handle.prototype = {
 			that.cancelDrag(event);
 		});
 		this.module.lockCanvas();
+		this.module.showGrid();
 	},
 	drag: function(event) {
 		if (this.isDragging) {
@@ -479,6 +526,7 @@ Handle.prototype = {
 		this.isDragging = false;
 		this.$body.unbind('mousemove').unbind('mouseup');
 		this.objectStyles = {};
+		this.module.hideGrid();
 	},
 	cancelDrag: function(event) {
 		document.CdDispatch.call('modifyStyles', this.getInitialProps());
@@ -818,15 +866,11 @@ $(document).ready(function() {
 		disp.listen('selectRule', renderPropertiesPanel);
 		disp.listen('changeStyleMode', renderPropertiesPanel);
 		
-		var handleModule = new HandleModule(this.contentDocument);
-		handleModule.render();
-		
 		var sleeping = false,
 			timer,
 			$body = $(document).find('body'),
 			iframeDoc = this.contentDocument;
 		$(iframeDoc).mousedown(function(evt) {
-			$body.focus();
 			document.CdDispatch.call('selectElement', evt.target);
 		}).mouseover(function(event) {
 			$('.'+hoverClass, iframeDoc).removeClass(hoverClass);
@@ -838,6 +882,9 @@ $(document).ready(function() {
 		$(document).mouseover(function() {
 			$('.'+hoverClass, iframeDoc).removeClass(hoverClass);
 		});
+		
+		var handleModule = new HandleModule(iframeDoc);
+		handleModule.render();
 		
 		disp.Keys.listen(disp.Keys.GRACE_ACCENT, function(event) {
 			disp.call('changeStyleMode', (disp.styleMode + 1) % 3 );

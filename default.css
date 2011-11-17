@@ -75,13 +75,21 @@ input.search {
 .rightnav .ct {
 	padding: 0 10px;
 }
-.coverSheet {
+.coverSheet, .grid {
 	position:absolute;
 	top:0;
 	left:0;
 	right:0;
 	bottom:0;
 	display:none;
+}
+.gridH, .gridV {
+	background-color:rgba(0,0,0,.03);
+	position:absolute;
+	top:0;
+	bottom:0;
+	left:0;
+	right:0;
 }
 .selectors {
 	background-color: #444;
