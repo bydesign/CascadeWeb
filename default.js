@@ -627,9 +627,16 @@ Handle.prototype = {
 			var rules = this.dispatch.getElementRules();
 			console.log(rules);
 			for (var i=0, len=rules.length; i<len; i++) {
-				obj = rules[i].get(prop);
-				console.log(obj);
-				if (obj != undefined) break;
+				var val = rules[i].get(prop);
+				console.log(val);
+				if (val != undefined) {
+					var parts = this.attributeRegex.exec(val);
+					obj = {
+						val: Number(parts[1]),
+						unit: parts[2]
+					};
+					break;
+				}
 			}
 		}
 		var val = obj.val - change * fac;
