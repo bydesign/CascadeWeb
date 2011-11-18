@@ -100,19 +100,33 @@ function KeyManager(selectors) {
 	this.SINGLE_QUOTE = 222;
 	
 	this.pressed = [];
-	this.listeners = [];
+	this.listeners = {
+		'press': {},
+		'down': {},
+		'up': {},
+	};
 	
 	// bind key event functionality
 	var that = this;
-	console.log(selectors);
 	$(selectors).keydown(function(event) {
-		console.log(event.keyCode);
+		var fns = that.listeners['down'][event.keyCode];
+		if (fns != undefined) {
+			for (var i=0; i < fns.length; i++) {
+				fns[i].call(this, event);
+			}
+		}
 		
 	}).keyup(function(event) {
 		if (that.pressed.indexOf(event.keyCode) != -1) {
 			that.pressed.pop(that.pressed.indexOf(event.keyCode));
 		}
-		var fns = that.listeners[event.keyCode];
+		var fns = that.listeners['press'][event.keyCode];
+		if (fns != undefined) {
+			for (var i=0; i < fns.length; i++) {
+				fns[i].call(this, event);
+			}
+		}
+		var fns = that.listeners['up'][event.keyCode];
 		if (fns != undefined) {
 			for (var i=0; i < fns.length; i++) {
 				fns[i].call(this, event);
@@ -126,19 +140,31 @@ KeyManager.prototype = {
 		if (this.pressed.indexOf(key) != -1) return true;
 		return false;
 	},
-	listen: function(keys, fn) {
+	press: function(keys, fn) {
+		this.listen('press', keys, fn);
+		return this;
+	},
+	down: function(keys, fn) {
+		this.listen('down', keys, fn);
+		return this;
+	},
+	up: function(keys, fn) {
+		this.listen('up', keys, fn);
+		return this;
+	},
+	listen: function(action, keys, fn) {
 		if (keys.length > 0) {
 			for (i=0; i< keys.length; i++) {
-				this.add_listener(keys[i], fn);
+				this.add_listener(action, keys[i], fn);
 			}
 		} else {
-			this.add_listener(keys, fn);
+			this.add_listener(action, keys, fn);
 		}
 		return this;
 	},
-	add_listener: function(key, fn) {
-		if (this.listeners[key] == undefined) this.listeners[key] = [];
-		this.listeners[key].push(fn);
+	add_listener: function(action, key, fn) {
+		if (this.listeners[action][key] == undefined) this.listeners[action][key] = [];
+		this.listeners[action][key].push(fn);
 	}
 };
 
@@ -247,7 +273,6 @@ function Rule(rule, manager, i) {
 Rule.prototype = {
 	set: function(attr, val) {
 		this.style.setProperty(attr, val);
-		//$(document.CdDispatch.selectedElement).css(attr, val);
 	},
 	get: function(attr) {
 		return this.style.getPropertyValue(attr);
@@ -265,7 +290,15 @@ Rule.prototype = {
 	},
 	hasAttr: function(attr) {
 		return this.style.getPropertyValue(attr) != null;
-	}
+	},
+	attrs: function() {
+		var attrs = [],
+			style = this.style;
+		for (var i=0, len=this.style.length; i<len; i++) {
+			attrs.push(style[i]);
+		}
+		return attrs;
+	},
 };
 
 function PropertiesModule() {
@@ -330,6 +363,7 @@ function HandleModule(doc) {
 		that.update();
 	}
 	disp.listen('selectElement', updateControls);
+	disp.listen('selectRule', updateControls);
 	disp.listen('modifyStyle', updateControls);
 	disp.listen('modifyStyles', updateControls);
 	
@@ -339,7 +373,14 @@ function HandleModule(doc) {
 		$controls.removeClass(modeClasses.join(' '));
 		$controls.addClass(modeClasses[disp.styleMode]);
 	});
+	
+	// grid code
 	this.renderGrid();
+	disp.Keys.down(disp.Keys.SHIFT, function(evt) {
+		that.showGrid();
+	}).up(disp.Keys.SHIFT, function(evt) {
+		that.hideGrid();
+	});
 }
 HandleModule.prototype = {
 	render: function() {
@@ -385,7 +426,6 @@ HandleModule.prototype = {
 		this.$grid.append(gridV);
 	},
 	forwardMouseEvent: function(event) {
-		if (this.showGrid) this.$grid.hide();
 		this.$controls.hide();
 		
 		var mouseX = event.pageX - this.docOffset.left,
@@ -393,7 +433,6 @@ HandleModule.prototype = {
 		var docElement = this.doc.elementFromPoint(mouseX, mouseY);
 		$(docElement).trigger(event.type);
 		
-		if (this.showGrid) this.$grid.show();
 		this.$controls.show();
 	},
 	showGrid: function() {
@@ -462,6 +501,11 @@ HandleModule.prototype = {
 			'border-bottom-width': pb>0 ? '1px' : '0',
 			'border-left-width': pl>0 ? '1px' : '0'
 		});
+		var attrs = document.CdDispatch.getSelectedRule().attrs();
+		this.$controls.find('.handle.defined').removeClass('defined');
+		for (var i=0, len=attrs.length; i<len; i++) {
+			this.$controls.find('#'+attrs[i]).addClass('defined');
+		}
 	},
 };
 
@@ -486,7 +530,8 @@ function Handle(settings) {
 	this.text = (settings.text != undefined) ? settings.text : '',
 	this.objectStyles = {};
 	this.dragClass = 'drag';
-	this.$element = $('<span class="handle '+ this.cssClass +'" title="'+ this.title +'">'+ this.text +'</span>');
+	this.$element = $('<span class="handle '+ this.cssClass +'" id="'+ this.title +'"><span class="labelWrap"><span class="label"></span>'+ this.text +'<span class="rem" title="remove property">x</span></span></span>');
+	this.$labelElement = this.$element.find('.label');
 	this.dispatch = document.CdDispatch;
 	this.attributeRegex = /([0-9\.]+)([A-z%]+)/;
 	
@@ -502,6 +547,7 @@ function Handle(settings) {
 	
 	this.$body = $(document.CdDispatch.doc).find('html');
 	this.$doc = $(document);
+	this.updateLabel();
 }
 Handle.prototype = {
 	startDrag: function(event) {
@@ -511,21 +557,22 @@ Handle.prototype = {
 		this.target = event.target;
 		this.saveInitialProps(this.modifyX);
 		this.saveInitialProps(this.modifyY);
+		this.$element.addClass('drag');
 		
 		var that = this;
 		this.$doc.mousemove(function(event) { that.drag(event); })
 				 .mouseup(function() { that.endDrag(event); });
 		
 		var Keys = document.CdDispatch.Keys;
-		Keys.listen(Keys.ESCAPE, function(event) {
+		Keys.press(Keys.ESCAPE, function(event) {
 			that.cancelDrag(event);
 		});
 		this.module.lockCanvas();
-		this.module.showGrid();
 	},
 	drag: function(event) {
 		if (this.isDragging) {
 			var css = this.getNewProps(event.pageX, event.pageY);
+			this.updateLabel(css);
 			document.CdDispatch.call('modifyStyles', css);
 		}
 	},
@@ -534,7 +581,7 @@ Handle.prototype = {
 		this.isDragging = false;
 		this.$body.unbind('mousemove').unbind('mouseup');
 		this.objectStyles = {};
-		this.module.hideGrid();
+		this.$element.removeClass('drag');
 	},
 	cancelDrag: function(event) {
 		var css = {},
@@ -576,12 +623,27 @@ Handle.prototype = {
 				css[prop] = val + obj.unit;
 			}
 		}
-		console.log(css);
 		return css;
 	},
-	
+	updateLabel: function(css) {
+		var str = '';
+		var len = 0;
+		for (var prop in css) {
+			str += '<span class="property">'+ prop + '</span><span class="value">' + css[prop] + '</span>';
+			len++;
+		}
+		if (len == 0) {
+			str = '<span class="property">'+ this.title +'</span><span class="value">add</span>';
+		}
+		this.$labelElement.html(str);
+	},
 	click: function(event) {
 		console.log('handle clicked');
+		console.log(event.target);
+		if ($(event.target).hasClass('rem')) {
+			var props = {};
+			document.CdDispatch.call('modifyStyles', {});
+		}
 	}
 };
 
@@ -598,7 +660,7 @@ Dispatch.prototype.StyleAttributes = [
 				title:'width/height',
 				text:'WH',
 				parent: 'box',
-				modifyX: { 'width':1 },
+				modifyX: {'width':1 },
 				modifyY: { 'height':1 },
 				cssClass: 'bottom right size double',
 			},
@@ -893,7 +955,7 @@ $(document).ready(function() {
 		var handleModule = new HandleModule(iframeDoc);
 		handleModule.render();
 		
-		disp.Keys.listen(disp.Keys.GRACE_ACCENT, function(event) {
+		disp.Keys.press(disp.Keys.GRACE_ACCENT, function(event) {
 			disp.call('changeStyleMode', (disp.styleMode + 1) % 3 );
 		});
 		

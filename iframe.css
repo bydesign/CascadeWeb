@@ -23,7 +23,6 @@ body {
 	height:100px;
 	width:100px;
 	top:0;
-	/*background-color:#eee !important;*/
 	border: solid 0 blue;
 }
 .block1 {
@@ -51,8 +50,8 @@ body {
 	top:350px;
 	left:150px;
 	background-color:#999;
-	padding:0;
-	margin:0;
+	/*padding:0;
+	margin:0;*/
 }
 .content {
 	margin: 3em 12em;
