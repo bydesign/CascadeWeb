@@ -228,6 +228,9 @@ Dispatch.prototype = {
 		this.selectedRule = ruleId;
 		this.rules[ruleId].activate();
 	},
+	getSelectedRule: function() {
+		return this.rules[this.selectedRule];
+	},
 };
 
 function Rule(rule, manager, i) {
@@ -259,6 +262,9 @@ Rule.prototype = {
 	deactivate: function() {
 		this.active = false;
 		this.activeClass = 'inactive';
+	},
+	hasAttr: function(attr) {
+		return this.style.getPropertyValue(attr) != null;
 	}
 };
 
@@ -481,6 +487,8 @@ function Handle(settings) {
 	this.objectStyles = {};
 	this.dragClass = 'drag';
 	this.$element = $('<span class="handle '+ this.cssClass +'" title="'+ this.title +'">'+ this.text +'</span>');
+	this.dispatch = document.CdDispatch;
+	this.attributeRegex = /([0-9\.]+)([A-z%]+)/;
 	
 	var that = this;
 	this.$element.css(this.styles).mousedown(function(event) {
@@ -506,7 +514,7 @@ Handle.prototype = {
 		
 		var that = this;
 		this.$doc.mousemove(function(event) { that.drag(event); })
-				  .mouseup(function() { that.endDrag(event); });
+				 .mouseup(function() { that.endDrag(event); });
 		
 		var Keys = document.CdDispatch.Keys;
 		Keys.listen(Keys.ESCAPE, function(event) {
@@ -517,7 +525,7 @@ Handle.prototype = {
 	},
 	drag: function(event) {
 		if (this.isDragging) {
-			var css = this.getNewProps(this.modifyX, this.modifyY, event.pageX, event.pageY);
+			var css = this.getNewProps(event.pageX, event.pageY);
 			document.CdDispatch.call('modifyStyles', css);
 		}
 	},
@@ -529,48 +537,47 @@ Handle.prototype = {
 		this.module.hideGrid();
 	},
 	cancelDrag: function(event) {
-		document.CdDispatch.call('modifyStyles', this.getInitialProps());
+		var css = {},
+			styles = this.objectStyles;
+		for (var prop in styles) {
+			css[prop] = styles[prop].val + styles[prop].unit;
+		}
+		document.CdDispatch.call('modifyStyles', css);
 		this.endDrag();
 	},
 	saveInitialProps: function(obj) {
+		var rule = this.dispatch.getSelectedRule();
+		var regex = this.attributeRegex;
+		var styles = this.objectStyles;
 		for (var prop in obj) {
-			this.objectStyles[prop] = document.getStyleNum(prop, document.CdDispatch.selectedElement);
+			var attr = rule.get(prop);
+			if (attr != null) {
+				var parts = regex.exec(attr);
+				styles[prop] = {
+					val: Number(parts[1]),
+					unit: parts[2]
+				};
+			}
 		}
 	},
-	getInitialProps: function() {
+	getNewProps: function(mouseX, mouseY) {
 		var css = {};
 		for (var prop in this.modifyX) {
-			css[prop] = this.objectStyles[prop];
+			var obj = this.objectStyles[prop];
+			if (obj != undefined) {
+				var val = obj.val - (this.startMouseX - mouseX) * this.modifyX[prop];
+				css[prop] = val + obj.unit;
+			}
 		}
 		for (var prop in this.modifyY) {
-			css[prop] = this.objectStyles[prop];
+			var obj = this.objectStyles[prop];
+			if (obj != undefined) {
+				var val = obj.val - (this.startMouseY - mouseY) * this.modifyY[prop];
+				css[prop] = val + obj.unit;
+			}
 		}
+		console.log(css);
 		return css;
-	},
-	getNewProps: function(objX, objY, mouseX, mouseY) {
-		var css = {};
-		for (var prop in this.modifyX) {
-			var val = this.objectStyles[prop] - (this.startMouseX - mouseX) * this.getPropModX(prop);
-			css[prop] = this.getPixelValue(val);
-		}
-		for (var prop in this.modifyY) {
-			var val = this.objectStyles[prop] - (this.startMouseY - mouseY) * this.getPropModY(prop);
-			css[prop] = this.getPixelValue(val);
-		}
-		return css;
-	},
-	getPixelValue: function(val) {
-		return Math.round(val) + 'px';
-	},
-	getPropModX: function(prop) {
-		return this.getPropMod(this.modifyX, prop);
-	},
-	getPropModY: function(prop) {
-		return this.getPropMod(this.modifyY, prop);
-	},
-	getPropMod: function(dir, prop) {
-		if (dir != undefined && dir[prop] != undefined) return dir[prop];
-		return 1;
 	},
 	
 	click: function(event) {
