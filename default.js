@@ -154,7 +154,7 @@ KeyManager.prototype = {
 	},
 	listen: function(action, keys, fn) {
 		if (keys.length > 0) {
-			for (i=0; i< keys.length; i++) {
+			for (var i=0, len=keys.length; i<len; i++) {
 				this.add_listener(action, keys[i], fn);
 			}
 		} else {
@@ -272,7 +272,8 @@ function Rule(rule, manager, i) {
 }
 Rule.prototype = {
 	set: function(attr, val) {
-		this.style.setProperty(attr, val);
+		if (val == undefined) this.style.removeProperty(attr);
+		else this.style.setProperty(attr, val);
 	},
 	get: function(attr) {
 		return this.style.getPropertyValue(attr);
@@ -343,7 +344,7 @@ function HandleModule(doc) {
 	this.$box = $('#box'),
 	this.$padding = $('#padding'),
 	this.$doc = $(disp.doc),
-	this.layoutHandles = [];
+	this.handles = [];
 	this.updateScroll();
 	var that = this;
 	this.$doc.scroll(function() { that.updateScroll(); });
@@ -403,9 +404,11 @@ HandleModule.prototype = {
 				parent: containers[defs[i].parent],
 				modifyX: defs[i].modifyX,
 				modifyY: defs[i].modifyY,
+				modifyXFac: defs[i].modifyXFac,
+				modifyYFac: defs[i].modifyYFac,
 				cssClass: defs[i].cssClass + ' ' + name,
 			});
-			this.layoutHandles.push(handle);
+			this.handles.push(handle);
 		}
 	},
 	renderGrid: function() {
@@ -506,6 +509,10 @@ HandleModule.prototype = {
 		for (var i=0, len=attrs.length; i<len; i++) {
 			this.$controls.find('#'+attrs[i]).addClass('defined');
 		}
+		var handles = this.handles;
+		for (var i=0, len=handles.length; i<len; i++) {
+			handles[i].update();
+		}
 	},
 };
 
@@ -525,6 +532,8 @@ function Handle(settings) {
 	this.handleCssClass = settings.handleCssClass,
 	this.modifyX = settings.modifyX,
 	this.modifyY = settings.modifyY,
+	this.modifyXFac = (settings.modifyXFac != undefined) ? settings.modifyXFac : 1,
+	this.modifyYFac = (settings.modifyYFac != undefined) ? settings.modifyYFac : 1,
 	this.styles = (settings.handleStyles != undefined) ? settings.handleStyles : {},
 	this.cssClass = settings.cssClass,
 	this.text = (settings.text != undefined) ? settings.text : '',
@@ -547,7 +556,6 @@ function Handle(settings) {
 	
 	this.$body = $(document.CdDispatch.doc).find('html');
 	this.$doc = $(document);
-	this.updateLabel();
 }
 Handle.prototype = {
 	startDrag: function(event) {
@@ -555,8 +563,8 @@ Handle.prototype = {
 		this.startMouseX = event.pageX;
 		this.startMouseY = event.pageY;
 		this.target = event.target;
-		this.saveInitialProps(this.modifyX);
-		this.saveInitialProps(this.modifyY);
+		this.saveInitialProp(this.modifyX);
+		this.saveInitialProp(this.modifyY);
 		this.$element.addClass('drag');
 		
 		var that = this;
@@ -572,7 +580,7 @@ Handle.prototype = {
 	drag: function(event) {
 		if (this.isDragging) {
 			var css = this.getNewProps(event.pageX, event.pageY);
-			this.updateLabel(css);
+			this.updateLabel();
 			document.CdDispatch.call('modifyStyles', css);
 		}
 	},
@@ -592,57 +600,72 @@ Handle.prototype = {
 		document.CdDispatch.call('modifyStyles', css);
 		this.endDrag();
 	},
-	saveInitialProps: function(obj) {
+	saveInitialProp: function(prop) {
 		var rule = this.dispatch.getSelectedRule();
 		var regex = this.attributeRegex;
 		var styles = this.objectStyles;
-		for (var prop in obj) {
-			var attr = rule.get(prop);
-			if (attr != null) {
-				var parts = regex.exec(attr);
-				styles[prop] = {
-					val: Number(parts[1]),
-					unit: parts[2]
-				};
-			}
+		var attr = rule.get(prop);
+		if (attr != null) {
+			var parts = regex.exec(attr);
+			styles[prop] = {
+				val: Number(parts[1]),
+				unit: parts[2]
+			};
 		}
 	},
 	getNewProps: function(mouseX, mouseY) {
 		var css = {};
-		for (var prop in this.modifyX) {
-			var obj = this.objectStyles[prop];
-			if (obj != undefined) {
-				var val = obj.val - (this.startMouseX - mouseX) * this.modifyX[prop];
-				css[prop] = val + obj.unit;
-			}
-		}
-		for (var prop in this.modifyY) {
-			var obj = this.objectStyles[prop];
-			if (obj != undefined) {
-				var val = obj.val - (this.startMouseY - mouseY) * this.modifyY[prop];
-				css[prop] = val + obj.unit;
-			}
-		}
+		css[this.modifyX] = this.getNewProp(this.modifyX, this.startMouseX - mouseX, this.modifyXFac);
+		css[this.modifyY] = this.getNewProp(this.modifyY, this.startMouseY - mouseY, this.modifyYFac);
 		return css;
 	},
-	updateLabel: function(css) {
-		var str = '';
-		var len = 0;
-		for (var prop in css) {
-			str += '<span class="property">'+ prop + '</span><span class="value">' + css[prop] + '</span>';
-			len++;
+	getNewProp: function(prop, change, fac) {
+		console.log('get new prop');
+		var obj = this.objectStyles[prop];
+		console.log(prop);
+		if (prop == undefined || obj == undefined) {
+			var rules = this.dispatch.getElementRules();
+			console.log(rules);
+			for (var i=0, len=rules.length; i<len; i++) {
+				obj = rules[i].get(prop);
+				console.log(obj);
+				if (obj != undefined) break;
+			}
 		}
-		if (len == 0) {
-			str = '<span class="property">'+ this.title +'</span><span class="value">add</span>';
+		var val = obj.val - change * fac;
+		return val + obj.unit;
+	},
+	update: function() {
+		this.updateLabel();
+	},
+	updateLabel: function() {
+		var rule = this.dispatch.getSelectedRule();
+		var str = '',
+			propX = this.modifyX,
+			propY = this.modifyY;
+		var valX = rule.get(propX),
+			valY = rule.get(propY);
+		if (propX == undefined && propY == undefined) {
+			str = '<span class="property">'+ this.title +'</span><span class="value">not set</span>';
+		} else {
+			if (propX != undefined) {
+				if (valX == null) valX = 'not set';
+				str += '<span class="property">'+ propX +'</span><span class="value">'+ valX +'</span>';
+			}
+			if (propY != undefined) {
+				if (valY == null) valY = 'not set';
+				str += '<span class="property">'+ propY +'</span><span class="value">'+ valY +'</span>';
+			}
 		}
 		this.$labelElement.html(str);
 	},
 	click: function(event) {
-		console.log('handle clicked');
-		console.log(event.target);
 		if ($(event.target).hasClass('rem')) {
 			var props = {};
-			document.CdDispatch.call('modifyStyles', {});
+			if (this.modifyX != undefined) props[this.modifyX] = undefined;
+			if (this.modifyY != undefined) props[this.modifyY] = undefined;
+			console.log(props);
+			document.CdDispatch.call('modifyStyles', props);
 		}
 	}
 };
@@ -660,8 +683,8 @@ Dispatch.prototype.StyleAttributes = [
 				title:'width/height',
 				text:'WH',
 				parent: 'box',
-				modifyX: {'width':1 },
-				modifyY: { 'height':1 },
+				modifyX: 'width',
+				modifyY: 'height',
 				cssClass: 'bottom right size double',
 			},
 			// top/left
@@ -669,74 +692,64 @@ Dispatch.prototype.StyleAttributes = [
 				title:'top/left',
 				text:'TL',
 				parent: 'box',
-				modifyX: { 'left':1 },
-				modifyY: { 'top':1 },
+				modifyX: 'left',
+				modifyY: 'top',
 				cssClass: 'top left position double',
 			},
 			// add bottom/right here
 			
 			// padding handles
-			/*{
-				text: 'P',
-				parent: 'padding',
-				modifyY: { 'padding-top':1, 'padding-bottom':1 },
-				modifyX: { 'padding-right':-1, 'padding-left':-1 },
-				cssClass: 'top right padding',
-			},*/
 			{
 				title:'padding-left',
 				parent: 'padding',
-				modifyX: { 'padding-left':1 },
+				modifyX: 'padding-left',
 				cssClass: 'left padding subhandle',
 			},
 			{
 				title:'padding-right',
 				parent: 'padding',
-				modifyX: { 'padding-right':-1 },
+				modifyX: 'padding-right',
+				modifyXFac: -1,
 				cssClass: 'right padding subhandle',
 			},
 			{
 				title:'padding-top',
 				parent: 'padding',
-				modifyY: { 'padding-top':1 },
+				modifyY: 'padding-top',
 				cssClass: 'top padding subhandle',
 			},
 			{
 				title:'padding-bottom',
 				parent: 'padding',
-				modifyY: { 'padding-bottom':-1 },
+				modifyY: 'padding-bottom',
+				modifyYFac: -1,
 				cssClass: 'bottom padding subhandle',
 			},
 			// margin handles
-			/*{
-				text: 'M',
-				parent: 'controls',
-				modifyY: { 'margin-top':.5, 'margin-bottom':.5 },
-				modifyX: { 'margin-right':.5, 'margin-left':.5 },
-				cssClass: 'bottom right margin',
-			},*/
 			{
 				title:'margin-left',
 				parent: 'controls',
-				modifyX: { 'margin-left':-1 },
+				modifyX: 'margin-left',
+				modifyXFac: -1,
 				cssClass: 'left margin subhandle',
 			},
 			{
 				title:'margin-right',
 				parent: 'controls',
-				modifyX: { 'margin-right':1 },
+				modifyX: 'margin-right',
 				cssClass: 'right margin subhandle',
 			},
 			{
 				title:'margin-top',
 				parent: 'controls',
-				modifyY: { 'margin-top':-1 },
+				modifyY: 'margin-top',
+				modifyYFac: -1,
 				cssClass: 'top margin subhandle',
 			},
 			{
 				title:'margin-bottom',
 				parent: 'controls',
-				modifyY: { 'margin-bottom':1 },
+				modifyY: 'margin-bottom',
 				cssClass: 'bottom margin subhandle',
 			},
 			//'z-index'
@@ -787,33 +800,33 @@ Dispatch.prototype.StyleAttributes = [
 			{
 				title:'border-left-width',
 				parent: 'box',
-				modifyX: { 'border-left-width':-1 },
+				modifyX: 'border-left-width',
 				cssClass: 'left margin subhandle',
 			},
 			{
 				title:'border-right-width',
 				parent: 'box',
-				modifyX: { 'border-right-width':1 },
+				modifyX: 'border-right-width',
 				cssClass: 'right margin subhandle',
 			},
 			{
 				title:'border-top-width',
 				parent: 'box',
-				modifyY: { 'border-top-width':-1 },
+				modifyY: 'border-top-width',
 				cssClass: 'top margin subhandle',
 			},
 			{
 				title:'border-bottom-width',
 				parent: 'box',
-				modifyY: { 'border-bottom-width':1 },
+				modifyY: 'border-bottom-width',
 				cssClass: 'bottom margin subhandle',
 			},
 			{
 				title:'border-radius',
 				text:'BR',
 				parent: 'box',
-				modifyX: { 'border-radius':.5 },
-				modifyY: { 'border-radius':.5 },
+				modifyX: 'border-radius',
+				modifyY: 'border-radius',
 				cssClass: 'bottom right size double',
 			},
 			//'border-width',
@@ -839,32 +852,29 @@ Dispatch.prototype.StyleAttributes = [
 				title:'font-size',
 				text:'FS',
 				parent: 'box',
-				//modifyX: { 'font-size':1 },
-				modifyY: { 'font-size':.25 },
+				modifyY: 'font-size',
+				modifyYFac: .25,
 				cssClass: 'top left text double',
 			},
 			{
 				title:'line-height',
 				text:'LH',
 				parent: 'box',
-				//modifyX: { 'font-size':1 },
-				modifyY: { 'line-height':.25 },
+				modifyY: 'line-height',
 				cssClass: 'top right text double',
 			},
 			{
 				title:'letter-spacing',
 				text:'LS',
 				parent: 'box',
-				//modifyX: { 'font-size':1 },
-				modifyX: { 'letter-spacing':.25 },
+				modifyX: 'letter-spacing',
 				cssClass: 'bottom right text double',
 			},
 			{
 				title:'word-spacing',
 				text:'WS',
 				parent: 'box',
-				//modifyX: { 'font-size':1 },
-				modifyX: { 'word-spacing':.25 },
+				modifyX: 'word-spacing',
 				cssClass: 'bottom left text double',
 			},
 			/*'font-size',

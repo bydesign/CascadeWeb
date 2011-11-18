@@ -322,6 +322,7 @@ li:hover .sheet {
 	font-family: "Myriad Pro", Helvetica, Arial, sans-serif;
 	box-shadow: 1px 1px 4px rgba(0,0,0,.7);
 	padding-right:30px;
+	white-space:nowrap;
 }
 .handle:hover .label, .handle.drag .label {
 	opacity:1;
@@ -329,7 +330,6 @@ li:hover .sheet {
 .handle .property {
 	font-size:10px;
 	font-weight:normal;
-	white-space:nowrap;
 }
 .handle .value {
 	display:block;
