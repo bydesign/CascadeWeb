@@ -489,16 +489,16 @@ HandleModule.prototype = {
 			'border-left-width': ml>0 ? '1px' : '0'
 		});
 		this.$box.css({
-			'top': mt+bt-1+'px',
-			'left': ml+bl-1+'px',
-			'right': mr+br-1+'px',
-			'bottom': mb+bb-1+'px'
+			'top': mt-1+'px',
+			'left': ml-1+'px',
+			'right': mr-1+'px',
+			'bottom': mb-1+'px'
 		});
 		this.$padding.css({
-			'top': pt-1+'px',
-			'left': pl-1+'px',
-			'right': pr-1+'px',
-			'bottom': pb-1+'px',
+			'top': bt+pt-1+'px',
+			'left': bl+pl-1+'px',
+			'right': br+pr-1+'px',
+			'bottom': bb+pb-1+'px',
 			'border-top-width': pt>0 ? '1px' : '0',
 			'border-right-width': pr>0 ? '1px' : '0',
 			'border-bottom-width': pb>0 ? '1px' : '0',
@@ -615,20 +615,20 @@ Handle.prototype = {
 	},
 	getNewProps: function(mouseX, mouseY) {
 		var css = {};
-		css[this.modifyX] = this.getNewProp(this.modifyX, this.startMouseX - mouseX, this.modifyXFac);
-		css[this.modifyY] = this.getNewProp(this.modifyY, this.startMouseY - mouseY, this.modifyYFac);
+		if (this.modifyX != undefined) {
+			css[this.modifyX] = this.getNewProp(this.modifyX, this.startMouseX - mouseX, this.modifyXFac);
+		}
+		if (this.modifyY != undefined) {
+			css[this.modifyY] = this.getNewProp(this.modifyY, this.startMouseY - mouseY, this.modifyYFac);
+		}
 		return css;
 	},
 	getNewProp: function(prop, change, fac) {
-		console.log('get new prop');
 		var obj = this.objectStyles[prop];
-		console.log(prop);
-		if (prop == undefined || obj == undefined) {
+		if (obj == undefined) {
 			var rules = this.dispatch.getElementRules();
-			console.log(rules);
 			for (var i=0, len=rules.length; i<len; i++) {
 				var val = rules[i].get(prop);
-				console.log(val);
 				if (val != undefined) {
 					var parts = this.attributeRegex.exec(val);
 					obj = {
@@ -636,6 +636,11 @@ Handle.prototype = {
 						unit: parts[2]
 					};
 					break;
+				} else {
+					obj = {
+						val: 0,
+						unit: 'px'
+					}
 				}
 			}
 		}
@@ -814,6 +819,7 @@ Dispatch.prototype.StyleAttributes = [
 				title:'border-right-width',
 				parent: 'box',
 				modifyX: 'border-right-width',
+				modifyXFac: -1,
 				cssClass: 'right margin subhandle',
 			},
 			{
@@ -826,6 +832,7 @@ Dispatch.prototype.StyleAttributes = [
 				title:'border-bottom-width',
 				parent: 'box',
 				modifyY: 'border-bottom-width',
+				modifyYFac: -1,
 				cssClass: 'bottom margin subhandle',
 			},
 			{
@@ -834,6 +841,8 @@ Dispatch.prototype.StyleAttributes = [
 				parent: 'box',
 				modifyX: 'border-radius',
 				modifyY: 'border-radius',
+				modifyXFac: -1,
+				modifyYFac: -1,
 				cssClass: 'bottom right size double',
 			},
 			//'border-width',
