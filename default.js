@@ -356,7 +356,8 @@ function HandleModule(doc) {
 	this.gridX = 12;
 	this.gridY = 12;
 	this.gridSnap = true;
-	this.docOffset = this.$el.offset();
+	this.docOffset = this.$el.offset(),
+	this.selectedHandle;
 	
 	this.$el.bind('click mousedown mouseup', function forwardEvents(evt) {
 		var isHandle = $(evt.target).hasClass('handle');
@@ -521,6 +522,13 @@ HandleModule.prototype = {
 			handles[i].update();
 		}
 	},
+	selectHandle: function(handle) {
+		if (this.selectedHandle != undefined) {
+			this.selectedHandle.deselect();
+		}
+		handle.select();
+		this.selectedHandle = handle;
+	},
 };
 
 document.getStyleNum = function(name, el) {
@@ -548,15 +556,17 @@ function Handle(settings) {
 	this.styles = (settings.handleStyles != undefined) ? settings.handleStyles : {},
 	this.cssClass = settings.cssClass,
 	this.text = (settings.text != undefined) ? settings.text : '',
-	this.objectStyles = {};
-	this.dragClass = 'drag';
-	this.$element = $('<span class="handle '+ this.cssClass +'" id="'+ this.title +'"><span class="labelWrap"><span class="label"></span>'+ this.text +'<span class="rem" title="remove property">x</span></span></span>');
-	this.$labelElement = this.$element.find('.label');
-	this.dispatch = document.CdDispatch;
+	this.selected = false,
+	this.objectStyles = {},
+	this.dragClass = 'drag',
+	this.$element = $('<span class="handle '+ this.cssClass +'" id="'+ this.title +'"><span class="labelWrap"><span class="label"></span>'+ this.text +'<span class="rem" title="remove property">x</span></span></span>'),
+	this.$labelElement = this.$element.find('.label'),
+	this.dispatch = document.CdDispatch,
 	this.attributeRegex = /([0-9\.]+)([A-z%]+)/;
 	
 	var that = this;
 	this.$element.css(this.styles).mousedown(function(event) {
+		that.module.selectHandle(that);
 		that.startDrag(event);
 		return false;
 	}).click(function(event) {
@@ -588,6 +598,14 @@ Handle.prototype = {
 		});
 		this.module.lockCanvas();
 	},
+	select: function() {
+		this.selected = true;
+		this.$element.addClass('selected');
+	},
+	deselect: function() {
+		this.selected = false;
+		this.$element.removeClass('selected');
+	},
 	drag: function(event) {
 		if (this.isDragging) {
 			var css = this.getNewProps(event.pageX, event.pageY);
@@ -612,13 +630,10 @@ Handle.prototype = {
 		this.endDrag();
 	},
 	saveInitialProp: function(prop) {
-		var rule = this.dispatch.getSelectedRule();
-		var regex = this.attributeRegex;
-		var styles = this.objectStyles;
-		var attr = rule.get(prop);
-		if (attr != null) {
-			var parts = regex.exec(attr);
-			styles[prop] = {
+		var attr = this.dispatch.getSelectedRule().get(prop);
+		if (prop != undefined && attr != null) {
+			var parts = this.attributeRegex.exec(attr);
+			this.objectStyles[prop] = {
 				val: Number(parts[1]),
 				unit: parts[2]
 			};
@@ -682,6 +697,10 @@ Handle.prototype = {
 				}
 			}
 		}
+		console.log(prop);
+		console.log(this.objectStyles[prop]);
+		console.log(change);
+		console.log(obj.val);
 		var val = obj.val - change * fac;
 		return val + obj.unit;
 	},

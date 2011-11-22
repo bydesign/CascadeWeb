@@ -378,7 +378,16 @@ li:hover .sheet {
 .rem:hover {
 	background-color:#888;
 }
-.handle.defined .rem {
+.handle.defined .rem, .handle.selected .rem {
 	display:block;
+}
+.handle.selected {
+	opacity:1;
+	border:solid 1px #fff;
+	margin:-1px;
+	background-color:rgba(0,0,0,.7);
+}
+.handle.defined.selected {
+	background-color:rgba(0,150,0,.8);
 }
 
