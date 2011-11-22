@@ -340,6 +340,12 @@ PropertiesModule.prototype = {
 };
 
 function HandleModule(doc) {
+	this.NODRAG = 0,
+	this.DRAG = 1,
+	this.ALTDRAG = 2,
+	this.ALTSHIFTDRAG = 3;
+	this.dragMode = this.NODRAG;
+	
 	var disp = document.CdDispatch;
 	this.doc = doc,
 	this.$el = $('#pageHolder'),
@@ -381,13 +387,46 @@ function HandleModule(doc) {
 	
 	// grid code
 	this.renderGrid();
-	disp.Keys.down(disp.Keys.SHIFT, function(evt) {
+	var Keys = disp.Keys;
+	Keys.down(Keys.SHIFT, function(evt) {
 		that.showGrid();
-	}).up(disp.Keys.SHIFT, function(evt) {
+		if (that.dragMode == that.ALTDRAG) that.setDragMode(that.ALTSHIFTDRAG);
+	}
+	).up(Keys.SHIFT, function(evt) {
 		that.hideGrid();
+		if (that.dragMode == that.ALTSHIFTDRAG) that.setDragMode(that.ALTDRAG);
+	}
+	).down(Keys.ALT, function(evt) {
+		if (that.dragMode == that.DRAG) {
+			if (Keys.isPressed(Keys.SHIFT)) that.setDragMode(that.ALTSHIFTDRAG);
+			else that.setDragMode(that.ALTDRAG);
+		}
+	}
+	).up(Keys.ALT, function(evt) {
+		if (that.dragMode == that.ALTDRAG || that.dragMode == that.ALTSHIFTDRAG) {
+			that.setDragMode(that.NODRAG);
+		}
+	});
+	
+	var Keys = document.CdDispatch.Keys;
+	Keys.press(Keys.ESCAPE, function(event) {
+		that.selectedHandle.cancelDrag(event);
 	});
 }
 HandleModule.prototype = {
+	setDragMode: function(mode) {
+		this.dragMode = mode;
+	},
+	isDragging: function() {
+		return this.dragMode != this.NODRAG;
+	},
+	isAltDrag: function() {
+		return this.dragMode == this.ALTDRAG;
+	},
+	isAltShiftDrag: function() {
+		return this.dragMode == this.ALTSHIFTDRAG;
+	},
+
 	render: function() {
 		this.addHandles('layout', document.CdDispatch.StyleAttributes[0].handles);
 		this.addHandles('decorate', document.CdDispatch.StyleAttributes[1].handles);
@@ -567,12 +606,12 @@ function Handle(settings) {
 	
 	var that = this;
 	this.$element.css(this.styles).mousedown(function(event) {
+		event.preventDefault();
 		that.module.selectHandle(that);
 		that.startDrag(event);
-		return false;
 	}).click(function(event) {
+		event.preventDefault();
 		that.click(event);
-		return false;
 	});
 	this.$element.appendTo(this.parent);
 	
@@ -581,7 +620,8 @@ function Handle(settings) {
 }
 Handle.prototype = {
 	startDrag: function(event) {
-		this.isDragging = true;
+		this.module.setDragMode(this.module.DRAG);
+		
 		this.startMouseX = event.pageX;
 		this.startMouseY = event.pageY;
 		this.target = event.target;
@@ -590,12 +630,11 @@ Handle.prototype = {
 		this.$element.addClass('drag');
 		
 		var that = this;
-		this.$doc.mousemove(function(event) { that.drag(event); })
-				 .mouseup(function() { that.endDrag(event); });
-		
-		var Keys = document.CdDispatch.Keys;
-		Keys.press(Keys.ESCAPE, function(event) {
-			that.cancelDrag(event);
+		this.$doc.mousemove(function(event) {
+			that.drag(event);
+		}
+		).mouseup(function() {
+			that.endDrag(event);
 		});
 		this.module.lockCanvas();
 	},
@@ -608,7 +647,7 @@ Handle.prototype = {
 		this.$element.removeClass('selected');
 	},
 	drag: function(event) {
-		if (this.isDragging) {
+		if (this.module.isDragging()) {
 			var css = this.getNewProps(event.pageX, event.pageY);
 			this.updateLabel();
 			document.CdDispatch.call('modifyStyles', css);
@@ -616,11 +655,11 @@ Handle.prototype = {
 	},
 	endDrag: function(event) {
 		this.module.unlockCanvas();
-		this.isDragging = false;
-		this.$body.unbind('mousemove').unbind('mouseup');
+		this.$doc.unbind('mousemove').unbind('mouseup');
 		this.objectStyles = {};
 		this.startDragInitVals = {};
 		this.$element.removeClass('drag');
+		this.module.setDragMode(this.module.NODRAG);
 	},
 	cancelDrag: function(event) {
 		var css = {},
@@ -628,6 +667,8 @@ Handle.prototype = {
 		for (var prop in styles) {
 			css[prop] = styles[prop].val + styles[prop].unit;
 		}
+		if (css[this.modifyX] == undefined) css[this.modifyX] = undefined;
+		if (css[this.modifyY] == undefined) css[this.modifyY] = undefined;
 		document.CdDispatch.call('modifyStyles', css);
 		this.endDrag();
 	},
@@ -643,41 +684,38 @@ Handle.prototype = {
 	},
 	getNewProps: function(mouseX, mouseY) {
 		var Keys = this.dispatch.Keys,
-			modifyX = this.modifyX,
-			modifyY = this.modifyY,
-			modifyXAlt = this.modifyXAlt,
-			modifyYAlt = this.modifyYAlt,
-			modifyXAltShift = this.modifyXAltShift,
-			modifyYAltShift = this.modifyYAltShift;
-		var css = {};
-		if (modifyX != undefined) {
-			var val = this.getNewProp(modifyX, this.startMouseX - mouseX, this.modifyXFac);
-			if (modifyXAltShift != undefined && Keys.isPressed(Keys.ALT) && Keys.isPressed(Keys.SHIFT)) {
-				for (var i=0, len=modifyXAltShift.length; i<len; i++) {
-					css[modifyXAltShift[i]] = val;
-				}
-			} else if (modifyXAlt != undefined && Keys.isPressed(Keys.ALT)) {
-				for (var i=0, len=modifyXAlt.length; i<len; i++) {
-					css[modifyXAlt[i]] = val;
-				}
-			} else {
-				css[modifyX] = val;
-			}
+			css = {};
+			
+		if (this.modifyX != undefined) {
+			var val = this.getNewProp(this.modifyX, this.startMouseX - mouseX, this.modifyXFac);
+			css = this.getCssProps('x', css, val);
 		}
-		if (modifyY != undefined) {
-			var val = this.getNewProp(modifyY, this.startMouseY - mouseY, this.modifyYFac);
-			if (modifyYAltShift != undefined && Keys.isPressed(Keys.ALT) && Keys.isPressed(Keys.SHIFT)) {
-				for (var i=0, len=modifyYAltShift.length; i<len; i++) {
-					css[modifyYAltShift[i]] = val;
-				}
-			} else if (modifyYAlt != undefined && Keys.isPressed(Keys.ALT)) {
-				for (var i=0, len=modifyYAlt.length; i<len; i++) {
-					css[modifyYAlt[i]] = val;
-				}
-			} else {
-				css[modifyY] = val;
+		if (this.modifyY != undefined) {
+			var val = this.getNewProp(this.modifyY, this.startMouseY - mouseY, this.modifyYFac);
+			css = this.getCssProps('y', css, val);
+		}
+		return css;
+	},
+	getCssProps: function(dir, css, val) {
+		if (dir == 'x') {
+			var prop = this.modifyX,
+				propAlt = (this.modifyXAlt == undefined) ? [this.modifyX] : this.modifyXAlt,
+				propAltShift = (this.modifyXAltShift == undefined) ? [this.modifyX] : this.modifyXAltShift;
+		} else if (dir == 'y') {
+			var prop = this.modifyY,
+				propAlt = this.modifyYAlt,
+				propAltShift = this.modifyYAltShift;
+		}
+		if (this.module.isAltShiftDrag()) {
+			for (var i=0, len=propAltShift.length; i<len; i++) {
+				css[propAltShift[i]] = val;
 			}
-			//css[this.modifyY] = this.getNewProp(modifyY, this.startMouseY - mouseY, this.modifyYFac);
+		} else if (this.module.isAltDrag()) {
+			for (var i=0, len=propAlt.length; i<len; i++) {
+				css[propAlt[i]] = val;
+			}
+		} else {
+			css[prop] = val;
 		}
 		return css;
 	},
