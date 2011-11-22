@@ -115,6 +115,9 @@ function KeyManager(selectors) {
 				fns[i].call(this, event);
 			}
 		}
+		if (that.pressed.indexOf(event.keyCode) == -1) {
+			that.pressed.push(event.keyCode);
+		}
 		
 	}).keyup(function(event) {
 		if (that.pressed.indexOf(event.keyCode) != -1) {
@@ -136,7 +139,7 @@ function KeyManager(selectors) {
 	});
 }
 KeyManager.prototype = {
-	is_pressed: function(key) {
+	isPressed: function(key) {
 		if (this.pressed.indexOf(key) != -1) return true;
 		return false;
 	},
@@ -155,14 +158,14 @@ KeyManager.prototype = {
 	listen: function(action, keys, fn) {
 		if (keys.length > 0) {
 			for (var i=0, len=keys.length; i<len; i++) {
-				this.add_listener(action, keys[i], fn);
+				this.addListener(action, keys[i], fn);
 			}
 		} else {
-			this.add_listener(action, keys, fn);
+			this.addListener(action, keys, fn);
 		}
 		return this;
 	},
-	add_listener: function(action, key, fn) {
+	addListener: function(action, key, fn) {
 		if (this.listeners[action][key] == undefined) this.listeners[action][key] = [];
 		this.listeners[action][key].push(fn);
 	}
@@ -404,6 +407,10 @@ HandleModule.prototype = {
 				parent: containers[defs[i].parent],
 				modifyX: defs[i].modifyX,
 				modifyY: defs[i].modifyY,
+				modifyXAlt: defs[i].modifyXAlt,
+				modifyYAlt: defs[i].modifyYAlt,
+				modifyXAltShift: defs[i].modifyXAltShift,
+				modifyYAltShift: defs[i].modifyYAltShift,
 				modifyXFac: defs[i].modifyXFac,
 				modifyYFac: defs[i].modifyYFac,
 				cssClass: defs[i].cssClass + ' ' + name,
@@ -532,6 +539,10 @@ function Handle(settings) {
 	this.handleCssClass = settings.handleCssClass,
 	this.modifyX = settings.modifyX,
 	this.modifyY = settings.modifyY,
+	this.modifyXAlt = settings.modifyXAlt,
+	this.modifyYAlt = settings.modifyYAlt,
+	this.modifyXAltShift = settings.modifyXAltShift,
+	this.modifyYAltShift = settings.modifyYAltShift,
 	this.modifyXFac = (settings.modifyXFac != undefined) ? settings.modifyXFac : 1,
 	this.modifyYFac = (settings.modifyYFac != undefined) ? settings.modifyYFac : 1,
 	this.styles = (settings.handleStyles != undefined) ? settings.handleStyles : {},
@@ -614,12 +625,42 @@ Handle.prototype = {
 		}
 	},
 	getNewProps: function(mouseX, mouseY) {
+		var Keys = this.dispatch.Keys,
+			modifyX = this.modifyX,
+			modifyY = this.modifyY,
+			modifyXAlt = this.modifyXAlt,
+			modifyYAlt = this.modifyYAlt,
+			modifyXAltShift = this.modifyXAltShift,
+			modifyYAltShift = this.modifyYAltShift;
 		var css = {};
-		if (this.modifyX != undefined) {
-			css[this.modifyX] = this.getNewProp(this.modifyX, this.startMouseX - mouseX, this.modifyXFac);
+		if (modifyX != undefined) {
+			var val = this.getNewProp(modifyX, this.startMouseX - mouseX, this.modifyXFac);
+			if (modifyXAltShift != undefined && Keys.isPressed(Keys.ALT) && Keys.isPressed(Keys.SHIFT)) {
+				for (var i=0, len=modifyXAltShift.length; i<len; i++) {
+					css[modifyXAltShift[i]] = val;
+				}
+			} else if (modifyXAlt != undefined && Keys.isPressed(Keys.ALT)) {
+				for (var i=0, len=modifyXAlt.length; i<len; i++) {
+					css[modifyXAlt[i]] = val;
+				}
+			} else {
+				css[modifyX] = val;
+			}
 		}
-		if (this.modifyY != undefined) {
-			css[this.modifyY] = this.getNewProp(this.modifyY, this.startMouseY - mouseY, this.modifyYFac);
+		if (modifyY != undefined) {
+			var val = this.getNewProp(modifyY, this.startMouseY - mouseY, this.modifyYFac);
+			if (modifyYAltShift != undefined && Keys.isPressed(Keys.ALT) && Keys.isPressed(Keys.SHIFT)) {
+				for (var i=0, len=modifyYAltShift.length; i<len; i++) {
+					css[modifyYAltShift[i]] = val;
+				}
+			} else if (modifyYAlt != undefined && Keys.isPressed(Keys.ALT)) {
+				for (var i=0, len=modifyYAlt.length; i<len; i++) {
+					css[modifyYAlt[i]] = val;
+				}
+			} else {
+				css[modifyY] = val;
+			}
+			//css[this.modifyY] = this.getNewProp(modifyY, this.startMouseY - mouseY, this.modifyYFac);
 		}
 		return css;
 	},
@@ -637,10 +678,7 @@ Handle.prototype = {
 					};
 					break;
 				} else {
-					obj = {
-						val: 0,
-						unit: 'px'
-					}
+					obj = { val: 0, unit: 'px' };
 				}
 			}
 		}
@@ -721,6 +759,8 @@ Dispatch.prototype.StyleAttributes = [
 				title:'padding-right',
 				parent: 'padding',
 				modifyX: 'padding-right',
+				modifyXAlt: ['padding-right','padding-left'],
+				modifyXAltShift: ['padding-top','padding-right','padding-bottom','padding-left'],
 				modifyXFac: -1,
 				cssClass: 'right padding subhandle',
 			},
@@ -728,6 +768,8 @@ Dispatch.prototype.StyleAttributes = [
 				title:'padding-top',
 				parent: 'padding',
 				modifyY: 'padding-top',
+				modifyYAlt: ['padding-top','padding-bottom'],
+				modifyYAltShift: ['padding-top','padding-right','padding-bottom','padding-left'],
 				cssClass: 'top padding subhandle',
 			},
 			{
