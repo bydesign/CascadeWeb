@@ -562,6 +562,7 @@ function Handle(settings) {
 	this.$element = $('<span class="handle '+ this.cssClass +'" id="'+ this.title +'"><span class="labelWrap"><span class="label"></span>'+ this.text +'<span class="rem" title="remove property">x</span></span></span>'),
 	this.$labelElement = this.$element.find('.label'),
 	this.dispatch = document.CdDispatch,
+	this.startDragInitVals = {},
 	this.attributeRegex = /([0-9\.]+)([A-z%]+)/;
 	
 	var that = this;
@@ -618,6 +619,7 @@ Handle.prototype = {
 		this.isDragging = false;
 		this.$body.unbind('mousemove').unbind('mouseup');
 		this.objectStyles = {};
+		this.startDragInitVals = {};
 		this.$element.removeClass('drag');
 	},
 	cancelDrag: function(event) {
@@ -682,6 +684,9 @@ Handle.prototype = {
 	getNewProp: function(prop, change, fac) {
 		var obj = this.objectStyles[prop];
 		if (obj == undefined) {
+			obj = this.startDragInitVals[prop];
+		}
+		if (obj == undefined) {
 			var rules = this.dispatch.getElementRules();
 			for (var i=0, len=rules.length; i<len; i++) {
 				var val = rules[i].get(prop);
@@ -696,11 +701,8 @@ Handle.prototype = {
 					obj = { val: 0, unit: 'px' };
 				}
 			}
+			this.startDragInitVals[prop] = obj;
 		}
-		console.log(prop);
-		console.log(this.objectStyles[prop]);
-		console.log(change);
-		console.log(obj.val);
 		var val = obj.val - change * fac;
 		return val + obj.unit;
 	},
