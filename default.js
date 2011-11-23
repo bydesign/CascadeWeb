@@ -404,9 +404,21 @@ function HandleModule(doc) {
 	}
 	).up(Keys.ALT, function(evt) {
 		if (that.dragMode == that.ALTDRAG || that.dragMode == that.ALTSHIFTDRAG) {
-			that.setDragMode(that.NODRAG);
+			that.setDragMode(that.DRAG);
 		}
-	});
+	}).press(Keys.UP, function() {
+		that.selectedHandle.change('y', 1);
+	}
+	).press(Keys.DOWN, function() {
+		that.selectedHandle.change('y', -1);
+	}
+	).press(Keys.LEFT, function() {
+		that.selectedHandle.change('x', 1);
+	}
+	).press(Keys.RIGHT, function() {
+		that.selectedHandle.change('x', -1);
+	}
+	)
 	
 	var Keys = document.CdDispatch.Keys;
 	Keys.press(Keys.ESCAPE, function(event) {
@@ -681,6 +693,22 @@ Handle.prototype = {
 				unit: parts[2]
 			};
 		}
+	},
+	change: function(dir, val) {
+		if (dir == 'x') {
+			var mod = this.modifyX,
+				modFac = this.modifyXFac;
+		} else if (dir == 'y') {
+			var mod = this.modifyY,
+				modFac = this.modifyYFac;
+		}
+		this.saveInitialProp(mod);
+		var val = this.getNewProp(mod, val, modFac);
+		var css = {};
+		css[mod] = val;
+		document.CdDispatch.call('modifyStyles', css);
+		this.objectStyles = {};
+		this.startDragInitVals = {};
 	},
 	getNewProps: function(mouseX, mouseY) {
 		var Keys = this.dispatch.Keys,
