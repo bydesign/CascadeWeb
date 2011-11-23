@@ -260,6 +260,10 @@ Dispatch.prototype = {
 	getSelectedRule: function() {
 		return this.rules[this.selectedRule];
 	},
+	getEmSize: function() {
+		var el = this.$selectedElement.parent()[0];
+		return document.getStyleNum('font-size', el);
+	},
 };
 
 function Rule(rule, manager, i) {
@@ -363,11 +367,13 @@ function HandleModule(doc) {
 	this.gridY = 12;
 	this.gridSnap = true;
 	this.docOffset = this.$el.offset(),
-	this.selectedHandle;
+	this.selectedHandle,
+	this.snapToGrid = false;
 	
 	this.$el.bind('click mousedown mouseup', function forwardEvents(evt) {
-		var isHandle = $(evt.target).hasClass('handle');
-		if (!isHandle) that.forwardMouseEvent(evt);
+		var forward = !$(evt.target).hasClass('handle');
+		if ($(evt.target).hasClass('rem')) forward = false;
+		if (forward) that.forwardMouseEvent(evt);
 	});
 	
 	function updateControls() {
@@ -390,10 +396,12 @@ function HandleModule(doc) {
 	var Keys = disp.Keys;
 	Keys.down(Keys.SHIFT, function(evt) {
 		that.showGrid();
+		that.snapGrid();
 		if (that.dragMode == that.ALTDRAG) that.setDragMode(that.ALTSHIFTDRAG);
 	}
 	).up(Keys.SHIFT, function(evt) {
 		that.hideGrid();
+		that.unsnapGrid();
 		if (that.dragMode == that.ALTSHIFTDRAG) that.setDragMode(that.ALTDRAG);
 	}
 	).down(Keys.ALT, function(evt) {
@@ -503,6 +511,15 @@ HandleModule.prototype = {
 	hideGrid: function() {
 		this.$grid.fadeOut('fast');
 	},
+	snapGrid: function() {
+		this.snapToGrid = true;
+	},
+	unsnapGrid: function() {
+		this.snapToGrid = false;
+	},
+	isSnapping: function() {
+		return this.snapToGrid;
+	},
 	lockCanvas: function() {
 		this.$coverSheet.show();
 	},
@@ -593,7 +610,7 @@ document.getStyleNum = function(name, el) {
 
 function Handle(settings) {
 	this.title = settings.title,
-	this.parent = settings.parent,
+	this.$parent = settings.parent,
 	this.module = settings.module,
 	this.handleCssClass = settings.handleCssClass,
 	this.modifyX = settings.modifyX,
@@ -615,6 +632,7 @@ function Handle(settings) {
 	this.dispatch = document.CdDispatch,
 	this.startDragInitVals = {},
 	this.attributeRegex = /([0-9\.]+)([A-z%]+)/;
+	this.absolutePos = {};
 	
 	var that = this;
 	this.$element.css(this.styles).mousedown(function(event) {
@@ -625,7 +643,7 @@ function Handle(settings) {
 		event.preventDefault();
 		that.click(event);
 	});
-	this.$element.appendTo(this.parent);
+	this.$element.appendTo(this.$parent);
 	
 	this.$body = $(document.CdDispatch.doc).find('html');
 	this.$doc = $(document);
@@ -702,6 +720,7 @@ Handle.prototype = {
 			var mod = this.modifyY,
 				modFac = this.modifyYFac;
 		}
+		
 		this.saveInitialProp(mod);
 		var val = this.getNewProp(mod, val, modFac);
 		var css = {};
@@ -769,6 +788,27 @@ Handle.prototype = {
 			}
 			this.startDragInitVals[prop] = obj;
 		}
+		if (obj.unit == 'em') {
+			var emSize = this.dispatch.getEmSize();
+			change = change / emSize;
+		}
+		
+		if (this.module.isSnapping()) {
+			console.log('snapping');
+			var grid = this.module.gridX;
+			var offset = this.$parent.offset();
+			var offGrid = offset.left % grid;
+			console.log(offset.left + ' : ' + offGrid);
+			console.log(change);
+			if (change > 0) {
+				obj.val -= offGrid;
+				console.log(offset.left - offGrid);
+			} else {
+				obj.val += grid - offGrid;
+				console.log(offset.left + grid - offGrid);
+			}
+		}
+		
 		var val = obj.val - change * fac;
 		return val + obj.unit;
 	},
