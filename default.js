@@ -767,7 +767,8 @@ Handle.prototype = {
 		return css;
 	},
 	getNewProp: function(prop, change, fac) {
-		var obj = this.objectStyles[prop];
+		var obj = this.objectStyles[prop],
+			newChange = change;
 		if (obj == undefined) {
 			obj = this.startDragInitVals[prop];
 		}
@@ -788,28 +789,32 @@ Handle.prototype = {
 			}
 			this.startDragInitVals[prop] = obj;
 		}
-		if (obj.unit == 'em') {
-			var emSize = this.dispatch.getEmSize();
-			change = change / emSize;
-		}
 		
 		if (this.module.isSnapping()) {
-			console.log('snapping');
-			var grid = this.module.gridX;
-			var offset = this.$parent.offset();
-			var offGrid = offset.left % grid;
-			console.log(offset.left + ' : ' + offGrid);
-			console.log(change);
-			if (change > 0) {
-				obj.val -= offGrid;
-				console.log(offset.left - offGrid);
-			} else {
-				obj.val += grid - offGrid;
-				console.log(offset.left + grid - offGrid);
+			var gridShift = 0;	// use this for starting grid location
+			var grid = this.module.gridX,
+				offset = this.$parent.offset(),
+				offGrid = offset.left % grid + gridShift,
+				newChange = Math.round(change / grid) * grid;
+			
+			if (this.module.isDragging()) {
+				newChange += (offGrid > grid/2) ? offGrid : -grid-offGrid;
+				
+			} else {	// using arrow keys
+				if (change > 0) {
+					newChange += (offGrid == 0) ? grid : offGrid;
+				} else {
+					newChange += -grid-offGrid;
+				}
 			}
 		}
 		
-		var val = obj.val - change * fac;
+		if (obj.unit == 'em') {
+			var emSize = this.dispatch.getEmSize();
+			newChange = newChange / emSize;
+		}
+		
+		var val = obj.val - newChange * fac;
 		return val + obj.unit;
 	},
 	update: function() {
