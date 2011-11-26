@@ -8,6 +8,9 @@
 body.hover, html.hover {
 	outline:none;
 }
+body {
+	-webkit-transition: -webkit-transform .2s ease-in-out;
+}
 
 
 /**** PAGE SPECIFIC STYLES ****/

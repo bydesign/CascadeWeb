@@ -357,6 +357,7 @@ function HandleModule(doc) {
 	this.$box = $('#box'),
 	this.$padding = $('#padding'),
 	this.$doc = $(disp.doc),
+	this.$body = this.$doc.find('body'),
 	this.handles = [];
 	this.updateScroll();
 	var that = this;
@@ -368,7 +369,9 @@ function HandleModule(doc) {
 	this.gridSnap = true;
 	this.docOffset = this.$el.offset(),
 	this.selectedHandle,
-	this.snapToGrid = false;
+	this.snapToGrid = false
+	this.mouseX = 0,
+	this.mouseY = 0;
 	
 	this.$el.bind('click mousedown mouseup', function forwardEvents(evt) {
 		var forward = !$(evt.target).hasClass('handle');
@@ -414,7 +417,8 @@ function HandleModule(doc) {
 		if (that.dragMode == that.ALTDRAG || that.dragMode == that.ALTSHIFTDRAG) {
 			that.setDragMode(that.DRAG);
 		}
-	}).press(Keys.UP, function() {
+	}
+	).press(Keys.UP, function() {
 		that.selectedHandle.change('y', 1);
 	}
 	).press(Keys.DOWN, function() {
@@ -426,11 +430,21 @@ function HandleModule(doc) {
 	).press(Keys.RIGHT, function() {
 		that.selectedHandle.change('x', -1);
 	}
-	)
-	
-	var Keys = document.CdDispatch.Keys;
-	Keys.press(Keys.ESCAPE, function(event) {
+	).down(Keys.CTRL, function (event) {
+		that.zoom(event);
+	}
+	).up(Keys.CTRL, function(event) {
+		that.unzoom();
+	}
+	).press(Keys.ESCAPE, function(event) {
 		that.selectedHandle.cancelDrag(event);
+	});
+	
+	this.$doc.mousemove(function(evt) {
+		//console.log(evt.pageX);
+		//console.log(evt.pageY);
+		that.mouseX = evt.pageX,
+		that.mouseY = evt.pageY;
 	});
 }
 HandleModule.prototype = {
@@ -529,6 +543,22 @@ HandleModule.prototype = {
 	updateScroll: function() {
 		this.scrollTop = this.$doc.scrollTop();
 		this.scrollLeft = this.$doc.scrollLeft();
+	},
+	zoom: function(event) {
+		console.log('zoom');
+		console.log(this.mouseX);
+		console.log(this.mouseY);
+		this.$body.css({
+			'-webkit-transform-origin': this.mouseX +'px '+ this.mouseY +'px',
+			'-webkit-transform': 'scale(2,2)'
+		});
+		console.log(this.$body);
+	},
+	unzoom: function() {
+		console.log('unzoom');
+		this.$body.css({
+			'-webkit-transform': 'scale(1,1)'
+		});
 	},
 	// make controls align with selected element
 	update: function() {
@@ -791,22 +821,27 @@ Handle.prototype = {
 		}
 		
 		if (this.module.isSnapping()) {
-			var gridShift = 0;	// use this for starting grid location
-			var grid = this.module.gridX,
-				offset = this.$parent.offset(),
-				offGrid = offset.left % grid + gridShift,
-				newChange = Math.round(change / grid) * grid;
+			console.log('snapping: ' + newChange);
+			var gridShift = 3,	// use this for starting grid location
+				grid = this.module.gridX,
+				offset = this.$parent.offset().left,
+				offGrid = offset % grid,
+				absPos = change + offGrid;
+			console.log(offGrid);
 			
 			if (this.module.isDragging()) {
-				newChange += (offGrid > grid/2) ? offGrid : -grid-offGrid;
+				newChange = Math.round(absPos/grid) * grid;
+				//newChange += (offGrid > grid/2) ? grid-offGrid : -offGrid;
 				
-			} else {	// using arrow keys
+			} else {	// using shift + arrow keys
 				if (change > 0) {
 					newChange += (offGrid == 0) ? grid : offGrid;
 				} else {
 					newChange += -grid-offGrid;
 				}
 			}
+			//newChange -= gridShift;
+			console.log(newChange);
 		}
 		
 		if (obj.unit == 'em') {
