@@ -357,7 +357,7 @@ function HandleModule(doc) {
 	this.$box = $('#box'),
 	this.$padding = $('#padding'),
 	this.$doc = $(disp.doc),
-	this.$body = this.$doc.find('body'),
+	this.$html = this.$doc.find('html'),
 	this.handles = [];
 	this.updateScroll();
 	var that = this;
@@ -371,7 +371,8 @@ function HandleModule(doc) {
 	this.selectedHandle,
 	this.snapToGrid = false
 	this.mouseX = 0,
-	this.mouseY = 0;
+	this.mouseY = 0,
+	this.zoomLevel = 1;
 	
 	this.$el.bind('click mousedown mouseup', function forwardEvents(evt) {
 		var forward = !$(evt.target).hasClass('handle');
@@ -430,21 +431,23 @@ function HandleModule(doc) {
 	).press(Keys.RIGHT, function() {
 		that.selectedHandle.change('x', -1);
 	}
-	).down(Keys.CTRL, function (event) {
+	).down(Keys.OS_LEFT, function (event) {
 		that.zoom(event);
 	}
-	).up(Keys.CTRL, function(event) {
+	).up(Keys.OS_LEFT, function(event) {
 		that.unzoom();
 	}
 	).press(Keys.ESCAPE, function(event) {
 		that.selectedHandle.cancelDrag(event);
 	});
-	
 	this.$doc.mousemove(function(evt) {
-		//console.log(evt.pageX);
-		//console.log(evt.pageY);
 		that.mouseX = evt.pageX,
 		that.mouseY = evt.pageY;
+	});
+	var offset = $('#iframe').offset();
+	$(document).mousemove(function(evt) {
+		that.mouseX = evt.pageX - offset.left,
+		that.mouseY = evt.pageY - offset.top;
 	});
 }
 HandleModule.prototype = {
@@ -545,45 +548,46 @@ HandleModule.prototype = {
 		this.scrollLeft = this.$doc.scrollLeft();
 	},
 	zoom: function(event) {
-		console.log('zoom');
-		console.log(this.mouseX);
-		console.log(this.mouseY);
-		this.$body.css({
+		this.zoomLevel = 2;
+		this.$html.css({
 			'-webkit-transform-origin': this.mouseX +'px '+ this.mouseY +'px',
 			'-webkit-transform': 'scale(2,2)'
 		});
-		console.log(this.$body);
+		this.update();
 	},
 	unzoom: function() {
-		console.log('unzoom');
-		this.$body.css({
+		this.zoomLevel = 1;
+		this.$html.css({
 			'-webkit-transform': 'scale(1,1)'
 		});
+		this.update();
 	},
 	// make controls align with selected element
 	update: function() {
 		var el = document.CdDispatch.selectedElement,
 			$el = document.CdDispatch.$selectedElement,
-			getStyleNum = document.getStyleNum;
+			getStyleNum = document.getStyleNum,
+			z = this.zoomLevel;
+		if ($el == undefined) return;
 		var offset = $el.offset(),
-			w = $el.width(),
-			h = $el.height(),
-			t = getStyleNum('top', el),
-			r = getStyleNum('right', el),
-			b = getStyleNum('bottom', el),
-			l = getStyleNum('left', el),
-			mt = getStyleNum('marginTop', el),
-			mr = getStyleNum('marginRight', el),
-			mb = getStyleNum('marginBottom', el),
-			ml = getStyleNum('marginLeft', el),
-			pt = getStyleNum('paddingTop', el),
-			pr = getStyleNum('paddingRight', el),
-			pb = getStyleNum('paddingBottom', el),
-			pl = getStyleNum('paddingLeft', el),
-			bt = getStyleNum('borderTopWidth', el),
-			br = getStyleNum('borderRightWidth', el),
-			bb = getStyleNum('borderBottomWidth', el),
-			bl = getStyleNum('borderLeftWidth', el);
+			w = $el.width() * z,
+			h = $el.height() * z,
+			t = getStyleNum('top', el) * z,
+			r = getStyleNum('right', el) * z,
+			b = getStyleNum('bottom', el) * z,
+			l = getStyleNum('left', el) * z,
+			mt = getStyleNum('marginTop', el) * z,
+			mr = getStyleNum('marginRight', el) * z,
+			mb = getStyleNum('marginBottom', el) * z,
+			ml = getStyleNum('marginLeft', el) * z,
+			pt = getStyleNum('paddingTop', el) * z,
+			pr = getStyleNum('paddingRight', el) * z,
+			pb = getStyleNum('paddingBottom', el) * z,
+			pl = getStyleNum('paddingLeft', el) * z,
+			bt = getStyleNum('borderTopWidth', el) * z,
+			br = getStyleNum('borderRightWidth', el) * z,
+			bb = getStyleNum('borderBottomWidth', el) * z,
+			bl = getStyleNum('borderLeftWidth', el) * z;
 		this.$controls.css({
 			'top': offset.top-mt+(mt>0 ? 0 : 1)-this.scrollTop+'px',
 			'left': offset.left-ml+(ml>0 ? 0 : 1)-this.scrollLeft+'px',
@@ -797,6 +801,7 @@ Handle.prototype = {
 		return css;
 	},
 	getNewProp: function(prop, change, fac) {
+		change = change / this.module.zoomLevel;
 		var obj = this.objectStyles[prop],
 			newChange = change;
 		if (obj == undefined) {
@@ -847,6 +852,8 @@ Handle.prototype = {
 		if (obj.unit == 'em') {
 			var emSize = this.dispatch.getEmSize();
 			newChange = newChange / emSize;
+		} else if (obj.unit == 'px') {
+			newChange = Math.round(newChange);
 		}
 		
 		var val = obj.val - newChange * fac;

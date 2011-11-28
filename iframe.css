@@ -8,8 +8,16 @@
 body.hover, html.hover {
 	outline:none;
 }
-body {
-	-webkit-transition: -webkit-transform .2s ease-in-out;
+#mouseTest {
+	position:absolute;
+	top:0;
+	left:0;
+	margin-left:-8px;
+	margin-top:-8px;
+	width:6px;
+	height:6px;
+	background-color:red;
+	z-index:1000;
 }
 
 
