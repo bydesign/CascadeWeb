@@ -364,15 +364,17 @@ function HandleModule(doc) {
 	this.$doc.scroll(function() { that.updateScroll(); });
 	this.$coverSheet = $('#coverSheet');
 	this.$grid = $('#grid');
-	this.gridX = 12;
-	this.gridY = 12;
+	this.gridX = 20;
+	this.gridY = 20;
 	this.gridSnap = true;
 	this.docOffset = this.$el.offset(),
 	this.selectedHandle,
 	this.snapToGrid = false
 	this.mouseX = 0,
 	this.mouseY = 0,
-	this.zoomLevel = 1;
+	this.zoomLevel = 1,
+	this.shortcut_keys = {},
+	this.css_axis = disp.CSS;
 	
 	this.$el.bind('click mousedown mouseup', function forwardEvents(evt) {
 		var forward = !$(evt.target).hasClass('handle');
@@ -390,7 +392,7 @@ function HandleModule(doc) {
 	
 	var $controls = this.$controls;
 	disp.listen('changeStyleMode', function(mode) {
-		var modeClasses = ['layoutMode', 'decorateMode', 'textMode'];
+		var modeClasses = ['layoutMode', 'decorateMode', 'typeMode'];
 		$controls.removeClass(modeClasses.join(' '));
 		$controls.addClass(modeClasses[disp.styleMode]);
 	});
@@ -465,11 +467,13 @@ HandleModule.prototype = {
 	},
 
 	render: function() {
-		this.addHandles('layout', document.CdDispatch.StyleAttributes[0].handles);
-		this.addHandles('decorate', document.CdDispatch.StyleAttributes[1].handles);
-		this.addHandles('text', document.CdDispatch.StyleAttributes[2].handles);
+		//this.addHandles('layout', document.CdDispatch.StyleAttributes[0].handles);
+		//this.addHandles('decorate', document.CdDispatch.StyleAttributes[1].handles);
+		//this.addHandles('text', document.CdDispatch.StyleAttributes[2].handles);
+		
+		this.addHandles(document.CdDispatch.HandleDefs);
 	},
-	addHandles: function(name, defs) {
+	addHandles: function(defs) {
 		var containers = {
 			'controls': this.$controls,
 			'box': this.$box,
@@ -482,6 +486,8 @@ HandleModule.prototype = {
 				module: that,
 				text: defs[i].text,
 				parent: containers[defs[i].parent],
+				posX: defs[i].posX,
+				posY: defs[i].posY,
 				modifyX: defs[i].modifyX,
 				modifyY: defs[i].modifyY,
 				modifyXAlt: defs[i].modifyXAlt,
@@ -490,7 +496,9 @@ HandleModule.prototype = {
 				modifyYAltShift: defs[i].modifyYAltShift,
 				modifyXFac: defs[i].modifyXFac,
 				modifyYFac: defs[i].modifyYFac,
-				cssClass: defs[i].cssClass + ' ' + name,
+				cssClass: defs[i].cssClass + ' ' + defs[i].mode,
+				mode: defs[i].mode,
+				shortcut_key: defs[i].shortcut_key,
 			});
 			this.handles.push(handle);
 		}
@@ -647,6 +655,8 @@ function Handle(settings) {
 	this.$parent = settings.parent,
 	this.module = settings.module,
 	this.handleCssClass = settings.handleCssClass,
+	this.posX = settings.posX,
+	this.posY = settings.posY,
 	this.modifyX = settings.modifyX,
 	this.modifyY = settings.modifyY,
 	this.modifyXAlt = settings.modifyXAlt,
@@ -658,6 +668,8 @@ function Handle(settings) {
 	this.styles = (settings.handleStyles != undefined) ? settings.handleStyles : {},
 	this.cssClass = settings.cssClass,
 	this.text = (settings.text != undefined) ? settings.text : '',
+	this.mode = settings.mode,
+	this.shortcut_key = settings.shortcut_key,
 	this.selected = false,
 	this.objectStyles = {},
 	this.dragClass = 'drag',
@@ -665,7 +677,8 @@ function Handle(settings) {
 	this.$labelElement = this.$element.find('.label'),
 	this.dispatch = document.CdDispatch,
 	this.startDragInitVals = {},
-	this.attributeRegex = /([0-9\.]+)([A-z%]+)/;
+	this.attributeRegex = /([0-9\.]+)([A-z%]+)/,
+	this.initDragLayout = {};
 	this.absolutePos = {};
 	
 	var that = this;
@@ -692,6 +705,16 @@ Handle.prototype = {
 		this.saveInitialProp(this.modifyX);
 		this.saveInitialProp(this.modifyY);
 		this.$element.addClass('drag');
+		
+		var $parent = this.$parent,
+			layout = $parent.offset(),
+			docOffset = $('#pageHolder').offset();
+		layout.top -= docOffset.top;
+		layout.left -= docOffset.left;
+		layout.width = $parent.outerWidth();	// assumes box model
+		layout.height = $parent.outerHeight();	// assumes box model
+		this.initDragLayout = layout;
+		console.log(layout);
 		
 		var that = this;
 		this.$doc.mousemove(function(event) {
@@ -722,6 +745,7 @@ Handle.prototype = {
 		this.$doc.unbind('mousemove').unbind('mouseup');
 		this.objectStyles = {};
 		this.startDragInitVals = {};
+		this.initDragLayout = {};
 		this.$element.removeClass('drag');
 		this.module.setDragMode(this.module.NODRAG);
 	},
@@ -768,11 +792,11 @@ Handle.prototype = {
 			css = {};
 			
 		if (this.modifyX != undefined) {
-			var val = this.getNewProp(this.modifyX, this.startMouseX - mouseX, this.modifyXFac);
+			var val = this.getNewProp('x', this.modifyX, mouseX-this.startMouseX, this.modifyXFac);
 			css = this.getCssProps('x', css, val);
 		}
 		if (this.modifyY != undefined) {
-			var val = this.getNewProp(this.modifyY, this.startMouseY - mouseY, this.modifyYFac);
+			var val = this.getNewProp('y', this.modifyY, mouseY-this.startMouseY, this.modifyYFac);
 			css = this.getCssProps('y', css, val);
 		}
 		return css;
@@ -800,7 +824,7 @@ Handle.prototype = {
 		}
 		return css;
 	},
-	getNewProp: function(prop, change, fac) {
+	getNewProp: function(dir, prop, change, fac) {
 		change = change / this.module.zoomLevel;
 		var obj = this.objectStyles[prop],
 			newChange = change;
@@ -826,27 +850,17 @@ Handle.prototype = {
 		}
 		
 		if (this.module.isSnapping()) {
-			console.log('snapping: ' + newChange);
-			var gridShift = 3,	// use this for starting grid location
-				grid = this.module.gridX,
-				offset = this.$parent.offset().left,
-				offGrid = offset % grid,
-				absPos = change + offGrid;
-			console.log(offGrid);
+			var pos = document.POS,
+				$parent = this.$parent,
+				initLayout = this.initDragLayout,
+				offset = initLayout.left;
+			if (dir == 'x' && this.posX == pos.RIGHT) offset += initLayout.width;
+			if (dir == 'y') offset = initLayout.top;
+			if (dir == 'y' && this.posY == pos.BOTTOM) offset += initLayout.height;
 			
-			if (this.module.isDragging()) {
-				newChange = Math.round(absPos/grid) * grid;
-				//newChange += (offGrid > grid/2) ? grid-offGrid : -offGrid;
-				
-			} else {	// using shift + arrow keys
-				if (change > 0) {
-					newChange += (offGrid == 0) ? grid : offGrid;
-				} else {
-					newChange += -grid-offGrid;
-				}
-			}
-			//newChange -= gridShift;
-			console.log(newChange);
+			var grid = (dir == 'x') ? this.module.gridX : this.module.gridY;
+			var roundThis = (offset + newChange) / grid;
+			newChange = Math.round(roundThis) * grid - offset;
 		}
 		
 		if (obj.unit == 'em') {
@@ -856,7 +870,7 @@ Handle.prototype = {
 			newChange = Math.round(newChange);
 		}
 		
-		var val = obj.val - newChange * fac;
+		var val = obj.val + newChange * fac;
 		return val + obj.unit;
 	},
 	update: function() {
@@ -898,89 +912,244 @@ function CssProp(attr, values) {
 	this.attr = attr,
 	this.values = values;
 }
+document.POS = {
+	TOP: 0,
+	RIGHT: 1,
+	BOTTOM: 2,
+	LEFT: 3
+}
+Dispatch.prototype.MODES = {
+	LAYOUT: 'layout',
+	DECORATE: 'decorate',
+	TYPE: 'type',
+};
+var modes = Dispatch.prototype.MODES;
+Dispatch.prototype.HandleDefs = [
+	// LAYOUT
+	// width/height
+	{
+		title:'width/height',
+		text:'WH',
+		parent: 'box',
+		posX: document.POS.RIGHT,
+		posY: document.POS.BOTTOM,
+		modifyX: 'width',
+		modifyY: 'height',
+		cssClass: 'bottom right size double',
+		mode: modes.LAYOUT,
+		shortcut_key: 'w h',
+	},
+	// top/left
+	{
+		title:'top/left',
+		text:'TL',
+		parent: 'box',
+		posX: document.POS.LEFT,
+		posY: document.POS.TOP,
+		modifyX: 'left',
+		modifyY: 'top',
+		cssClass: 'top left position double',
+		mode: modes.LAYOUT,
+		shortcut_key: 't l',
+	},
+	// add bottom/right here
+	
+	// padding handles
+	{
+		title:'padding-left',
+		parent: 'padding',
+		posX: document.POS.LEFT,
+		modifyX: 'padding-left',
+		cssClass: 'left padding subhandle',
+		mode: modes.LAYOUT,
+		shortcut_key: 'pl',
+	},
+	{
+		title:'padding-right',
+		parent: 'padding',
+		posX: document.POS.RIGHT,
+		modifyX: 'padding-right',
+		modifyXAlt: ['padding-right','padding-left'],
+		modifyXAltShift: ['padding-top','padding-right','padding-bottom','padding-left'],
+		modifyXFac: -1,
+		cssClass: 'right padding subhandle',
+		mode: modes.LAYOUT,
+		shortcut_key: 'pr',
+	},
+	{
+		title:'padding-top',
+		parent: 'padding',
+		posY: document.POS.TOP,
+		modifyY: 'padding-top',
+		modifyYAlt: ['padding-top','padding-bottom'],
+		modifyYAltShift: ['padding-top','padding-right','padding-bottom','padding-left'],
+		cssClass: 'top padding subhandle',
+		mode: modes.LAYOUT,
+		shortcut_key: 'pt',
+	},
+	{
+		title:'padding-bottom',
+		parent: 'padding',
+		posY: document.POS.BOTTOM,
+		modifyY: 'padding-bottom',
+		modifyYFac: -1,
+		cssClass: 'bottom padding subhandle',
+		mode: modes.LAYOUT,
+		shortcut_key: 'pb',
+	},
+	// margin handles
+	{
+		title:'margin-left',
+		parent: 'controls',
+		posX: document.POS.LEFT,
+		modifyX: 'margin-left',
+		modifyXFac: -1,
+		cssClass: 'left margin subhandle',
+		mode: modes.LAYOUT,
+		shortcut_key: 'ml',
+	},
+	{
+		title:'margin-right',
+		parent: 'controls',
+		posX: document.POS.RIGHT,
+		modifyX: 'margin-right',
+		cssClass: 'right margin subhandle',
+		mode: modes.LAYOUT,
+		shortcut_key: 'mr',
+	},
+	{
+		title:'margin-top',
+		parent: 'controls',
+		posY: document.POS.TOP,
+		modifyY: 'margin-top',
+		modifyYFac: -1,
+		cssClass: 'top margin subhandle',
+		mode: modes.LAYOUT,
+		shortcut_key: 'mt',
+	},
+	{
+		title:'margin-bottom',
+		parent: 'controls',
+		posY: document.POS.BOTTOM,
+		modifyY: 'margin-bottom',
+		cssClass: 'bottom margin subhandle',
+		mode: modes.LAYOUT,
+		shortcut_key: 'mb',
+	},
+	//'z-index'
+	
+	// DECORATION
+	{
+		title:'border-left-width',
+		parent: 'box',
+		posX: document.POS.LEFT,
+		modifyX: 'border-left-width',
+		cssClass: 'left margin subhandle',
+		mode: modes.DECORATE,
+		shortcut_key: 'bl',
+	},
+	{
+		title:'border-right-width',
+		parent: 'box',
+		posX: document.POS.RIGHT,
+		modifyX: 'border-right-width',
+		modifyXFac: -1,
+		cssClass: 'right margin subhandle',
+		mode: modes.DECORATE,
+		shortcut_key: 'br',
+	},
+	{
+		title:'border-top-width',
+		parent: 'box',
+		posY: document.POS.TOP,
+		modifyY: 'border-top-width',
+		cssClass: 'top margin subhandle',
+		mode: modes.DECORATE,
+		shortcut_key: 'bt',
+	},
+	{
+		title:'border-bottom-width',
+		parent: 'box',
+		posY: document.POS.BOTTOM,
+		modifyY: 'border-bottom-width',
+		modifyYFac: -1,
+		cssClass: 'bottom margin subhandle',
+		mode: modes.DECORATE,
+		shortcut_key: 'bb',
+	},
+	{
+		title:'border-radius',
+		text:'BR',
+		parent: 'box',
+		posX: document.POS.RIGHT,
+		posY: document.POS.BOTTOM,
+		modifyX: 'border-radius',
+		modifyY: 'border-radius',
+		modifyXFac: -1,
+		modifyYFac: -1,
+		cssClass: 'bottom right size double',
+		mode: modes.DECORATE,
+		shortcut_key: 'br',
+	},
+	//'background-image-position',
+	//'box-shadow-offset',
+	//'opacity'
+	
+	// TYPOGRAPHY
+	{
+		title:'font-size',
+		text:'FS',
+		parent: 'box',
+		posX: document.POS.LEFT,
+		posY: document.POS.TOP,
+		modifyY: 'font-size',
+		modifyYFac: .25,
+		cssClass: 'top left double',
+		mode: modes.TYPE,
+		shortcut_key: 'fs',
+	},
+	{
+		title:'line-height',
+		text:'LH',
+		parent: 'box',
+		posX: document.POS.RIGHT,
+		posY: document.POS.TOP,
+		modifyY: 'line-height',
+		cssClass: 'top right double',
+		mode: modes.TYPE,
+		shortcut_key: 'lh',
+	},
+	{
+		title:'letter-spacing',
+		text:'LS',
+		parent: 'box',
+		posX: document.POS.RIGHT,
+		posY: document.POS.BOTTOM,
+		modifyX: 'letter-spacing',
+		cssClass: 'bottom right double',
+		mode: modes.TYPE,
+		shortcut_key: 'ls',
+	},
+	{
+		title:'word-spacing',
+		text:'WS',
+		parent: 'box',
+		posX: document.POS.LEFT,
+		posY: document.POS.BOTTOM,
+		modifyX: 'word-spacing',
+		cssClass: 'bottom left double',
+		mode: modes.TYPE,
+		shortcut_key: 'ws',
+	},
+	/*'text-indent',
+	'text-shadow-position',
+	'color'*/
+	
+];
 
 Dispatch.prototype.StyleAttributes = [
 	{	// LAYOUT
 		handles: [
-			// width/height
-			{
-				title:'width/height',
-				text:'WH',
-				parent: 'box',
-				modifyX: 'width',
-				modifyY: 'height',
-				cssClass: 'bottom right size double',
-			},
-			// top/left
-			{
-				title:'top/left',
-				text:'TL',
-				parent: 'box',
-				modifyX: 'left',
-				modifyY: 'top',
-				cssClass: 'top left position double',
-			},
-			// add bottom/right here
-			
-			// padding handles
-			{
-				title:'padding-left',
-				parent: 'padding',
-				modifyX: 'padding-left',
-				cssClass: 'left padding subhandle',
-			},
-			{
-				title:'padding-right',
-				parent: 'padding',
-				modifyX: 'padding-right',
-				modifyXAlt: ['padding-right','padding-left'],
-				modifyXAltShift: ['padding-top','padding-right','padding-bottom','padding-left'],
-				modifyXFac: -1,
-				cssClass: 'right padding subhandle',
-			},
-			{
-				title:'padding-top',
-				parent: 'padding',
-				modifyY: 'padding-top',
-				modifyYAlt: ['padding-top','padding-bottom'],
-				modifyYAltShift: ['padding-top','padding-right','padding-bottom','padding-left'],
-				cssClass: 'top padding subhandle',
-			},
-			{
-				title:'padding-bottom',
-				parent: 'padding',
-				modifyY: 'padding-bottom',
-				modifyYFac: -1,
-				cssClass: 'bottom padding subhandle',
-			},
-			// margin handles
-			{
-				title:'margin-left',
-				parent: 'controls',
-				modifyX: 'margin-left',
-				modifyXFac: -1,
-				cssClass: 'left margin subhandle',
-			},
-			{
-				title:'margin-right',
-				parent: 'controls',
-				modifyX: 'margin-right',
-				cssClass: 'right margin subhandle',
-			},
-			{
-				title:'margin-top',
-				parent: 'controls',
-				modifyY: 'margin-top',
-				modifyYFac: -1,
-				cssClass: 'top margin subhandle',
-			},
-			{
-				title:'margin-bottom',
-				parent: 'controls',
-				modifyY: 'margin-bottom',
-				cssClass: 'bottom margin subhandle',
-			},
-			//'z-index'
 		],
 		properties: [
 			new CssProp('display', [
@@ -1025,47 +1194,6 @@ Dispatch.prototype.StyleAttributes = [
 	// this one needs more thought!
 	{	// DECORATION
 		handles: [
-			{
-				title:'border-left-width',
-				parent: 'box',
-				modifyX: 'border-left-width',
-				cssClass: 'left margin subhandle',
-			},
-			{
-				title:'border-right-width',
-				parent: 'box',
-				modifyX: 'border-right-width',
-				modifyXFac: -1,
-				cssClass: 'right margin subhandle',
-			},
-			{
-				title:'border-top-width',
-				parent: 'box',
-				modifyY: 'border-top-width',
-				cssClass: 'top margin subhandle',
-			},
-			{
-				title:'border-bottom-width',
-				parent: 'box',
-				modifyY: 'border-bottom-width',
-				modifyYFac: -1,
-				cssClass: 'bottom margin subhandle',
-			},
-			{
-				title:'border-radius',
-				text:'BR',
-				parent: 'box',
-				modifyX: 'border-radius',
-				modifyY: 'border-radius',
-				modifyXFac: -1,
-				modifyYFac: -1,
-				cssClass: 'bottom right size double',
-			},
-			//'border-width',
-			//'border-radius',
-			//'background-image-position',
-			//'box-shadow-offset',
-			//'opacity'
 		],
 		properties: [
 			'background-image',
@@ -1080,42 +1208,6 @@ Dispatch.prototype.StyleAttributes = [
 	},
 	{	// TEXT
 		handles: [
-			{
-				title:'font-size',
-				text:'FS',
-				parent: 'box',
-				modifyY: 'font-size',
-				modifyYFac: .25,
-				cssClass: 'top left text double',
-			},
-			{
-				title:'line-height',
-				text:'LH',
-				parent: 'box',
-				modifyY: 'line-height',
-				cssClass: 'top right text double',
-			},
-			{
-				title:'letter-spacing',
-				text:'LS',
-				parent: 'box',
-				modifyX: 'letter-spacing',
-				cssClass: 'bottom right text double',
-			},
-			{
-				title:'word-spacing',
-				text:'WS',
-				parent: 'box',
-				modifyX: 'word-spacing',
-				cssClass: 'bottom left text double',
-			},
-			/*'font-size',
-			'line-height',
-			'word-spacing',
-			'letter-spacing',
-			'text-indent',
-			'text-shadow',
-			'color'*/
 		],
 		properties: [
 			new CssProp('font-family', [
