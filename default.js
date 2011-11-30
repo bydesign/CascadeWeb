@@ -118,6 +118,7 @@ function KeyManager(selectors) {
 		if (that.pressed.indexOf(event.keyCode) == -1) {
 			that.pressed.push(event.keyCode);
 		}
+		document.userAction();
 		
 	}).keyup(function(event) {
 		if (that.pressed.indexOf(event.keyCode) != -1) {
@@ -864,7 +865,6 @@ Handle.prototype = {
 				$parent = this.$parent,
 				initLayout = this.initDragLayout,
 				offset = initLayout.left;
-			console.log(initLayout);
 			if (dir == 'x' && this.posX == pos.RIGHT) offset += initLayout.width;
 			if (dir == 'y') offset = initLayout.top;
 			if (dir == 'y' && this.posY == pos.BOTTOM) offset += initLayout.height;
@@ -1258,6 +1258,16 @@ Dispatch.prototype.StyleAttributes = [
 	}
 ];
 
+document.sleepTimer;
+document.userAction = function() {
+	var $body = $(document).find('body');
+	$body.removeClass('sleep');
+	if (document.sleepTimer != undefined) clearTimeout(document.sleepTimer);
+	document.sleepTimer = setTimeout(function() {
+		$body.addClass('sleep');
+	}, 3000);
+};
+
 document.CdDispatch;
 var SM,
 	Keys,
@@ -1305,16 +1315,8 @@ $(document).ready(function() {
 		});
 		
 		// do fadeout when no activity happening -- css commented due to challenges
-		$(iframeDoc).mousemove(function() {
-			if (!sleeping) {
-				timer = setTimeout(function() {
-					$body.addClass('sleep');
-					sleeping = true;
-				}, 5000);
-			} else {
-				$body.removeClass('sleep');
-				sleeping = false;
-			}
+		$(iframeDoc).add(document).mousemove(function() {
+			document.userAction();
 		});
 	};
 	

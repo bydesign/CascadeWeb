@@ -32,11 +32,11 @@ ul li {
 }
 
 /*** future feature of having editing interface fadout during pause ***/
-/*.hd, .controls, .rightnav {
+.hd, .controls, .rightnav {
 	-webkit-transition: opacity ease-in-out .5s;
 }
 body.sleep .hd, body.sleep .rightnav { opacity:.2; }
-body.sleep .controls { opacity:0; }*/
+body.sleep .controls { opacity:0; }
 
 .holder {
 	position:absolute;

@@ -16,6 +16,7 @@ body.hover, html.hover {
 	height:12px;
 	background-color:red;
 	z-index:1000;
+	display:none;
 }
 
 
