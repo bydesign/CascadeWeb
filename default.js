@@ -364,8 +364,8 @@ function HandleModule(doc) {
 	this.$doc.scroll(function() { that.updateScroll(); });
 	this.$coverSheet = $('#coverSheet');
 	this.$grid = $('#grid');
-	this.gridX = 20;
-	this.gridY = 20;
+	this.gridX = 12;
+	this.gridY = 12;
 	this.gridSnap = true;
 	this.docOffset = this.$el.offset(),
 	this.selectedHandle,
@@ -557,17 +557,21 @@ HandleModule.prototype = {
 	},
 	zoom: function(event) {
 		this.zoomLevel = 2;
-		this.$html.css({
+		var css = {
 			'-webkit-transform-origin': this.mouseX +'px '+ this.mouseY +'px',
 			'-webkit-transform': 'scale(2,2)'
-		});
+		};
+		this.$html.css(css);
+		this.$grid.css(css);
 		this.update();
 	},
 	unzoom: function() {
 		this.zoomLevel = 1;
-		this.$html.css({
+		var css = {
 			'-webkit-transform': 'scale(1,1)'
-		});
+		};
+		this.$html.css(css);
+		this.$grid.css(css);
 		this.update();
 	},
 	// make controls align with selected element
@@ -705,16 +709,7 @@ Handle.prototype = {
 		this.saveInitialProp(this.modifyX);
 		this.saveInitialProp(this.modifyY);
 		this.$element.addClass('drag');
-		
-		var $parent = this.$parent,
-			layout = $parent.offset(),
-			docOffset = $('#pageHolder').offset();
-		layout.top -= docOffset.top;
-		layout.left -= docOffset.left;
-		layout.width = $parent.outerWidth();	// assumes box model
-		layout.height = $parent.outerHeight();	// assumes box model
-		this.initDragLayout = layout;
-		console.log(layout);
+		this.saveInitialLayout();
 		
 		var that = this;
 		this.$doc.mousemove(function(event) {
@@ -769,6 +764,21 @@ Handle.prototype = {
 				unit: parts[2]
 			};
 		}
+	},
+	saveInitialLayout: function() {
+		var $parent = this.$parent,
+			zoom = this.module.zoomLevel,
+			docOffset = $('#pageHolder').offset();
+		if (zoom > 1) this.module.unzoom();	// zoom throws off computed values
+		layout = $parent.offset(),
+		layout.top = layout.top;
+		layout.left = layout.left;
+		layout.top -= docOffset.top;
+		layout.left -= docOffset.left;
+		layout.width = $parent.outerWidth();	// assumes box model
+		layout.height = $parent.outerHeight();	// assumes box model
+		this.initDragLayout = layout;
+		if (zoom > 1) this.module.zoom();
 	},
 	change: function(dir, val) {
 		if (dir == 'x') {
@@ -854,6 +864,7 @@ Handle.prototype = {
 				$parent = this.$parent,
 				initLayout = this.initDragLayout,
 				offset = initLayout.left;
+			console.log(initLayout);
 			if (dir == 'x' && this.posX == pos.RIGHT) offset += initLayout.width;
 			if (dir == 'y') offset = initLayout.top;
 			if (dir == 'y' && this.posY == pos.BOTTOM) offset += initLayout.height;
