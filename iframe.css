@@ -6,6 +6,10 @@
 }
 .hover, .selected {
 	outline:dashed 1px rgba(0,0,0,.5);
+	-webkit-transition: outline ease-in-out .5s;
+}
+.sleep .hover, .sleep .selected {
+	outline-color:rgba(0,0,0,0);
 }
 body.hover, html.hover {
 	outline:none;

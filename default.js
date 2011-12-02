@@ -1272,11 +1272,13 @@ Dispatch.prototype.StyleAttributes = [
 
 document.sleepTimer;
 document.userAction = function() {
-	var $body = $(document).find('body');
-	$body.removeClass('sleep');
+	var $body = $(document).find('body'),
+		$iframeBody = $( $('#iframe')[0].contentDocument ).find('body'),
+		sleepClass = 'sleep';
+	$body.add($iframeBody).removeClass(sleepClass);
 	if (document.sleepTimer != undefined) clearTimeout(document.sleepTimer);
 	document.sleepTimer = setTimeout(function() {
-		$body.addClass('sleep');
+		$body.add($iframeBody).addClass(sleepClass);
 	}, 3000);
 };
 
