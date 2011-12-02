@@ -362,7 +362,11 @@ function HandleModule(doc) {
 	this.handles = [];
 	this.updateScroll();
 	var that = this;
-	this.$doc.scroll(function() { that.updateScroll(); });
+	this.$doc.scroll(function() {
+		document.userAction();
+		that.updateScroll();
+		that.update();
+	});
 	this.$coverSheet = $('#coverSheet');
 	this.$grid = $('#grid');
 	this.gridX = 12;
