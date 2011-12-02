@@ -1118,8 +1118,6 @@ Dispatch.prototype.HandleDefs = [
 		mode: modes.DECORATE,
 		shortcut_key: 'br',
 	},
-	//'background-image-position',
-	//'box-shadow-offset',
 	//'opacity'
 	
 	// TYPOGRAPHY
@@ -1223,14 +1221,29 @@ Dispatch.prototype.StyleAttributes = [
 		handles: [
 		],
 		properties: [
-			'background-image',
-			'background-image-repeat',
-			'background-image-attach',
+			// BACKGROUND COLOR
 			'background-color',
+			
+			// BACKGROUND GRADIENT
+			
+			// BACKGROUND IMAGE
+			'background-image',
 			'background-repeat',
+			'background-attach',
+			'background-position',
+			'background-size',
+			
+			// BOX SHADOW
+			'box-shadow-color',
+			'box-shadow-h-shadow',
+			'box-shadow-v-shadow',
+			'box-shadow-blur',
+			'box-shadow-spread',
+			'box-shadow-inset',
+			
+			// BORDER IMAGE
 			'border-style',
 			'border-color',
-			'box-shadow-color'
 		]
 	},
 	{	// TEXT
