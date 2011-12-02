@@ -391,6 +391,14 @@ function HandleModule(doc) {
 	disp.listen('modifyStyle', updateControls);
 	disp.listen('modifyStyles', updateControls);
 	
+	disp.listen('selectElement', function() {
+		that.$doc.find('.hover').removeClass('hover');
+		that.highlightAffectedElements();
+	});
+	disp.listen('selectRule', function() {
+		that.highlightAffectedElements();
+	});
+	
 	var $controls = this.$controls;
 	disp.listen('changeStyleMode', function(mode) {
 		var modeClasses = ['layoutMode', 'decorateMode', 'typeMode'];
@@ -468,13 +476,7 @@ HandleModule.prototype = {
 	},
 
 	render: function() {
-		//this.addHandles('layout', document.CdDispatch.StyleAttributes[0].handles);
-		//this.addHandles('decorate', document.CdDispatch.StyleAttributes[1].handles);
-		//this.addHandles('text', document.CdDispatch.StyleAttributes[2].handles);
-		
-		this.addHandles(document.CdDispatch.HandleDefs);
-	},
-	addHandles: function(defs) {
+		var defs = document.CdDispatch.HandleDefs;
 		var containers = {
 			'controls': this.$controls,
 			'box': this.$box,
@@ -627,7 +629,8 @@ HandleModule.prototype = {
 			'border-bottom-width': pb>0 ? '1px' : '0',
 			'border-left-width': pl>0 ? '1px' : '0'
 		});
-		var attrs = document.CdDispatch.getSelectedRule().attrs();
+		var rule = document.CdDispatch.getSelectedRule();
+		var attrs = rule.attrs();
 		this.$controls.find('.handle.defined').removeClass('defined');
 		for (var i=0, len=attrs.length; i<len; i++) {
 			this.$controls.find('#'+attrs[i]).addClass('defined');
@@ -643,6 +646,13 @@ HandleModule.prototype = {
 		}
 		handle.select();
 		this.selectedHandle = handle;
+	},
+	highlightAffectedElements: function() {
+		var selectClass = 'selected',
+			disp = document.CdDispatch;
+		this.$doc.find('.'+selectClass).removeClass(selectClass);
+		var $els = this.$doc.find(disp.getSelectedRule().selector);
+		$els.not(disp.selectedElement).addClass(selectClass);
 	},
 };
 
@@ -853,12 +863,14 @@ Handle.prototype = {
 						unit: parts[2]
 					};
 					break;
-				} else {
-					obj = { val: 0, unit: 'px' };
 				}
 			}
-			this.startDragInitVals[prop] = obj;
 		}
+		if (obj == undefined) {
+			var val = document.getStyleNum(prop, this.dispatch.selectedElement);
+			obj = { val: val, unit: 'px' };
+		}
+		this.startDragInitVals[prop] = obj;
 		
 		if (this.module.isSnapping()) {
 			var pos = document.POS,
@@ -1315,7 +1327,7 @@ $(document).ready(function() {
 		});
 		
 		// do fadeout when no activity happening -- css commented due to challenges
-		$(iframeDoc).add(document).mousemove(function() {
+		$(iframeDoc).add($(document).find('body')).mousemove(function() {
 			document.userAction();
 		});
 	};
