@@ -338,6 +338,20 @@ PropertiesModule.prototype = {
 			var attr = $(this).attr('name'),
 				val = $(this).val();
 			disp.call('modifyStyle', attr, val);
+		}).end().find('ul.inlineBtns > li').click(function(evt) {
+			evt.preventDefault();
+			var $this = $(this),
+				attr = $this.parent().attr('id'),
+				activeClass = 'active';
+			if ($this.hasClass(activeClass)) {
+				disp.call('modifyStyle', attr, undefined);
+				$this.removeClass(activeClass);
+			} else {
+				var val = $this.text();
+				disp.call('modifyStyle', attr, val);
+				$this.siblings('.'+activeClass).removeClass(activeClass);
+				$this.addClass(activeClass);
+			}
 		});
 		
 		this.$el.html($rendered);
@@ -1177,7 +1191,7 @@ Dispatch.prototype.StyleAttributes = [
 		handles: [
 		],
 		properties: [
-			new CssProp('display', [
+			/*new CssProp('display', [
 				'none',
 				'inline',
 				'inline-block',
@@ -1212,7 +1226,7 @@ Dispatch.prototype.StyleAttributes = [
 				'hidden',
 				'scroll',
 				'auto'
-			]),
+			]),*/
 			
 		]
 	},

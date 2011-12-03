@@ -39,6 +39,62 @@
 					<a href="#" id="mode2"<% if (curMode == 2) { %> class="active"<% } %>>typography</a>
 				</div>
 				<div class="styles">
+					<% if (curMode === 0) { %>
+					<ul class="props">
+						<li><span>display:</span>
+							<ul class="inlineBtns" id="display">
+								<li<% if (styles['display'] == 'none') { %> class="active"<% } %>>none<span class="remove"></span></li>
+								<li<% if (styles['display'] == 'inline') { %> class="active"<% } %>>inline<span class="remove"></span></li>
+								<li<% if (styles['display'] == 'inline-block') { %> class="active"<% } %>>inline-block<span class="remove"></span></li>
+								<li<% if (styles['display'] == 'block') { %> class="active"<% } %>>block<span class="remove"></span></li>
+								<!--<li>table</li>
+								<li>table-cell</li>-->
+							</ul>
+						</li>
+						<li><span>position:</span>
+							<ul class="inlineBtns" id="position">
+								<li<% if (styles['position'] == 'static') { %> class="active"<% } %>>static<span class="remove"></span></li>
+								<li<% if (styles['position'] == 'relative') { %> class="active"<% } %>>relative<span class="remove"></span></li>
+								<li<% if (styles['position'] == 'absolute') { %> class="active"<% } %>>absolute<span class="remove"></span></li>
+								<li<% if (styles['position'] == 'fixed') { %> class="active"<% } %>>fixed<span class="remove"></span></li>
+							</ul>
+						</li>
+						<li><span>float:</span>
+							<ul class="inlineBtns" id="float">
+								<li<% if (styles['float'] == 'left') { %> class="active"<% } %>>left<span class="remove"></span></li>
+								<li<% if (styles['float'] == 'right') { %> class="active"<% } %>>right<span class="remove"></span></li>
+								<li<% if (styles['float'] == 'none') { %> class="active"<% } %>>none<span class="remove"></span></li>
+							</ul>
+						</li>
+						<li><span>clear:</span>
+							<ul class="inlineBtns" id="clear">
+								<li<% if (styles['clear'] == 'left') { %> class="active"<% } %>>left<span class="remove"></span></li>
+								<li<% if (styles['clear'] == 'right') { %> class="active"<% } %>>right<span class="remove"></span></li>
+								<li<% if (styles['clear'] == 'none') { %> class="active"<% } %>>none<span class="remove"></span></li>
+							</ul>
+						</li>
+						<li><span>visibility:</span>
+							<ul class="inlineBtns" id="visibility">
+								<li<% if (styles['visibility'] == 'visible') { %> class="active"<% } %>>visible<span class="remove"></span></li>
+								<li<% if (styles['visibility'] == 'hidden') { %> class="active"<% } %>>hidden<span class="remove"></span></li>
+								<li<% if (styles['visibility'] == 'collapse') { %> class="active"<% } %>>collapse<span class="remove"></span></li>
+							</ul>
+						</li>
+						<li><span>overflow:</span>
+							<ul class="inlineBtns" id="overflow">
+								<li<% if (styles['overflow'] == 'visible') { %> class="active"<% } %>>visible<span class="remove"></span></li>
+								<li<% if (styles['overflow'] == 'hidden') { %> class="active"<% } %>>hidden<span class="remove"></span></li>
+								<li<% if (styles['overflow'] == 'scroll') { %> class="active"<% } %>>scroll<span class="remove"></span></li>
+								<li<% if (styles['overflow'] == 'auto') { %> class="active"<% } %>>auto<span class="remove"></span></li>
+							</ul>
+						</li>
+					</ul>
+					<% } else if (curMode == 1) { %>
+					
+					
+					<% } else if (curMode == 2) { %>
+					
+					<% } %>
 					<ul class="props">
 					<% _.each(properties, function(prop) { %>
 						<li><label><%= prop.attr %></label> : 
