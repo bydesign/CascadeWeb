@@ -1235,7 +1235,7 @@ Dispatch.prototype.StyleAttributes = [
 		handles: [
 		],
 		properties: [
-			// BACKGROUND COLOR
+			/*// BACKGROUND COLOR
 			'background-color',
 			
 			// BACKGROUND GRADIENT
@@ -1257,7 +1257,7 @@ Dispatch.prototype.StyleAttributes = [
 			
 			// BORDER IMAGE
 			'border-style',
-			'border-color',
+			'border-color',*/
 		]
 	},
 	{	// TEXT
