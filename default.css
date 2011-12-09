@@ -69,6 +69,29 @@ input.search {
 	text-align:right;
 	z-index:500;
 }
+.hierarchy {
+	position:absolute;
+	top:5px;
+	left:160px;
+	margin:0;
+	font-size:14px;
+	text-transform: lowercase;
+}
+.hierarchy li {
+	float:left;
+	padding: 3px 8px;
+	max-width:120px;
+	text-overflow:ellipsis;
+	overflow:hidden;
+	border-radius:4px;
+	white-space:nowrap;
+}
+.attrs {
+	font-size:12px;
+}
+.hierarchy li:last-child {
+	background-color:rgba(255,255,255,.2);
+}
 .rightnav {
 	position:absolute;
 	top: 35px;

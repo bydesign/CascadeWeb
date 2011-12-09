@@ -22,8 +22,10 @@
 					<input type="search" class="search" id="searchInput" placeholder="div.classname > span" value="<%= query %>">
 				</form>
 				<ul class="hierarchy">
-					<% _.each(elements, function(el) { %>
-					<li><%= el.name %></li>
+					<% _.each(elements, function(el, i) { %>
+					<li id="i<%= i %>" title="<%= el.name %>">
+						<span class="tagName"><%=el.tagName%></span><span class="attrs"><%= el.name %></span>
+					</li>
 					<% }); %>
 				</ul>
 			</div>

@@ -323,10 +323,14 @@ function SearchModule(dispatch) {
 	this.template = _.template( $("#searchTemplate").html() );
 	this.query;
 	this.queryLength;
+	this.parents = [];
 	
 	var that = this;
 	dispatch.listen('search', function(query) {
 		that.search(query);
+	});
+	dispatch.listen('selectElement', function(el) {
+		that.render();
 	});
 	var Keys = dispatch.Keys;
 	Keys.press(Keys.FORWARDSLASH, function(event) {
@@ -335,12 +339,21 @@ function SearchModule(dispatch) {
 }
 SearchModule.prototype = {
 	render: function() {
+		this.parents = [];
+		var el = this.dispatch.selectedElement;
+		if (el != undefined) this.getHierarchy(el);
 		var $rendered = $(this.template( {
-			elements: [],
+			elements: this.parents.reverse(),
 			query: this.query,
 			queryLen: this.queryLength,
 		} ));
 		$form = $rendered.find('#searchForm');
+		var that = this;
+		$rendered.find('.hierarchy > li').click(function(evt) {
+			var id = Number( $(this).attr('id').substr(1) );
+			var el = that.parents[id].element;
+			that.dispatch.call('selectElement', el);
+		});
 		this.$input = $rendered.find('#searchInput');
 		var that = this;
 		$form.submit(function(evt) {
@@ -363,6 +376,22 @@ SearchModule.prototype = {
 			this.dispatch.call('selectRule', rule);
 		}
 		this.render();
+	},
+	getHierarchy: function(el) {
+		name = '';
+		if (el.id != '') name += '#'+el.id;
+		if (el.tagName != undefined) {
+			if (el.className != '') name += '.' + el.className.replace(' ','.');
+			this.parents.push({
+				tagName: el.tagName,
+				name:name,
+				element: el,
+			});
+		}
+		var $parent = $(el).parent();
+		if ($parent.length > 0) {
+			this.getHierarchy($parent[0]);
+		}
 	},
 };
 
@@ -1000,7 +1029,6 @@ Handle.prototype = {
 			var props = {};
 			if (this.modifyX != undefined) props[this.modifyX] = undefined;
 			if (this.modifyY != undefined) props[this.modifyY] = undefined;
-			console.log(props);
 			document.CdDispatch.call('modifyStyles', props);
 		}
 	}
