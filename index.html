@@ -96,7 +96,55 @@
 					</ul>
 					
 					<% } else if (curMode == 2) { %>
-					
+					<ul class="props">
+						<li><span>font-family:</span>
+							<ul class="inlineBtns" id="font-family">
+								<li<% if (styles['font-family'] == 'Helvetica, Arial, sans-serif') { %> class="active"<% } %>>Helvetica, Arial, sans-serif<span class="remove"></span></li>
+								<li<% if (styles['font-family'] == 'Georgia, Times, serif') { %> class="active"<% } %>>Georgia, Times, serif<span class="remove"></span></li>
+							</ul>
+						</li>
+						<li><span>font-weight:</span>
+							<ul class="inlineBtns" id="font-weight">
+								<li<% if (styles['font-weight'] == 'normal') { %> class="active"<% } %>>normal<span class="remove"></span></li>
+								<li<% if (styles['font-weight'] == 'bold') { %> class="active"<% } %>>bold<span class="remove"></span></li>
+							</ul>
+						</li>
+						<li><span>font-style:</span>
+							<ul class="inlineBtns" id="font-style">
+								<li<% if (styles['font-style'] == 'normal') { %> class="active"<% } %>>normal<span class="remove"></span></li>
+								<li<% if (styles['font-style'] == 'italic') { %> class="active"<% } %>>italic<span class="remove"></span></li>
+							</ul>
+						</li>
+						<li><span>font-variant:</span>
+							<ul class="inlineBtns" id="font-variant">
+								<li<% if (styles['font-variant'] == 'normal') { %> class="active"<% } %>>normal<span class="remove"></span></li>
+								<li<% if (styles['font-variant'] == 'small-caps') { %> class="active"<% } %>>small-caps<span class="remove"></span></li>
+							</ul>
+						</li>
+						<li><span>text-decoration:</span>
+							<ul class="inlineBtns" id="text-decoration">
+								<li<% if (styles['text-decoration'] == 'none') { %> class="active"<% } %>>none<span class="remove"></span></li>
+								<li<% if (styles['text-decoration'] == 'underline') { %> class="active"<% } %>>underline<span class="remove"></span></li>
+								<li<% if (styles['text-decoration'] == 'line-through') { %> class="active"<% } %>>line-through<span class="remove"></span></li>
+								<li<% if (styles['text-decoration'] == 'overline') { %> class="active"<% } %>>overline<span class="remove"></span></li>
+							</ul>
+						</li>
+						<li><span>text-transform:</span>
+							<ul class="inlineBtns" id="text-transform">
+								<li<% if (styles['text-transform'] == 'normal') { %> class="active"<% } %>>normal<span class="remove"></span></li>
+								<li<% if (styles['text-transform'] == 'capitalize') { %> class="active"<% } %>>capitalize<span class="remove"></span></li>
+								<li<% if (styles['text-transform'] == 'uppercase') { %> class="active"<% } %>>uppercase<span class="remove"></span></li>
+								<li<% if (styles['text-transform'] == 'lowercase') { %> class="active"<% } %>>lowercase<span class="remove"></span></li>
+							</ul>
+						</li>
+						<li><span>white-space:</span>
+							<ul class="inlineBtns" id="white-space">
+								<li<% if (styles['white-space'] == 'normal') { %> class="active"<% } %>>normal<span class="remove"></span></li>
+								<li<% if (styles['white-space'] == 'pre') { %> class="active"<% } %>>pre<span class="remove"></span></li>
+								<li<% if (styles['white-space'] == 'nowrap') { %> class="active"<% } %>>nowrap<span class="remove"></span></li>
+							</ul>
+						</li>
+					</ul>
 					<% } %>
 					<ul class="props">
 					<% _.each(properties, function(prop) { %>

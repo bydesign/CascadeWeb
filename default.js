@@ -310,6 +310,14 @@ Rule.prototype = {
 	},
 };
 
+function SearchModule() {
+	this.$el = $('#propertiesModule');
+	this.template = _.template( $("#propertiesTemplate").html() );
+}
+SearchModule.prototype = {
+	render = function() {},
+};
+
 function PropertiesModule() {
 	this.$el = $('#propertiesModule');
 	this.template = _.template( $("#propertiesTemplate").html() );
@@ -1191,43 +1199,6 @@ Dispatch.prototype.StyleAttributes = [
 		handles: [
 		],
 		properties: [
-			/*new CssProp('display', [
-				'none',
-				'inline',
-				'inline-block',
-				'block',
-				'table',
-				'table-cell'
-			]),
-			new CssProp('position', [
-				'static',
-				'relative',
-				'absolute',
-				'fixed'
-			]),
-			new CssProp('float', [
-				'left',
-				'right',
-				'none'
-			]),
-			new CssProp('clear', [
-				'left',
-				'right',
-				'both',
-				'none'
-			]),
-			new CssProp('visibility', [
-				'visible',
-				'hidden',
-				'collapse'
-			]),
-			new CssProp('overflow', [
-				'visible',
-				'hidden',
-				'scroll',
-				'auto'
-			]),*/
-			
 		]
 	},
 	// this one needs more thought!
@@ -1264,39 +1235,6 @@ Dispatch.prototype.StyleAttributes = [
 		handles: [
 		],
 		properties: [
-			new CssProp('font-family', [
-				'Helvetica, Arial, sans-serif',
-				'Georgia, Times, serif'
-			]),
-			new CssProp('font-weight', [
-				'normal',
-				'bold'
-			]),
-			new CssProp('font-style', [
-				'normal',
-				'italic'
-			]),
-			new CssProp('text-decoration', [
-				'none',
-				'underline',
-				'line-through',
-				'overline'
-			]),
-			new CssProp('font-variant', [
-				'normal',
-				'small-caps'
-			]),
-			new CssProp('text-transform', [
-				'normal',
-				'capitalize',
-				'uppercase',
-				'lowercase'
-			]),
-			new CssProp('whitespace', [
-				'normal',
-				'pre',
-				'nowrap'
-			]),
 		]
 	}
 ];
