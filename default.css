@@ -57,9 +57,17 @@ iframe.document {
 input.search {
 	position:absolute;
 	top: 5px;
-	left: 155px;
+	left: 70%;
 	right: 10px;
 	font-size: 18px;
+}
+.queryLen {
+	position:absolute;
+	top:11px;
+	right:32px;
+	font-size:12px;
+	text-align:right;
+	z-index:500;
 }
 .rightnav {
 	position:absolute;
@@ -170,7 +178,8 @@ li:hover .sheet {
 	border:dotted 1px rgba(0,0,0,.3);
 }
 .box {
-	border:solid 1px rgba(0,0,0,.4);
+	border:solid 1px rgba(0,0,100,.4);
+	box-shadow: 0 0 5px rgb(0,0,100);
 }
 .pad {
 	border:dotted 1px rgba(0,0,0,.3);

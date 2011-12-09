@@ -14,7 +14,21 @@
 	<div class="doc">
 		<header class="hd">
 			<h1 class="logo">coDEsign</h1>
-			<input type="search" class="search" placeholder="div.classname > span">
+			<div id="searchModule">=
+			<script type="text/template" id="searchTemplate">
+			<div>
+				<form method="post" action="." id="searchForm">
+					<% if(queryLen != undefined) { %><span class="queryLen"><%=queryLen %> element<% if(queryLen > 1){%>s<%}%> found</span><% } %>
+					<input type="search" class="search" id="searchInput" placeholder="div.classname > span" value="<%= query %>">
+				</form>
+				<ul class="hierarchy">
+					<% _.each(elements, function(el) { %>
+					<li><%= el.name %></li>
+					<% }); %>
+				</ul>
+			</div>
+			</script>
+			</div>
 		</header>
 		<section class="rightnav">
 			<div class="ct" id="propertiesModule">

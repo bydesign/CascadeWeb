@@ -34,7 +34,7 @@ body {
 	padding:0;
 	margin:0;
 }
-.block1, .block2, .block3, .block4 {
+.block {
 	position:absolute;
 	height:100px;
 	width:100px;

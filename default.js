@@ -177,6 +177,7 @@ LAYOUT = 0, DECORATION = 1, TEXT = 2;
 
 function Dispatch(doc) {
 	this.doc = doc,
+	this.$doc = $(doc),
 	this.domrules = doc.styleSheets[0].rules,
 	this.rules = [],
 	this.listeners = {
@@ -198,7 +199,7 @@ function Dispatch(doc) {
 	for (var i=0, len=this.domrules.length, rule; i<len; i++) {
 		rule = new Rule(this.domrules[i], this, i);
 		this.rules.push(rule);
-		this.rulesDict[rule.selector] = rule;
+		this.rulesDict[rule.selector] = i;
 	}
 	
 	// SETUP MODEL EVENT LISTENERS
@@ -244,7 +245,7 @@ Dispatch.prototype = {
 		var rules = [];
 		var hasSelected = false;
 		for (var i=0, len=matchRules.length; i<len; i++) {
-			var rule = this.rulesDict[matchRules[i].selectorText];
+			var rule = this.getRuleBySelector(matchRules[i].selectorText);
 			rules.push(rule);
 			if (rule.id == this.selectedRule) hasSelected = true;
 		}
@@ -260,6 +261,10 @@ Dispatch.prototype = {
 	},
 	getSelectedRule: function() {
 		return this.rules[this.selectedRule];
+	},
+	getRuleBySelector: function(selector) {
+		var ruleId = this.rulesDict[selector];
+		return this.rules[ruleId];
 	},
 	getEmSize: function() {
 		var el = this.$selectedElement.parent()[0];
@@ -310,15 +315,59 @@ Rule.prototype = {
 	},
 };
 
-function SearchModule() {
-	this.$el = $('#propertiesModule');
-	this.template = _.template( $("#propertiesTemplate").html() );
+function SearchModule(dispatch) {
+	this.dispatch = dispatch;
+	this.$doc = dispatch.$doc;
+	this.$el = $('#searchModule');
+	this.$input = $('#searchInput');
+	this.template = _.template( $("#searchTemplate").html() );
+	this.query;
+	this.queryLength;
+	
+	var that = this;
+	dispatch.listen('search', function(query) {
+		that.search(query);
+	});
+	var Keys = dispatch.Keys;
+	Keys.press(Keys.FORWARDSLASH, function(event) {
+		that.$input.focus();
+	});
 }
 SearchModule.prototype = {
-	render = function() {},
+	render: function() {
+		var $rendered = $(this.template( {
+			elements: [],
+			query: this.query,
+			queryLen: this.queryLength,
+		} ));
+		$form = $rendered.find('#searchForm');
+		this.$input = $rendered.find('#searchInput');
+		var that = this;
+		$form.submit(function(evt) {
+			evt.preventDefault();
+			var query = that.$input.val();
+			that.dispatch.call('search', query);
+		});
+		this.$el.html($rendered);
+		this.$input.focus();
+	},
+	search: function(query) {
+		this.query = query;
+		var $queryset = this.$doc.find(query);
+		this.queryLength = $queryset.length;
+		if (this.queryLength > 0) {
+			this.dispatch.call('selectElement', $queryset[0]);
+		}
+		var rule = this.dispatch.rulesDict[query];
+		if (rule != undefined) {
+			this.dispatch.call('selectRule', rule);
+		}
+		this.render();
+	},
 };
 
-function PropertiesModule() {
+function PropertiesModule(dispatch) {
+	this.dispatch = dispatch;
 	this.$el = $('#propertiesModule');
 	this.template = _.template( $("#propertiesTemplate").html() );
 }
@@ -366,20 +415,20 @@ PropertiesModule.prototype = {
 	},
 };
 
-function HandleModule(doc) {
+function HandleModule(dispatch) {
+	this.dispatch = dispatch;
 	this.NODRAG = 0,
 	this.DRAG = 1,
 	this.ALTDRAG = 2,
 	this.ALTSHIFTDRAG = 3;
 	this.dragMode = this.NODRAG;
 	
-	var disp = document.CdDispatch;
-	this.doc = doc,
+	this.doc = dispatch.doc,
 	this.$el = $('#pageHolder'),
 	this.$controls = $('#controls'),
 	this.$box = $('#box'),
 	this.$padding = $('#padding'),
-	this.$doc = $(disp.doc),
+	this.$doc = $(dispatch.doc),
 	this.$html = this.$doc.find('html'),
 	this.handles = [];
 	this.updateScroll();
@@ -401,7 +450,7 @@ function HandleModule(doc) {
 	this.mouseY = 0,
 	this.zoomLevel = 1,
 	this.shortcut_keys = {},
-	this.css_axis = disp.CSS;
+	this.css_axis = dispatch.CSS;
 	
 	this.$el.bind('click mousedown mouseup', function forwardEvents(evt) {
 		var forward = !$(evt.target).hasClass('handle');
@@ -412,21 +461,21 @@ function HandleModule(doc) {
 	function updateControls() {
 		that.update();
 	}
-	disp.listen('selectElement', updateControls);
-	disp.listen('selectRule', updateControls);
-	disp.listen('modifyStyle', updateControls);
-	disp.listen('modifyStyles', updateControls);
+	dispatch.listen('selectElement', updateControls);
+	dispatch.listen('selectRule', updateControls);
+	dispatch.listen('modifyStyle', updateControls);
+	dispatch.listen('modifyStyles', updateControls);
 	
-	disp.listen('selectElement', function() {
+	dispatch.listen('selectElement', function() {
 		that.$doc.find('.hover').removeClass('hover');
 		that.highlightAffectedElements();
 	});
-	disp.listen('selectRule', function() {
+	dispatch.listen('selectRule', function() {
 		that.highlightAffectedElements();
 	});
 	
 	var $controls = this.$controls;
-	disp.listen('changeStyleMode', function(mode) {
+	dispatch.listen('changeStyleMode', function(mode) {
 		var modeClasses = ['layoutMode', 'decorateMode', 'typeMode'];
 		$controls.removeClass(modeClasses.join(' '));
 		$controls.addClass(modeClasses[disp.styleMode]);
@@ -434,7 +483,7 @@ function HandleModule(doc) {
 	
 	// grid code
 	this.renderGrid();
-	var Keys = disp.Keys;
+	var Keys = dispatch.Keys;
 	Keys.down(Keys.SHIFT, function(evt) {
 		that.showGrid();
 		that.snapGrid();
@@ -733,7 +782,7 @@ function Handle(settings) {
 	});
 	this.$element.appendTo(this.$parent);
 	
-	this.$body = $(document.CdDispatch.doc).find('html');
+	this.$body = this.module.$doc.find('html');
 	this.$doc = $(document);
 }
 Handle.prototype = {
@@ -1265,7 +1314,7 @@ $(document).ready(function() {
 		
 		disp.Keys = new KeyManager($(iframe.contentDocument).add(document));
 		
-		var propertiesPanel = new PropertiesModule();
+		var propertiesPanel = new PropertiesModule(disp);
 		function renderPropertiesPanel(arg) {
 			propertiesPanel.render();
 		}
@@ -1290,8 +1339,11 @@ $(document).ready(function() {
 			$('.'+hoverClass, iframeDoc).removeClass(hoverClass);
 		});
 		
-		var handleModule = new HandleModule(iframeDoc);
+		var handleModule = new HandleModule(disp);
 		handleModule.render();
+		
+		var searchModule = new SearchModule(disp);
+		searchModule.render();
 		
 		disp.Keys.press(disp.Keys.GRACE_ACCENT, function(event) {
 			disp.call('changeStyleMode', (disp.styleMode + 1) % 3 );
