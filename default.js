@@ -812,6 +812,7 @@ function Handle(settings) {
 	this.attributeRegex = /([0-9\.]+)([A-z%]+)/,
 	this.initDragLayout = {};
 	this.absolutePos = {};
+	this.hideLabelTimeout;
 	
 	var that = this;
 	this.$element.css(this.styles).mousedown(function(event) {
@@ -867,10 +868,9 @@ Handle.prototype = {
 		this.module.unlockCanvas();
 		this.$doc.unbind('mousemove').unbind('mouseup');
 		this.objectStyles = {};
-		this.startDragInitVals = {};
-		this.initDragLayout = {};
 		this.$element.removeClass('drag');
 		this.module.setDragMode(this.module.NODRAG);
+		this.endChange();
 	},
 	cancelDrag: function(event) {
 		var css = {},
@@ -923,8 +923,17 @@ Handle.prototype = {
 		var css = {};
 		css[mod] = val;
 		this.dispatch.call('modifyStyles', css);
-		this.objectStyles = {};
+		this.endChange();
+	},
+	endChange: function() {
 		this.startDragInitVals = {};
+		this.initDragLayout = {};
+		if (this.hideLabelTimeout != undefined) clearTimeout(this.hideLabelTimeout);
+		this.$element.addClass('showLabel');
+		var that = this;
+		this.hideLabelTimeout = setTimeout(function() {
+			that.$element.removeClass('showLabel');
+		}, 1000);
 	},
 	getNewProps: function(mouseX, mouseY) {
 		var Keys = this.dispatch.Keys,

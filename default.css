@@ -321,12 +321,12 @@ li:hover .sheet {
     background-color: rgba(0,0,0,0);
     border: none;
 }
-.handle.subhandle:hover {
+/*.handle.subhandle:hover {
     background-color: rgba(0,0,0,.3);
 }
 .handle.subhandle.drag {
     background-color: rgba(0,0,0,.5);
-}
+}*/
 .handle.subhandle.left, .handle.subhandle.right {
     top: 15px;
     bottom: 15px;
@@ -346,18 +346,12 @@ li:hover .sheet {
 .handle.subhandle.margin.top { top: -10px; }
 .handle.subhandle.margin.bottom { bottom: -10px; }
 
-.handle.defined {
+/*.handle.defined {
 	background-color:rgba(0,255,0,.2);
-}
-.handle.defined.subhandle:hover, .handle.defined.subhandle.drag {
+}*/
+/*.handle.defined.subhandle:hover, .handle.defined.subhandle.drag {
 	background-color:rgba(0,255,0,.5);
-}
-.handle {
-	overflow:hidden;
-}
-.handle:hover, .handle.drag {
-	overflow:visible;
-}
+}*/
 .handle .labelWrap {
 	position:absolute;
 	top:10px;
@@ -388,9 +382,6 @@ li:hover .sheet {
 	box-shadow: 1px 1px 4px rgba(0,0,0,.7);
 	padding-right:30px;
 	white-space:nowrap;
-}
-.handle:hover .label, .handle.drag .label {
-	opacity:1;
 }
 .handle .property {
 	font-size:10px;
@@ -446,13 +437,31 @@ li:hover .sheet {
 .handle.defined .rem, .handle.selected .rem {
 	display:block;
 }
-.handle.selected {
-	opacity:1;
-	border:solid 1px #fff;
-	margin:-1px;
-	background-color:rgba(0,0,0,.7);
-}
-.handle.defined.selected {
-	background-color:rgba(0,150,0,.8);
-}
 
+.handle {
+	overflow:hidden;
+}
+.handle.defined {
+	background-image: -webkit-gradient(linear, left top, right bottom, from(#66FF99), to(#66CC66));
+	opacity:.4;
+}
+.handle.defined.left, .handle.defined.right {
+	background-image: -webkit-gradient(linear, left top, right top, from(#66FF99), to(#66CC66));
+}
+.handle.defined.top, .handle.defined.bottom {
+	background-image: -webkit-gradient(linear, left top, left bottom, from(#66FF99), to(#66CC66));
+}
+.handle:hover, .handle.drag {
+	overflow:visible;
+	background-color:rgba(0,0,0,.3);
+}
+.handle:hover, .handle.drag, .handle.selected {
+	box-shadow: 1px 1px 5px rgba(0,0,0,.7);
+	opacity:1;
+}
+.handle.showLabel { 
+	overflow:visible;
+}
+.handle.showLabel .label, .handle:hover .label, .handle.drag .label {
+	opacity:1;
+}
