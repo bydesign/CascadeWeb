@@ -918,6 +918,7 @@ Handle.prototype = {
 		}
 		
 		this.saveInitialProp(mod);
+		this.saveInitialLayout();
 		var val = this.getNewProp(dir, mod, val, modFac);
 		var css = {};
 		css[mod] = val;
@@ -993,20 +994,22 @@ Handle.prototype = {
 			this.startDragInitVals[prop] = obj;
 			
 			if (this.module.isSnapping()) {
-				var pos = document.POS,
-					$parent = this.$parent,
-					initLayout = this.initDragLayout,
-					offset = initLayout.left;
-				if (dir == 'x' && this.posX == pos.RIGHT) offset += initLayout.width;
-				if (dir == 'y') offset = initLayout.top;
-				if (dir == 'y' && this.posY == pos.BOTTOM) offset += initLayout.height;
-				
+				var offset = this.getHandleOffset(dir);
 				var grid = (dir == 'x') ? this.module.gridX : this.module.gridY;
 				var roundThis = (offset + newChange) / grid;
 				newChange = Math.round(roundThis) * grid - offset;
 			}
 		} else {
-			newChange = change;
+			if (this.module.isSnapping()) {
+				var offset = this.getHandleOffset(dir);
+				var grid = (dir == 'x') ? this.module.gridX : this.module.gridY;
+				var diff = offset % grid;
+				if (diff > 0) {
+					newChange = (change > 0) ? grid-diff : diff * -1;
+				} else {
+					newChange = change * grid;
+				}
+			}
 		}
 		
 		if (obj.unit == 'em') {
@@ -1018,6 +1021,17 @@ Handle.prototype = {
 		
 		var val = obj.val + newChange * fac;
 		return val + obj.unit;
+	},
+	getHandleOffset: function(dir) {
+		var pos = document.POS,
+			$parent = this.$parent,
+			initLayout = this.initDragLayout,
+			offset = initLayout.left;
+		if (dir == 'x' && this.posX == pos.RIGHT) offset += initLayout.width;
+		if (dir == 'y') offset = initLayout.top;
+		if (dir == 'y' && this.posY == pos.BOTTOM) offset += initLayout.height;
+		
+		return offset;
 	},
 	update: function() {
 		this.updateLabel();
