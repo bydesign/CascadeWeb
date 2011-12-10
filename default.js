@@ -531,20 +531,33 @@ function HandleModule(dispatch) {
 	}
 	).up(Keys.ALT, function(evt) {
 		if (that.dragMode == that.ALTDRAG || that.dragMode == that.ALTSHIFTDRAG) {
+			evt.preventDefault();
 			that.setDragMode(that.DRAG);
 		}
 	}
-	).press(Keys.UP, function() {
-		that.selectedHandle.change('y', 1);
+	).press(Keys.UP, function(evt) {
+		console.log(evt);
+		if (that.selectedHandle != undefined) {
+			evt.preventDefault();
+			that.selectedHandle.change('y', -1);
+		}
 	}
-	).press(Keys.DOWN, function() {
-		that.selectedHandle.change('y', -1);
+	).press(Keys.DOWN, function(evt) {
+		if (that.selectedHandle != undefined) {
+			evt.preventDefault();
+			that.selectedHandle.change('y', 1);
+		}
 	}
-	).press(Keys.LEFT, function() {
-		that.selectedHandle.change('x', 1);
+	).press(Keys.LEFT, function(evt) {
+		if (that.selectedHandle != undefined) {
+			evt.preventDefault();
+			that.selectedHandle.change('x', -1);
+		}
 	}
-	).press(Keys.RIGHT, function() {
-		that.selectedHandle.change('x', -1);
+	).press(Keys.RIGHT, function(evt) {
+		if (that.selectedHandle != undefined) {
+			that.selectedHandle.change('x', 1);
+		}
 	}
 	).down(Keys.OS_LEFT, function (event) {
 		that.zoom(event);
@@ -683,8 +696,8 @@ HandleModule.prototype = {
 	},
 	// make controls align with selected element
 	update: function() {
-		var el = document.CdDispatch.selectedElement,
-			$el = document.CdDispatch.$selectedElement,
+		var el = this.dispatch.selectedElement,
+			$el = this.dispatch.$selectedElement,
 			getStyleNum = document.getStyleNum,
 			z = this.zoomLevel;
 		if ($el == undefined) return;
@@ -733,7 +746,7 @@ HandleModule.prototype = {
 			'border-bottom-width': pb>0 ? '1px' : '0',
 			'border-left-width': pl>0 ? '1px' : '0'
 		});
-		var rule = document.CdDispatch.getSelectedRule();
+		var rule = this.dispatch.getSelectedRule();
 		var attrs = rule.attrs();
 		this.$controls.find('.handle.defined').removeClass('defined');
 		for (var i=0, len=attrs.length; i<len; i++) {
@@ -905,10 +918,10 @@ Handle.prototype = {
 		}
 		
 		this.saveInitialProp(mod);
-		var val = this.getNewProp(mod, val, modFac);
+		var val = this.getNewProp(dir, mod, val, modFac);
 		var css = {};
 		css[mod] = val;
-		document.CdDispatch.call('modifyStyles', css);
+		this.dispatch.call('modifyStyles', css);
 		this.objectStyles = {};
 		this.startDragInitVals = {};
 	},
@@ -950,14 +963,14 @@ Handle.prototype = {
 		return css;
 	},
 	getNewProp: function(dir, prop, change, fac) {
-		change = change / this.module.zoomLevel;
 		var obj = this.objectStyles[prop],
-			newChange = change;
+			newChange = change,
+			dispatch = this.dispatch;
 		if (obj == undefined) {
 			obj = this.startDragInitVals[prop];
 		}
 		if (obj == undefined) {
-			var rules = this.dispatch.getElementRules();
+			var rules = dispatch.getElementRules();
 			for (var i=0, len=rules.length; i<len; i++) {
 				var val = rules[i].get(prop);
 				if (val != undefined) {
@@ -971,27 +984,33 @@ Handle.prototype = {
 			}
 		}
 		if (obj == undefined) {
-			var val = document.getStyleNum(prop, this.dispatch.selectedElement);
+			var val = document.getStyleNum(prop, dispatch.selectedElement);
 			obj = { val: val, unit: 'px' };
 		}
-		this.startDragInitVals[prop] = obj;
 		
-		if (this.module.isSnapping()) {
-			var pos = document.POS,
-				$parent = this.$parent,
-				initLayout = this.initDragLayout,
-				offset = initLayout.left;
-			if (dir == 'x' && this.posX == pos.RIGHT) offset += initLayout.width;
-			if (dir == 'y') offset = initLayout.top;
-			if (dir == 'y' && this.posY == pos.BOTTOM) offset += initLayout.height;
+		if (this.module.isDragging()) {
+			newChange = change / this.module.zoomLevel;
+			this.startDragInitVals[prop] = obj;
 			
-			var grid = (dir == 'x') ? this.module.gridX : this.module.gridY;
-			var roundThis = (offset + newChange) / grid;
-			newChange = Math.round(roundThis) * grid - offset;
+			if (this.module.isSnapping()) {
+				var pos = document.POS,
+					$parent = this.$parent,
+					initLayout = this.initDragLayout,
+					offset = initLayout.left;
+				if (dir == 'x' && this.posX == pos.RIGHT) offset += initLayout.width;
+				if (dir == 'y') offset = initLayout.top;
+				if (dir == 'y' && this.posY == pos.BOTTOM) offset += initLayout.height;
+				
+				var grid = (dir == 'x') ? this.module.gridX : this.module.gridY;
+				var roundThis = (offset + newChange) / grid;
+				newChange = Math.round(roundThis) * grid - offset;
+			}
+		} else {
+			newChange = change;
 		}
 		
 		if (obj.unit == 'em') {
-			var emSize = this.dispatch.getEmSize();
+			var emSize = dispatch.getEmSize();
 			newChange = newChange / emSize;
 		} else if (obj.unit == 'px') {
 			newChange = Math.round(newChange);
