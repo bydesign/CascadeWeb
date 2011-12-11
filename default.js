@@ -314,6 +314,17 @@ Rule.prototype = {
 		}
 		return attrs;
 	},
+	getBgProp: function(prop, index) {
+		var str = this.get(prop);
+		if (str == undefined) return undefined;
+		var parts = str.split(','),
+			val;
+		if (parts.length > index) val = parts[index];
+		else val = parts[0];
+		val = $.trim(val);
+		
+		return (val == 'initial') ? undefined : val;
+	},
 };
 
 function Background(settings) {
@@ -415,15 +426,16 @@ function PropertiesModule(dispatch) {
 	this.dispatch = dispatch;
 	this.$el = $('#propertiesModule');
 	this.template = _.template( $("#propertiesTemplate").html() );
+	this.backgrounds = [];
 	
-	this.dispatch.listen('selectRule', function(ruleId) {
-		var rule = dispatch.getSelectedRule();
-		console.log(rule.selector);
-		var attrs = rule.attrs();
-		for (var i=0, len=attrs.length; i<len; i++) {
-			console.log(attrs[i] + ': ' + rule.get(attrs[i]) );
-		}
-	});
+	var that = this,
+		dispatch = this.dispatch;
+	function renderPropertiesPanel(arg) {
+		that.render();
+	}
+	dispatch.listen('selectElement', renderPropertiesPanel);
+	dispatch.listen('selectRule', renderPropertiesPanel);
+	dispatch.listen('changeStyleMode', renderPropertiesPanel);
 }
 PropertiesModule.prototype = {
 	render: function() {
@@ -431,11 +443,13 @@ PropertiesModule.prototype = {
 			allRules = disp.rules,
 			rules = disp.getElementRules();
 			
+		this.getBackgrounds();
 		var $rendered = $(this.template( {
 			rules: rules,
 			styles: allRules[disp.selectedRule].style,
 			curMode: disp.styleMode,
 			properties: disp.StyleAttributes[disp.styleMode].properties,
+			backgrounds: this.backgrounds,
 		} ));
 		
 		$rendered.find('.selectors > li').click(function() {
@@ -466,6 +480,24 @@ PropertiesModule.prototype = {
 		});
 		
 		this.$el.html($rendered);
+	},
+	getBackgrounds: function() {
+		this.backgrounds = [];
+		var rule = this.dispatch.getSelectedRule();
+		var bgs = rule.get('background-image').split(',');
+		for (var i=0, len=bgs.length; i<len; i++) {
+			this.backgrounds.push(new Background({
+				image: $.trim(bgs[i]),
+				repeatX: rule.getBgProp('background-repeat-x', i),
+				repeatY: rule.getBgProp('background-repeat-y', i),
+				attachment: rule.getBgProp('background-attachment', i),
+				positionX: rule.getBgProp('background-position-x', i),
+				positionY: rule.getBgProp('background-position-y', i),
+				origin: rule.getBgProp('background-origin', i),
+				clip: rule.getBgProp('background-clip', i),
+				size: rule.getBgProp('background-size', i),
+			}));
+		}
 	},
 };
 
@@ -1410,12 +1442,6 @@ $(document).ready(function() {
 		disp.Keys = new KeyManager($(iframe.contentDocument).add(document));
 		
 		var propertiesPanel = new PropertiesModule(disp);
-		function renderPropertiesPanel(arg) {
-			propertiesPanel.render();
-		}
-		disp.listen('selectElement', renderPropertiesPanel);
-		disp.listen('selectRule', renderPropertiesPanel);
-		disp.listen('changeStyleMode', renderPropertiesPanel);
 		
 		var sleeping = false,
 			timer,

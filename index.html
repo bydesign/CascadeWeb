@@ -108,7 +108,9 @@
 					<% } else if (curMode == 1) { %>
 					<p><a href="#" class="btn">Add decoration</a></p>
 					<ul>
-						<li></li>
+						<% _.each(backgrounds, function(bg) { %>
+						<li><%=bg.image %></li>
+						<% }); %>
 					</ul>
 					
 					<% } else if (curMode == 2) { %>
