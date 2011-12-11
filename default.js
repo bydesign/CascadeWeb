@@ -241,6 +241,7 @@ Dispatch.prototype = {
 	//	doesn't apply to the selected element
 	getElementRules: function() {
 		var el = this.selectedElement;
+		if (el == undefined) return [];
 		var matchRules = el.ownerDocument.defaultView.getMatchedCSSRules(el, '');
 		var rules = [];
 		var hasSelected = false;
@@ -313,6 +314,21 @@ Rule.prototype = {
 		}
 		return attrs;
 	},
+};
+
+function Background(settings) {
+	this.image = settings.image,
+	this.repeatX = settings.repeatX,
+	this.repeatY = settings.repeatY,
+	this.attachment = settings.attachment,
+	this.positionX = settings.positionX,
+	this.positionY = settings.positionY,
+	this.origin = settings.origin,
+	this.clip = settings.clip,
+	this.size = settings.size;
+}
+Background.prototype = {
+	// nothing to see here
 };
 
 function SearchModule(dispatch) {
@@ -399,6 +415,15 @@ function PropertiesModule(dispatch) {
 	this.dispatch = dispatch;
 	this.$el = $('#propertiesModule');
 	this.template = _.template( $("#propertiesTemplate").html() );
+	
+	this.dispatch.listen('selectRule', function(ruleId) {
+		var rule = dispatch.getSelectedRule();
+		console.log(rule.selector);
+		var attrs = rule.attrs();
+		for (var i=0, len=attrs.length; i<len; i++) {
+			console.log(attrs[i] + ': ' + rule.get(attrs[i]) );
+		}
+	});
 }
 PropertiesModule.prototype = {
 	render: function() {
@@ -507,7 +532,7 @@ function HandleModule(dispatch) {
 	dispatch.listen('changeStyleMode', function(mode) {
 		var modeClasses = ['layoutMode', 'decorateMode', 'typeMode'];
 		$controls.removeClass(modeClasses.join(' '));
-		$controls.addClass(modeClasses[disp.styleMode]);
+		$controls.addClass(modeClasses[dispatch.styleMode]);
 	});
 	
 	// grid code

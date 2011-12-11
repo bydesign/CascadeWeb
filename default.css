@@ -85,6 +85,7 @@ input.search {
 	overflow:hidden;
 	border-radius:4px;
 	white-space:nowrap;
+	cursor: pointer;
 }
 .attrs {
 	font-size:12px;

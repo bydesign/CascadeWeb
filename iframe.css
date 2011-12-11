@@ -33,6 +33,15 @@ body {
 	border:none;
 	padding:0;
 	margin:0;
+	background-image: url(http://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Epiphragma_einer_Weinbergschnecke.JPG/220px-Epiphragma_einer_Weinbergschnecke.JPG),
+				url(http://upload.wikimedia.org/wikipedia/commons/thumb/f/fe/Cooked_snails.JPG/220px-Cooked_snails.JPG);
+	background-repeat: no-repeat;
+	background-position: 25% 25%, 75% 75%;
+}
+
+.doc {
+	background: url(http://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Slug_pic.jpg/220px-Slug_pic.jpg) no-repeat,
+				url(http://upload.wikimedia.org/wikipedia/commons/thumb/5/58/Slug_in_VanDusen_Botanical_Garden.jpg/220px-Slug_in_VanDusen_Botanical_Garden.jpg) no-repeat 100% 100%;
 }
 .block {
 	position:absolute;
