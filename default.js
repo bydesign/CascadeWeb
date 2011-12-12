@@ -484,10 +484,10 @@ PropertiesModule.prototype = {
 	getBackgrounds: function() {
 		this.backgrounds = [];
 		var rule = this.dispatch.getSelectedRule();
-		var bgs = rule.get('background-image').split(',');
+		var bgs = this.getBgImages(rule);
 		for (var i=0, len=bgs.length; i<len; i++) {
 			this.backgrounds.push(new Background({
-				image: $.trim(bgs[i]),
+				image: bgs[i],
 				repeatX: rule.getBgProp('background-repeat-x', i),
 				repeatY: rule.getBgProp('background-repeat-y', i),
 				attachment: rule.getBgProp('background-attachment', i),
@@ -498,6 +498,55 @@ PropertiesModule.prototype = {
 				size: rule.getBgProp('background-size', i),
 			}));
 		}
+	},
+	getBgImages: function(rule) {
+		var str = rule.get('background-image'),
+			parts = this.split(str),
+			obs = [];
+			matchRegex = /([a-z-]+)\((.*)\)$/;
+		//console.log(parts);
+		for (var i=0, len=parts.length; i<len; i++) {
+			var matchParts = parts[i].match(matchRegex);
+			var type = matchParts[1];
+			if (type == 'url') {
+				console.log('url: ' + matchParts[2]);
+				
+			} else if (type.indexOf('repeating-linear-gradient') > -1) {
+				console.log('repeating-linear-gradient:');
+				console.log(this.split(matchParts[2]));
+				
+			} else if (type.indexOf('repeating-radial-gradient') > -1) {
+				console.log('repeating-radial-gradient:');
+				console.log(this.split(matchParts[2]));
+				
+			} else if (type.indexOf('linear-gradient') > -1) {
+				console.log('linear-gradient:');
+				console.log(this.split(matchParts[2]));
+				
+			} else if (type.indexOf('radial-gradient') > -1) {
+				console.log('radial-gradient:');
+				console.log(this.split(matchParts[2]));
+			}
+		}
+		return parts;
+	},
+	split: function(string) {
+		var token = /((?:[^"']|".*?"|'.*?')*?)([(,)]|$)/g;
+		return (function recurse () {
+			for (var array = [];;) {
+				var result = token.exec(string);
+				//console.log(result);
+				if (result[2] == '(') {
+					array.push($.trim(result[1]) + '(' + recurse().join(',') + ')');
+					result = token.exec(string);
+				} else array.push($.trim(result[1]));
+				if (result[2] != ',') {
+					//console.log(array);
+					return array;
+				}
+			}
+			//console.log(array);
+		})()
 	},
 };
 

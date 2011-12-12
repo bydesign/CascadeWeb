@@ -41,8 +41,9 @@ body {
 
 .doc {
 	background: url(http://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Slug_pic.jpg/220px-Slug_pic.jpg) no-repeat,
-				url(http://upload.wikimedia.org/wikipedia/commons/thumb/5/58/Slug_in_VanDusen_Botanical_Garden.jpg/220px-Slug_in_VanDusen_Botanical_Garden.jpg) no-repeat 100% 100%;
-	background-size: 100px 50px, 25%;
+				url(http://upload.wikimedia.org/wikipedia/commons/thumb/5/58/Slug_in_VanDusen_Botanical_Garden.jpg/220px-Slug_in_VanDusen_Botanical_Garden.jpg) no-repeat 100% 100%,
+				-webkit-linear-gradient(top, #ccc, white);
+	background-size: 100px 50px, 25%, 100%;
 }
 .block {
 	position:absolute;
