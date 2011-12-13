@@ -339,7 +339,52 @@ function Background(settings) {
 	this.size = settings.size;
 }
 Background.prototype = {
-	// nothing to see here
+	toString: function() {
+		return '';
+	},
+};
+
+function ImageUrl(url) {
+	this.url = url;
+}
+ImageUrl.prototype = {
+	toString: function() {
+		return 'url(' + this.url + ')';
+	},
+};
+
+function Gradient(type, start, colors, shapeSize) {
+	this.type = type,
+	this.colors = colors,
+	this.start = start,
+	this.shapeSize = shapeSize;
+}
+
+Gradient.prototype = {
+	toString: function() {
+		var parts = [this.start];
+		if (this.shapeSize != undefined) parts.push(this.shapeSize);
+		parts.extend(this.colors);
+		return '-webkit-' + this.type + '(' + parts.join(',') + ')';
+	},
+};
+
+function Color(settings) {
+	this.r = settings.red,
+	this.g = settings.green,
+	this.b = settings.blue,
+	this.h = settings.hue,
+	this.s = settings.saturation,
+	this.l = settings.lightness,
+	this.a = settings.alpha,
+	this.hex = settings.hex,
+	this.type = settings.type,
+	this.name = settings.name;
+}
+Color.prototype = {
+	toString: function() {
+		return '';
+	},
 };
 
 function SearchModule(dispatch) {
@@ -484,7 +529,9 @@ PropertiesModule.prototype = {
 	getBackgrounds: function() {
 		this.backgrounds = [];
 		var rule = this.dispatch.getSelectedRule();
-		var bgs = this.getBgImages(rule);
+		var bgStr = rule.get('background-image');
+		if (bgStr == null) return; 
+		var bgs = this.getBgImages(bgStr);
 		for (var i=0, len=bgs.length; i<len; i++) {
 			this.backgrounds.push(new Background({
 				image: bgs[i],
@@ -499,53 +546,91 @@ PropertiesModule.prototype = {
 			}));
 		}
 	},
-	getBgImages: function(rule) {
-		var str = rule.get('background-image'),
-			parts = this.split(str),
+	getBgImages: function(str) {
+		var backgrounds = this.split(str),
 			obs = [];
 			matchRegex = /([a-z-]+)\((.*)\)$/;
-		//console.log(parts);
-		for (var i=0, len=parts.length; i<len; i++) {
-			var matchParts = parts[i].match(matchRegex);
-			var type = matchParts[1];
+		if (str == null) return null;
+		for (var i=0, len=backgrounds.length; i<len; i++) {
+			var bg = backgrounds[i],
+				type = bg.type;
 			if (type == 'url') {
-				console.log('url: ' + matchParts[2]);
-				
-			} else if (type.indexOf('repeating-linear-gradient') > -1) {
-				console.log('repeating-linear-gradient:');
-				console.log(this.split(matchParts[2]));
-				
-			} else if (type.indexOf('repeating-radial-gradient') > -1) {
-				console.log('repeating-radial-gradient:');
-				console.log(this.split(matchParts[2]));
+				obs.push(bg[type][0]);
 				
 			} else if (type.indexOf('linear-gradient') > -1) {
-				console.log('linear-gradient:');
-				console.log(this.split(matchParts[2]));
+				var parts = bg[type],
+					start = parts[0],
+					colors = this.getColors( parts.slice(1, parts.length) ),
+					name = (type.indexOf('repeating') > -1) ? 'repeating-linear-gradient': 'linear-gradient';
+				obs.push( new Gradient(name, start, colors, undefined) );
 				
 			} else if (type.indexOf('radial-gradient') > -1) {
-				console.log('radial-gradient:');
-				console.log(this.split(matchParts[2]));
+				var parts = bg[type],
+					start = parts[0],
+					end = parts[1],
+					colors = this.getColors( parts.slice(2, parts.length) ),
+					name = (type.indexOf('repeating') > -1) ? 'repeating-radial-gradient': 'radial-gradient';
+				obs.push( new Gradient(name, start, colors, end) );
 			}
 		}
-		return parts;
+		return obs;
+	},
+	getColors: function(arr) {
+		var colors = [];
+		for (var i=0, len=arr.length; i<len; i++) {
+			var data = arr[i],
+				settingsObj = {};
+			if (typeof(data) == 'string') {
+				settingsObj.name = data;
+				
+			} else if (data.type == 'rgb') {
+				settingsObj = {
+					red: data['rgb'][0],
+					green: data['rgb'][1],
+					blue: data['rgb'][2]
+				}
+			} else if (data.type == 'rgba') {
+				settingsObj = {
+					red: data['rgba'][0],
+					green: data['rgba'][1],
+					blue: data['rgba'][2],
+					alpha: data['rgba'][3]
+				}
+			} else if (data.type == 'hsl') {
+				settingsObj = {
+					hue: data['hsl'][0],
+					saturation: data['hsl'][1],
+					lightness: data['hsl'][2]
+				}
+			} else if (data.type == 'hsla') {
+				settingsObj = {
+					hue: data['hsla'][0],
+					saturation: data['hsla'][1],
+					lightness: data['hsla'][2],
+					alpha: data['hsla'][3]
+				}
+			}
+			settingsObj.type = data.type;
+			colors.push( new Color(settingsObj) );
+		}
+		return colors;
 	},
 	split: function(string) {
 		var token = /((?:[^"']|".*?"|'.*?')*?)([(,)]|$)/g;
 		return (function recurse () {
 			for (var array = [];;) {
 				var result = token.exec(string);
-				//console.log(result);
 				if (result[2] == '(') {
-					array.push($.trim(result[1]) + '(' + recurse().join(',') + ')');
+					var type = $.trim(result[1]);
+					var obj = { type: type };
+					obj[type] = recurse();
+					array.push(obj);
 					result = token.exec(string);
-				} else array.push($.trim(result[1]));
-				if (result[2] != ',') {
-					//console.log(array);
-					return array;
+				} else {
+					array.push($.trim(result[1]));
 				}
+				if (result[2] != ',') return array;
 			}
-			//console.log(array);
 		})()
 	},
 };
