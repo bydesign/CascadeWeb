@@ -6,6 +6,7 @@
  <link href="default.css" media="all" rel="stylesheet">
  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.10/jquery-ui.min.js"></script>
+ <script type="text/javascript" src="jquery.color.js"></script>
  <script type="text/javascript" src="underscore.js"></script>
  <script type="text/javascript" src="default.js"></script>
  
@@ -14,7 +15,7 @@
 	<div class="doc">
 		<header class="hd">
 			<h1 class="logo">coDEsign</h1>
-			<div id="searchModule">=
+			<div id="searchModule">
 			<script type="text/template" id="searchTemplate">
 			<div>
 				<form method="post" action="." id="searchForm">
@@ -109,7 +110,35 @@
 					<p><a href="#" class="btn">Add decoration</a></p>
 					<ul>
 						<% _.each(backgrounds, function(bg) { %>
-						<li><%=bg.image %></li>
+						<li>
+							<div style="background-image:<%=bg.image %>;" class="bgThumb"></div> 
+							<select name="background-repeat">
+								<option value="">--- not set ---</option>
+								<option<% if(bg.repeat == 'no-repeat') {%> selected="selected"<%}%>>no-repeat</option>
+								<option<% if(bg.repeat == 'repeat-x') {%> selected="selected"<%}%>>repeat-x</option>
+								<option<% if(bg.repeat == 'repeat-y') {%> selected="selected"<%}%>>repeat-y</option>
+								<option<% if(bg.repeat == 'repeat') {%> selected="selected"<%}%>>repeat</option>
+							</select> 
+							<select name="background-origin">
+								<option value="">--- not set ---</option>
+								<option<% if(bg.origin == 'padding-box') {%> selected="selected"<%}%>>padding-box</option>
+								<option<% if(bg.origin == 'border-box') {%> selected="selected"<%}%>>border-box</option>
+								<option<% if(bg.origin == 'content-box') {%> selected="selected"<%}%>>content-box</option>
+							</select> 
+							<select name="background-attachment">
+								<option value="">--- not set ---</option>
+								<option<% if(bg.attachment == 'scroll') {%> selected="selected"<%}%>>scroll</option>
+								<option<% if(bg.attachment == 'fixed') {%> selected="selected"<%}%>>fixed</option>
+								<option></option>
+							</select> 
+							<select name="background-clip">
+								<option value="">--- not set ---</option>
+								<option<% if(bg.clip == 'padding-box') {%> selected="selected"<%}%>>padding-box</option>
+								<option<% if(bg.clip == 'border-box') {%> selected="selected"<%}%>>border-box</option>
+								<option<% if(bg.clip == 'content-box') {%> selected="selected"<%}%>>content-box</option>
+								<option></option>
+							</select>
+						</li>
 						<% }); %>
 					</ul>
 					

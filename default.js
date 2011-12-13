@@ -172,6 +172,7 @@ KeyManager.prototype = {
 	}
 };
 
+
 // style modes
 LAYOUT = 0, DECORATION = 1, TEXT = 2;
 
@@ -329,8 +330,7 @@ Rule.prototype = {
 
 function Background(settings) {
 	this.image = settings.image,
-	this.repeatX = settings.repeatX,
-	this.repeatY = settings.repeatY,
+	this.repeat = settings.repeat,
 	this.attachment = settings.attachment,
 	this.positionX = settings.positionX,
 	this.positionY = settings.positionY,
@@ -364,26 +364,15 @@ Gradient.prototype = {
 	toString: function() {
 		var parts = [this.start];
 		if (this.shapeSize != undefined) parts.push(this.shapeSize);
-		parts.extend(this.colors);
-		return '-webkit-' + this.type + '(' + parts.join(',') + ')';
-	},
-};
-
-function Color(settings) {
-	this.r = settings.red,
-	this.g = settings.green,
-	this.b = settings.blue,
-	this.h = settings.hue,
-	this.s = settings.saturation,
-	this.l = settings.lightness,
-	this.a = settings.alpha,
-	this.hex = settings.hex,
-	this.type = settings.type,
-	this.name = settings.name;
-}
-Color.prototype = {
-	toString: function() {
-		return '';
+		var colors = [];
+		for(var i=0, clrs=this.colors, len=clrs.length; i<len; i++) {
+			console.log(clrs[i]);
+			console.log(clrs[i].toString());
+			colors.push(clrs[i].toString());
+		}
+		parts.push.apply(parts, colors);
+		
+		return '-webkit-' + this.type + '(' + parts.toString() + ')';
 	},
 };
 
@@ -555,7 +544,8 @@ PropertiesModule.prototype = {
 			var bg = backgrounds[i],
 				type = bg.type;
 			if (type == 'url') {
-				obs.push(bg[type][0]);
+				var image = new ImageUrl(bg[type][0]);
+				obs.push(image);
 				
 			} else if (type.indexOf('linear-gradient') > -1) {
 				var parts = bg[type],
@@ -578,40 +568,13 @@ PropertiesModule.prototype = {
 	getColors: function(arr) {
 		var colors = [];
 		for (var i=0, len=arr.length; i<len; i++) {
-			var data = arr[i],
-				settingsObj = {};
+			var data = arr[i];
 			if (typeof(data) == 'string') {
-				settingsObj.name = data;
-				
-			} else if (data.type == 'rgb') {
-				settingsObj = {
-					red: data['rgb'][0],
-					green: data['rgb'][1],
-					blue: data['rgb'][2]
-				}
-			} else if (data.type == 'rgba') {
-				settingsObj = {
-					red: data['rgba'][0],
-					green: data['rgba'][1],
-					blue: data['rgba'][2],
-					alpha: data['rgba'][3]
-				}
-			} else if (data.type == 'hsl') {
-				settingsObj = {
-					hue: data['hsl'][0],
-					saturation: data['hsl'][1],
-					lightness: data['hsl'][2]
-				}
-			} else if (data.type == 'hsla') {
-				settingsObj = {
-					hue: data['hsla'][0],
-					saturation: data['hsla'][1],
-					lightness: data['hsla'][2],
-					alpha: data['hsla'][3]
-				}
+				colors.push($.Color(data));
+			} else {
+				var type = data.type;
+				colors.push($.Color(data[type], type.toUpperCase()));
 			}
-			settingsObj.type = data.type;
-			colors.push( new Color(settingsObj) );
 		}
 		return colors;
 	},

@@ -182,6 +182,13 @@ li:hover .sheet {
 .strike {
 	text-decoration: line-through;
 }
+.bgThumb {
+	background-size:contain;
+	background-repeat:no-repeat;
+	width:70px;
+	height:50px;
+}
+
 .controls, .box, .pad {
 	position:absolute;
 }
