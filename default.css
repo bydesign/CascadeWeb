@@ -183,8 +183,8 @@ li:hover .sheet {
 	text-decoration: line-through;
 }
 .bgThumb {
-	background-size:contain;
-	background-repeat:no-repeat;
+	background-size:cover, auto;
+	background-repeat:no-repeat, repeat;
 	width:70px;
 	height:50px;
 }

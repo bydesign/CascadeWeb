@@ -440,6 +440,12 @@ $.Color.fn = $.Color.prototype = {
 		var util = this.util();
 		return util.hasOwnProperty('toString') ? util.toString(this) : this.to('RGB').toString();
 	},
+
+	toCSS: function() {
+		if ( !this.space ) { return ''; }
+		var util = this.util();
+		return util.hasOwnProperty('toCSS') ? util.toCSS(this) : this.to('RGB').toCSS();
+	},
 	
 	join: [].join,
 	push: [].push

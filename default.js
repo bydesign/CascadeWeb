@@ -321,7 +321,7 @@ Rule.prototype = {
 		var parts = str.split(','),
 			val;
 		if (parts.length > index) val = parts[index];
-		else val = parts[0];
+		else val = parts[ index % parts.length ];
 		val = $.trim(val);
 		
 		return (val == 'initial') ? undefined : val;
@@ -366,12 +366,9 @@ Gradient.prototype = {
 		if (this.shapeSize != undefined) parts.push(this.shapeSize);
 		var colors = [];
 		for(var i=0, clrs=this.colors, len=clrs.length; i<len; i++) {
-			console.log(clrs[i]);
-			console.log(clrs[i].toString());
-			colors.push(clrs[i].toString());
+			colors.push(clrs[i].toCSS());
 		}
 		parts.push.apply(parts, colors);
-		
 		return '-webkit-' + this.type + '(' + parts.toString() + ')';
 	},
 };
@@ -524,8 +521,7 @@ PropertiesModule.prototype = {
 		for (var i=0, len=bgs.length; i<len; i++) {
 			this.backgrounds.push(new Background({
 				image: bgs[i],
-				repeatX: rule.getBgProp('background-repeat-x', i),
-				repeatY: rule.getBgProp('background-repeat-y', i),
+				repeat: rule.getBgProp('background-repeat', i),
 				attachment: rule.getBgProp('background-attachment', i),
 				positionX: rule.getBgProp('background-position-x', i),
 				positionY: rule.getBgProp('background-position-y', i),
@@ -572,8 +568,7 @@ PropertiesModule.prototype = {
 			if (typeof(data) == 'string') {
 				colors.push($.Color(data));
 			} else {
-				var type = data.type;
-				colors.push($.Color(data[type], type.toUpperCase()));
+				colors.push($.Color(data[data.type]));
 			}
 		}
 		return colors;
