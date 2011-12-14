@@ -185,28 +185,62 @@ li:hover .sheet {
 .bgThumb {
 	background-size:cover, auto;
 	background-repeat:no-repeat, repeat;
-	width:70px;
-	height:80px;
+	width:40px;
+	height:30px;
 	float:left;
 	margin-top:3px;
 	margin-left:-80px;
 	border-radius:5px;
+	-webkit-transition:all .2s ease-in-out;
+	margin-top:-27px;
+}
+.selected .bgThumb {
+	width:70px;
+	height:80px;
+	margin-top:0;
 }
 .bgs li {
 	padding-left:80px;
 	position:relative;
+	height:40px;
+	overflow:hidden;
+	border-radius:5px;
 }
+.bgs li.selected {
+	padding-left:90px;
+	height:135px;
+	background-color:#222;
+}
+.bgLabel { display:none; }
+.selected bgLabel { display:inline; }
 .bgs h3 {
-	margin-left:-80px;
+	margin-left:-30px;
 	margin-bottom:5px;
-	width:255px;
+	width:205px;
 	overflow:hidden;
 	text-overflow:ellipsis;
 	white-space:nowrap;
 }
+.bgs .selected h3 {
+	margin-left:-80px;
+	width:255px;
+}
 .bgs .rem {
-	top:8px;
+	top:10px;
+	display:none;
+	margin-top:0;
+}
+.bgs .selected .rem {
 	display:block;
+}
+.bgs .edit {
+	position:absolute;
+	top:10px;
+	right:5px;
+}
+.bgs .selected .edit { display:none; }
+.bgControls {
+	padding-top:4px;
 }
 
 .controls, .box, .pad {

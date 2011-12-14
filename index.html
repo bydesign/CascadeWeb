@@ -110,10 +110,12 @@
 					<p><a href="#" class="btn">Add</a></p>
 					<ul class="bgs">
 						<% _.each(backgrounds, function(bg) { %>
-						<li id="bgi<%=bg.id%>">
+						<li id="bgi<%=bg.id%>"<% if(bg.id==bgId) { %> class="selected"<%}%>>
 							<a href="#" class="rem">x</a>
-							<h3>background: <%=bg.image.getName() %></h3>
+							<span class="edit">edit</span>
+							<h3><span class="bgLabel">background: </span><span class="bgName"><%=bg.image.getName() %></span></h3>
 							<div style="background-image:<%=bg.image %>, url(layout/grid.png);" class="bgThumb"></div> 
+							<div class="bgControls">
 							repeat: <select name="repeat">
 								<option value="">--- not set ---</option>
 								<option<% if(bg.repeat == 'no-repeat') {%> selected="selected"<%}%>>no-repeat</option>
@@ -140,6 +142,7 @@
 								<option<% if(bg.clip == 'content-box') {%> selected="selected"<%}%>>content-box</option>
 								<option></option>
 							</select>
+							</div>
 						</li>
 						<% }); %>
 					</ul>

@@ -187,12 +187,14 @@ function Dispatch(doc) {
 		'modifyRule': [],
 		'selectRule': [],
 		'selectElement': [],
+		'selectBackground': [],
 		'changeStyleMode': [],
 		'search': [],
 	},
 	this.styleMode = LAYOUT, // LAYOUT = 0, DECORATION = 1, TEXT = 2
 	this.selectedRule,
 	this.selectedElement,
+	this.selectedBackground,
 	this.$selectedElement,
 	this.rulesDict = {};
 	
@@ -219,6 +221,9 @@ function Dispatch(doc) {
 	this.listen('selectElement', function(el) {
 		this.selectedElement = el;
 		this.$selectedElement = $(el);
+	});
+	this.listen('selectBackground', function(bg) {
+		this.selectedBackground = bg;
 	});
 	this.listen('changeStyleMode', function(mode) {
 		this.styleMode = mode;
@@ -490,12 +495,14 @@ function PropertiesModule(dispatch) {
 	dispatch.listen('selectElement', renderPropertiesPanel);
 	dispatch.listen('selectRule', renderPropertiesPanel);
 	dispatch.listen('changeStyleMode', renderPropertiesPanel);
+	dispatch.listen('selectBackground', renderPropertiesPanel);
 }
 PropertiesModule.prototype = {
 	render: function() {
 		var disp = this.dispatch,
 			allRules = disp.rules,
-			rules = disp.getElementRules();
+			rules = disp.getElementRules(),
+			selBg = disp.selectedBackground;
 			
 		this.getBackgrounds();
 		var $rendered = $(this.template( {
@@ -504,6 +511,7 @@ PropertiesModule.prototype = {
 			curMode: disp.styleMode,
 			properties: disp.StyleAttributes[disp.styleMode].properties,
 			backgrounds: this.backgrounds,
+			bgId: (selBg != undefined) ? selBg.id : undefined,
 		} ));
 		
 		var that = this;
@@ -532,6 +540,13 @@ PropertiesModule.prototype = {
 				$this.siblings('.'+activeClass).removeClass(activeClass);
 				$this.addClass(activeClass);
 			}
+		}).end().find('.bgs li').click(function() {
+			var $this = $(this),
+				isSelected = $this.hasClass('selected'),
+				id = Number( $this.attr('id').substr(3) ),
+				selBg = disp.selectedBackground;
+			var selected = (selBg != undefined && id == selBg.id) ? undefined : that.backgrounds[id];
+			disp.call('selectBackground', selected);
 		}).end().find('.bgs select').change(function() {
 			var $this = $(this),
 				id = Number( $this.parent().attr('id').substr(3) ),
@@ -546,6 +561,9 @@ PropertiesModule.prototype = {
 		});
 		
 		this.$el.html($rendered);
+	},
+	toggleBgSelect: function(bg) {
+		
 	},
 	removeBg: function(i) {
 		this.backgrounds.splice(i,1);
@@ -702,6 +720,7 @@ function HandleModule(dispatch) {
 	dispatch.listen('selectRule', updateControls);
 	dispatch.listen('modifyStyle', updateControls);
 	dispatch.listen('modifyStyles', updateControls);
+	dispatch.listen('selectBackground', updateControls);
 	
 	dispatch.listen('selectElement', function() {
 		that.$doc.find('.hover').removeClass('hover');
@@ -904,6 +923,7 @@ HandleModule.prototype = {
 	},
 	// make controls align with selected element
 	update: function() {
+		console.log('updateControls');
 		var el = this.dispatch.selectedElement,
 			$el = this.dispatch.$selectedElement,
 			getStyleNum = document.getStyleNum,
