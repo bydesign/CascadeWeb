@@ -329,6 +329,7 @@ Rule.prototype = {
 };
 
 function Background(settings) {
+	this.id = settings.id,
 	this.image = settings.image,
 	this.repeat = settings.repeat,
 	this.attachment = settings.attachment,
@@ -340,7 +341,22 @@ function Background(settings) {
 }
 Background.prototype = {
 	toString: function() {
-		return '';
+		var arr = [];
+		//http://www.w3schools.com/cssref/css3_pr_background.asp
+		//position size repeat origin clip attachment image
+		if (this.positionX != undefined) arr.push(this.positionX);
+		if (this.positionY != undefined) arr.push(this.positionY);
+		//if (this.size != undefined) arr.push(this.size);	// this isn't supported in shorthand yet
+		if (this.repeat != undefined) arr.push(this.repeat);
+		if (this.origin != undefined) arr.push(this.origin);
+		if (this.clip != undefined) arr.push(this.clip);
+		if (this.attachment != undefined) arr.push(this.attachment);
+		arr.push(this.image);
+		return arr.join(' ');
+	},
+	change: function(prop, val) {
+		if (val == '') val = undefined;
+		this[prop] = val;
 	},
 };
 
@@ -350,6 +366,10 @@ function ImageUrl(url) {
 ImageUrl.prototype = {
 	toString: function() {
 		return 'url(' + this.url + ')';
+	},
+	getName: function() {
+		var urlParts = this.url.split('/');
+		return urlParts[urlParts.length-1];
 	},
 };
 
@@ -370,6 +390,9 @@ Gradient.prototype = {
 		}
 		parts.push.apply(parts, colors);
 		return '-webkit-' + this.type + '(' + parts.toString() + ')';
+	},
+	getName: function() {
+		return this.type;
 	},
 };
 
@@ -470,7 +493,7 @@ function PropertiesModule(dispatch) {
 }
 PropertiesModule.prototype = {
 	render: function() {
-		var disp = document.CdDispatch,
+		var disp = this.dispatch,
 			allRules = disp.rules,
 			rules = disp.getElementRules();
 			
@@ -483,6 +506,7 @@ PropertiesModule.prototype = {
 			backgrounds: this.backgrounds,
 		} ));
 		
+		var that = this;
 		$rendered.find('.selectors > li').click(function() {
 			var id = Number( $(this).attr('id').replace('rule','') );
 			disp.call('selectRule', id);
@@ -508,9 +532,43 @@ PropertiesModule.prototype = {
 				$this.siblings('.'+activeClass).removeClass(activeClass);
 				$this.addClass(activeClass);
 			}
+		}).end().find('.bgs select').change(function() {
+			var $this = $(this),
+				id = Number( $this.parent().attr('id').substr(3) ),
+				bg = that.backgrounds[id];
+			bg.change($this.attr('name'), $this.val());
+			that.updateBgCSS();
+		}).end().find('.bgs .rem').click(function(evt) {
+			evt.preventDefault();
+			var $this = $(this),
+				id = Number( $this.parent().attr('id').substr(3) );
+			that.removeBg(id);
 		});
 		
 		this.$el.html($rendered);
+	},
+	removeBg: function(i) {
+		this.backgrounds.splice(i,1);
+		this.updateBgCSS();
+		this.render();
+	},
+	updateBgCSS: function() {
+		var sizes = [];
+		for(var i=0, bgs=this.backgrounds, len=bgs.length; i<len; i++) {
+			var size = bgs[i].size;
+			if (size != undefined) sizes.push(size);
+		}
+		this.dispatch.call('modifyStyles', {
+			'background': this.getBgString(),
+			'background-size': sizes.join(','),
+		});
+	},
+	getBgString: function() {
+		var bgArr = [];
+		for (var i=0, bgs=this.backgrounds, len=bgs.length; i<len; i++) {
+			bgArr.push(bgs[i].toString());
+		}
+		return bgArr.join(',');
 	},
 	getBackgrounds: function() {
 		this.backgrounds = [];
@@ -520,6 +578,7 @@ PropertiesModule.prototype = {
 		var bgs = this.getBgImages(bgStr);
 		for (var i=0, len=bgs.length; i<len; i++) {
 			this.backgrounds.push(new Background({
+				id: i,
 				image: bgs[i],
 				repeat: rule.getBgProp('background-repeat', i),
 				attachment: rule.getBgProp('background-attachment', i),
