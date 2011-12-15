@@ -292,7 +292,7 @@ function Rule(rule, manager, i) {
 }
 Rule.prototype = {
 	set: function(attr, val) {
-		if (val == undefined) this.style.removeProperty(attr);
+		if (val == undefined || val == null || val == '') this.style.removeProperty(attr);
 		else this.style.setProperty(attr, val);
 	},
 	get: function(attr) {
@@ -349,8 +349,8 @@ Background.prototype = {
 		var arr = [];
 		//http://www.w3schools.com/cssref/css3_pr_background.asp
 		//position size repeat origin clip attachment image
-		if (this.positionX != undefined) arr.push(this.positionX);
-		if (this.positionY != undefined) arr.push(this.positionY);
+		//if (this.positionX != undefined) arr.push(this.positionX);
+		//if (this.positionY != undefined) arr.push(this.positionY);
 		//if (this.size != undefined) arr.push(this.size);	// this isn't supported in shorthand yet
 		if (this.repeat != undefined) arr.push(this.repeat);
 		if (this.origin != undefined) arr.push(this.origin);
@@ -542,7 +542,8 @@ PropertiesModule.prototype = {
 				$this.siblings('.'+activeClass).removeClass(activeClass);
 				$this.addClass(activeClass);
 			}
-		}).end().find('.bgs li').click(function() {
+		}).end().find('.bgs li').click(function(evt) {
+			if (evt.target.tagName == 'select') return;
 			var $this = $(this),
 				isSelected = $this.hasClass('selected'),
 				id = Number( $this.attr('id').substr(3) ),
@@ -569,7 +570,9 @@ PropertiesModule.prototype = {
 			selectedClass = 'selected',
 			$el = this.$el;
 		$el.find('ul.bgs li.selected').removeClass(selectedClass);
-		$el.find('#bgi'+bg.id).addClass(selectedClass);
+		if (bg != undefined) {
+			$el.find('#bgi'+bg.id).addClass(selectedClass);
+		}
 	},
 	removeBg: function(i) {
 		this.backgrounds.splice(i,1);
@@ -577,22 +580,20 @@ PropertiesModule.prototype = {
 		this.render();
 	},
 	updateBgCSS: function() {
-		var sizes = [];
-		for(var i=0, bgs=this.backgrounds, len=bgs.length; i<len; i++) {
-			var size = bgs[i].size;
-			if (size != undefined) sizes.push(size);
+		var bgArr = [],
+			posArr = [],
+			sizeArr = [];
+		for (var i=0, bgs=this.backgrounds, len=bgs.length; i<len; i++) {
+			var bg = bgs[i];
+			bgArr.push(bg.toString());
+			if (bg.positionX != undefined) posArr.push(bg.positionX + ' ' + bg.positionY);
+			if (bg.size != undefined) sizeArr.push(bg.size);
 		}
 		this.dispatch.call('modifyStyles', {
-			'background': this.getBgString(),
-			'background-size': sizes.join(','),
+			'background': bgArr.join(','),
+			'background-position': posArr.join(','),
+			'background-size': sizeArr.join(','),
 		});
-	},
-	getBgString: function() {
-		var bgArr = [];
-		for (var i=0, bgs=this.backgrounds, len=bgs.length; i<len; i++) {
-			bgArr.push(bgs[i].toString());
-		}
-		return bgArr.join(',');
 	},
 	getBackgrounds: function() {
 		this.backgrounds = [];
