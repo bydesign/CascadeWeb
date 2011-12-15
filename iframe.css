@@ -55,9 +55,17 @@ body {
 .block1 {
 	top:50px;
 	left:900px;
-	background-color:#ccc;
 	margin:10px 8px 15px 30px;
 	padding:10px 8px 15px 30px;
+	background-image: url(http://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Slug_pic.jpg/220px-Slug_pic.jpg),
+				url(http://upload.wikimedia.org/wikipedia/commons/thumb/5/58/Slug_in_VanDusen_Botanical_Garden.jpg/220px-Slug_in_VanDusen_Botanical_Garden.jpg);
+	background-repeat:no-repeat;
+	background-color:#ccc;
+	background-position:100% 100%, 0 0;
+	background-size: 70px 50px, 25%, 100%;
+	
+	box-shadow: 2px 2px 5px 5px yellow,
+				0 0 5px red inset;
 }
 .block2 {
 	top:200px;

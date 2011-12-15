@@ -495,7 +495,9 @@ function PropertiesModule(dispatch) {
 	dispatch.listen('selectElement', renderPropertiesPanel);
 	dispatch.listen('selectRule', renderPropertiesPanel);
 	dispatch.listen('changeStyleMode', renderPropertiesPanel);
-	dispatch.listen('selectBackground', renderPropertiesPanel);
+	dispatch.listen('selectBackground', function() {
+		that.update();
+	});
 }
 PropertiesModule.prototype = {
 	render: function() {
@@ -562,8 +564,12 @@ PropertiesModule.prototype = {
 		
 		this.$el.html($rendered);
 	},
-	toggleBgSelect: function(bg) {
-		
+	update: function() {
+		var bg = this.dispatch.selectedBackground,
+			selectedClass = 'selected',
+			$el = this.$el;
+		$el.find('ul.bgs li.selected').removeClass(selectedClass);
+		$el.find('#bgi'+bg.id).addClass(selectedClass);
 	},
 	removeBg: function(i) {
 		this.backgrounds.splice(i,1);

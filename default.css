@@ -182,6 +182,9 @@ li:hover .sheet {
 .strike {
 	text-decoration: line-through;
 }
+.bgThumb, .bgs li, .bgs h3 {
+	-webkit-transition:all .2s ease-in-out;
+}
 .bgThumb {
 	background-size:cover, auto;
 	background-repeat:no-repeat, repeat;
@@ -191,7 +194,6 @@ li:hover .sheet {
 	margin-top:3px;
 	margin-left:-80px;
 	border-radius:5px;
-	-webkit-transition:all .2s ease-in-out;
 	margin-top:-27px;
 }
 .selected .bgThumb {
@@ -223,7 +225,7 @@ li:hover .sheet {
 }
 .bgs .selected h3 {
 	margin-left:-80px;
-	width:255px;
+	width:245px;
 }
 .bgs .rem {
 	top:10px;
