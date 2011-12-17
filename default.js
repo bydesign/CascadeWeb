@@ -401,6 +401,30 @@ Gradient.prototype = {
 	},
 };
 
+function Shadow(settings) {
+	this.posX = settings['posX'],
+	this.posY = settings['posY'],
+	this.blur = settings['blur'],
+	this.color = settings['color'],
+	this.spread = settings['spread'],
+	this.inset = (settings['inset'] == undefined) ? false : settings['inset'];
+}
+Shadow.prototype = {
+	toString: function() {
+		var parts = [posX, posY];
+		if (this.blur != undefined) parts.push(this.blur);
+		if (this.color != undefined) parts.push(this.color);
+		if (this.spreadX != undefined) parts.push(this.spreadX);
+		if (this.spreadY != undefined) parts.push(this.spreadY);
+		if (this.inset != undefined) parts.push(this.inset);
+		
+		return parts.join(' ');
+	},
+	getName: function() {
+		return this.type;
+	},
+};
+
 function SearchModule(dispatch) {
 	this.dispatch = dispatch;
 	this.$doc = dispatch.$doc;
@@ -486,6 +510,7 @@ function PropertiesModule(dispatch) {
 	this.$el = $('#propertiesModule');
 	this.template = _.template( $("#propertiesTemplate").html() );
 	this.backgrounds = [];
+	this.shadows = [];
 	
 	var that = this,
 		dispatch = this.dispatch;
@@ -600,7 +625,7 @@ PropertiesModule.prototype = {
 		var rule = this.dispatch.getSelectedRule();
 		var bgStr = rule.get('background-image');
 		if (bgStr == null) return; 
-		var bgs = this.getBgImages(bgStr);
+		var bgs = this.parseBgImages(bgStr);
 		for (var i=0, len=bgs.length; i<len; i++) {
 			this.backgrounds.push(new Background({
 				id: i,
@@ -614,8 +639,38 @@ PropertiesModule.prototype = {
 				size: rule.getBgProp('background-size', i),
 			}));
 		}
+		this.shadows = this.parseShadows(rule.get('box-shadow'));
 	},
-	getBgImages: function(str) {
+	parseShadows: function(str) {
+		var shadowArr = [],
+			shadows = str.reverse().split(/,(?=[a-z])/g),	// reverse string to mimic regex lookbehind
+			unitCount = 0;
+		for (var i=0, len=shadows.length; i<len; i++) {
+			var settings = {};
+			var shad = $.trim( shadows[i].reverse() );
+			var colorParts = shad.split(/[\(\)]/g);	// see if rgb color exists
+			var parts, color;
+			if (colorParts.length > 1) {
+				parts = $.trim(colorParts[2]).split(' ');
+				settings['color'] = $.Color(colorParts[1].split(', '));
+			} else {
+				parts = shad.split(' ');
+				settings['color'] = $.Color(parts[0]);
+				parts.shift();
+			}
+			if (parts[parts.length-1] == 'inset') {
+				settings['inset'] = true;
+				parts.pop();
+			}
+			settings['posX'] = parts[0];
+			settings['posY'] = parts[1];
+			if (parts.length > 2) settings['blur'] = parts[2];
+			if (parts.length > 3) settings['spread'] = parts[3];
+			shadowArr.push(new Shadow(settings));
+		}
+		return shadowArr;
+	},
+	parseBgImages: function(str) {
 		var backgrounds = this.split(str),
 			obs = [];
 			matchRegex = /([a-z-]+)\((.*)\)$/;
@@ -675,6 +730,10 @@ PropertiesModule.prototype = {
 			}
 		})()
 	},
+};
+
+String.prototype.reverse = function () {
+	return this.split('').reverse().join('');
 };
 
 function HandleModule(dispatch) {
