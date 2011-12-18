@@ -201,6 +201,13 @@ li:hover .sheet {
 	height:80px;
 	margin-top:0;
 }
+.thumbBox {
+	width:50%;
+	height:50%;
+	margin-top:25%;
+	margin-left:25%;
+	background-color:#ccc;
+}
 .bgs li {
 	padding-left:80px;
 	position:relative;

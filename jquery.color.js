@@ -89,6 +89,7 @@ $.color.RGB = {
 
 	// RGB values must be integers in the range 0-255
 	toHEX: function ( rgb ) {
+		console.log(rgb);
 		return '#' + (0x1000000 + rgb[0]*0x10000 + rgb[1]*0x100 + rgb[2]).toString(16).slice(-6);
 	},
 

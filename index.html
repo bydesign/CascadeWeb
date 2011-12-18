@@ -6,7 +6,6 @@
  <link href="default.css" media="all" rel="stylesheet">
  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.10/jquery-ui.min.js"></script>
- <script type="text/javascript" src="jquery.color.js"></script>
  <script type="text/javascript" src="underscore.js"></script>
  <script type="text/javascript" src="default.js"></script>
  
@@ -142,6 +141,20 @@
 								<option<% if(bg.clip == 'content-box') {%> selected="selected"<%}%>>content-box</option>
 								<option></option>
 							</select>
+							</div>
+						</li>
+						<% }); %>
+						<% _.each(shadows, function(shad) { %>
+						<li id="shi<%=shad.id%>"<% if(shad.id==bgId) { %> class="selected"<%}%>>
+							<a href="#" class="rem">x</a>
+							<span class="edit">edit</span>
+							<h3><span class="shLabel">box-shadow</span></h3>
+							<div style="background:url(layout/grid.png); background-size:auto;" class="bgThumb">
+								<div class="thumbBox" style="box-shadow:<%=shad %>;"></div>
+							</div> 
+							<div class="shControls">
+								<label>color:</label> <input type="color" name="color" value="<%=shad.color.hex %>" /><br>
+								<input type="checkbox" name="inset" <% if (shad.inset) { %> checked<%}%> /> <label>inset</label>
 							</div>
 						</li>
 						<% }); %>
