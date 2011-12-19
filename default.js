@@ -342,7 +342,8 @@ function Background(settings) {
 	this.positionY = settings.positionY,
 	this.origin = settings.origin,
 	this.clip = settings.clip,
-	this.size = settings.size;
+	this.size = settings.size,
+	this.type = 'background';
 }
 Background.prototype = {
 	toString: function() {
@@ -391,13 +392,16 @@ Gradient.prototype = {
 		if (this.shapeSize != undefined) parts.push(this.shapeSize);
 		var colors = [];
 		for(var i=0, clrs=this.colors, len=clrs.length; i<len; i++) {
-			colors.push(clrs[i].toCSS());
+			colors.push(clrs[i]);
 		}
 		parts.push.apply(parts, colors);
 		return '-webkit-' + this.type + '(' + parts.toString() + ')';
 	},
 	getName: function() {
 		return this.type;
+	},
+	change: function(prop, val) {
+		this[prop] = val;
 	},
 };
 
@@ -406,23 +410,27 @@ function Shadow(settings) {
 	this.posX = settings['posX'],
 	this.posY = settings['posY'],
 	this.blur = settings['blur'],
-	this.color = settings['color'],
 	this.spread = settings['spread'],
+	this.color = settings['color'],
 	this.inset = (settings['inset'] == undefined) ? false : settings['inset'];
+	this.type = settings['type'];
 }
 Shadow.prototype = {
 	toString: function() {
 		var parts = [this.posX, this.posY];
 		if (this.blur != undefined) parts.push(this.blur);
+		if (this.spread != undefined) parts.push(this.spread);
 		if (this.color != undefined) parts.push(this.color);
-		if (this.spreadX != undefined) parts.push(this.spreadX);
-		if (this.spreadY != undefined) parts.push(this.spreadY);
 		if (this.inset) parts.push('inset');
 		
 		return parts.join(' ');
 	},
 	getName: function() {
 		return this.type;
+	},
+	change: function(prop, val) {
+		console.log(prop + ': ' + val);
+		this[prop] = val;
 	},
 };
 
@@ -729,8 +737,8 @@ PropertiesModule.prototype = {
 			
 		this.decorations = [];
 		this.backgrounds = this.parseBgImages(rule.get('background-image'), rule);
-		this.shadows = this.parseShadows(rule.get('box-shadow'));
-		this.textShadows = this.parseShadows(rule.get('text-shadow'));
+		this.shadows = this.parseShadows(rule.get('box-shadow'), 'box-shadow');
+		this.textShadows = this.parseShadows(rule.get('text-shadow'), 'text-shadow');
 		
 		var $rendered = $(this.template( {
 			rules: rules,
@@ -770,19 +778,24 @@ PropertiesModule.prototype = {
 				$this.addClass(activeClass);
 			}
 		}).end().find('.bgs li').click(function(evt) {
-			if (evt.target.tagName == 'select') return;
+			var tagName = evt.target.tagName;
+			if (tagName == 'SELECT' || tagName == 'INPUT') return;
 			var $this = $(this),
 				isSelected = $this.hasClass('selected'),
 				id = Number( $this.attr('id').substr(3) ),
 				selBg = disp.selectedDecoration;
 			var selected = (selBg != undefined && id == selBg.id) ? undefined : that.decorations[id];
 			disp.call('selectBackground', selected);
-		}).end().find('.bgs select').change(function() {
+		}).end().find('.bgs select, .bgs input').change(function() {
 			var $this = $(this),
-				id = Number( $this.parent().attr('id').substr(3) ),
-				bg = that.backgrounds[id];
-			bg.change($this.attr('name'), $this.val());
-			that.updateBgCSS();
+				id = Number( $this.parents('.bgs > li').attr('id').substr(3) ),
+				dec = that.decorations[id],
+				val = $this.val();
+			if ($this.attr('type') == 'checkbox') val = $this.is(':checked');
+			dec.change($this.attr('name'), val);
+			if (dec.type == 'background') that.updateBgCSS();
+			if (dec.type == 'box-shadow') that.updateBoxShadows();
+			if (dec.type == 'text-shadow') that.updateTextShadows();
 		}).end().find('.bgs .rem').click(function(evt) {
 			evt.preventDefault();
 			var $this = $(this),
@@ -806,6 +819,12 @@ PropertiesModule.prototype = {
 		this.updateBgCSS();
 		this.render();
 	},
+	updateBoxShadows: function() {
+		this.dispatch.call('modifyStyle', 'box-shadow', this.shadows.join(','));
+	},
+	updateTextShadows: function() {
+		this.dispatch.call('modifyStyle', 'text-shadow', this.textShadows.join(','));
+	},
 	updateBgCSS: function() {
 		var bgArr = [],
 			posArr = [],
@@ -822,7 +841,7 @@ PropertiesModule.prototype = {
 			'background-size': sizeArr.join(','),
 		});
 	},
-	parseShadows: function(str) {
+	parseShadows: function(str, type) {
 		if (str == null) return [];
 		var shadowArr = [],
 			shadows = str.reverse().split(/,(?=[a-z])/g),	// reverse string to mimic regex lookbehind
@@ -846,6 +865,7 @@ PropertiesModule.prototype = {
 				settings['inset'] = true;
 				parts.pop();
 			}
+			settings['type'] = type;
 			settings['posX'] = parts[0];
 			settings['posY'] = parts[1];
 			if (parts.length > 2) settings['blur'] = parts[2];
@@ -853,7 +873,7 @@ PropertiesModule.prototype = {
 			shadowArr.push(new Shadow(settings));
 		}
 		this.decorations.push.apply(this.decorations, shadowArr);
-		return shadowArr;
+		return shadowArr.reverse();
 	},
 	parseBgImages: function(str, rule) {
 		if (str == null) return [];
@@ -1191,7 +1211,6 @@ HandleModule.prototype = {
 	},
 	// make controls align with selected element
 	update: function() {
-		console.log('updateControls');
 		var el = this.dispatch.selectedElement,
 			$el = this.dispatch.$selectedElement,
 			getStyleNum = document.getStyleNum,

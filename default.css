@@ -182,7 +182,7 @@ li:hover .sheet {
 .strike {
 	text-decoration: line-through;
 }
-.bgThumb, .bgs li, .bgs h3 {
+.bgThumb, .bgs li, .bgs h3, .thumbText {
 	-webkit-transition:all .2s ease-in-out;
 }
 .bgThumb {
@@ -207,17 +207,19 @@ li:hover .sheet {
 	margin-top:25%;
 	margin-left:25%;
 	background-color:#ccc;
+	overflow:hidden;
 }
 .thumbText {
-	margin-top:10%;
 	font-size:24px;
 	font-family: Georgia, Times, serif;
 	color:#000;
 	text-align:center;
+	-webkit-transform: scale(2);
+	transform: scale(2);
+	height:35px;
 }
 .selected .thumbText {
-	margin-top:20%;
-	font-size:40px;
+	font-size:45px;
 }
 .bgs li {
 	padding-left:80px;
@@ -388,10 +390,6 @@ li:hover .sheet {
     margin-left: -10px;
     margin-top: -10px;
 }
-/*.right.bottom.size {
-    margin-right: -10px;
-    margin-bottom: -10px;
-}*/
 .right.bottom.margin {
     margin-right: -20px;
     margin-bottom: -20px;
@@ -403,12 +401,6 @@ li:hover .sheet {
     background-color: rgba(0,0,0,0);
     border: none;
 }
-/*.handle.subhandle:hover {
-    background-color: rgba(0,0,0,.3);
-}
-.handle.subhandle.drag {
-    background-color: rgba(0,0,0,.5);
-}*/
 .handle.subhandle.left, .handle.subhandle.right {
     top: 15px;
     bottom: 15px;
@@ -428,12 +420,6 @@ li:hover .sheet {
 .handle.subhandle.margin.top { top: -10px; }
 .handle.subhandle.margin.bottom { bottom: -10px; }
 
-/*.handle.defined {
-	background-color:rgba(0,255,0,.2);
-}*/
-/*.handle.defined.subhandle:hover, .handle.defined.subhandle.drag {
-	background-color:rgba(0,255,0,.5);
-}*/
 .handle .labelWrap {
 	position:absolute;
 	top:10px;
