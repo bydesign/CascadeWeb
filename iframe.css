@@ -110,6 +110,7 @@ body {
 }
 .content {
 	padding:20px;
+	text-shadow: 1px 1px mediumspringgreen;
 }
 .right {
 	float:right;

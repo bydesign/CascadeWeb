@@ -109,7 +109,7 @@
 					<p><a href="#" class="btn">Add</a></p>
 					<ul class="bgs">
 						<% _.each(backgrounds, function(bg) { %>
-						<li id="bgi<%=bg.id%>"<% if(bg.id==bgId) { %> class="selected"<%}%>>
+						<li id="dec<%=bg.id%>"<% if(bg.id==bgId) { %> class="selected"<%}%>>
 							<a href="#" class="rem">x</a>
 							<span class="edit">edit</span>
 							<h3><span class="bgLabel">background: </span><span class="bgName"><%=bg.image.getName() %></span></h3>
@@ -145,16 +145,29 @@
 						</li>
 						<% }); %>
 						<% _.each(shadows, function(shad) { %>
-						<li id="shi<%=shad.id%>"<% if(shad.id==bgId) { %> class="selected"<%}%>>
+						<li id="dec<%=shad.id%>"<% if(shad.id==bgId) { %> class="selected"<%}%>>
 							<a href="#" class="rem">x</a>
 							<span class="edit">edit</span>
 							<h3><span class="shLabel">box-shadow</span></h3>
 							<div style="background:url(layout/grid.png); background-size:auto;" class="bgThumb">
 								<div class="thumbBox" style="box-shadow:<%=shad %>;"></div>
 							</div> 
-							<div class="shControls">
+							<div class="bgControls">
 								<label>color:</label> <input type="color" name="color" value="<%=shad.color.hex %>" /><br>
 								<input type="checkbox" name="inset" <% if (shad.inset) { %> checked<%}%> /> <label>inset</label>
+							</div>
+						</li>
+						<% }); %>
+						<% _.each(textShadows, function(shad) { %>
+						<li id="dec<%=shad.id%>"<% if(shad.id==bgId) { %> class="selected"<%}%>>
+							<a href="#" class="rem">x</a>
+							<span class="edit">edit</span>
+							<h3><span class="shLabel">text-shadow</span></h3>
+							<div style="background:url(layout/grid.png); background-size:auto;" class="bgThumb">
+								<div class="thumbText" style="text-shadow:<%=shad %>;">Aa</div>
+							</div> 
+							<div class="bgControls">
+								<label>color:</label> <input type="color" name="color" value="<%=shad.color.hex %>" />
 							</div>
 						</li>
 						<% }); %>

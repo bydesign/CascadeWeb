@@ -208,6 +208,17 @@ li:hover .sheet {
 	margin-left:25%;
 	background-color:#ccc;
 }
+.thumbText {
+	margin-top:10%;
+	font-size:24px;
+	font-family: Georgia, Times, serif;
+	color:#000;
+	text-align:center;
+}
+.selected .thumbText {
+	margin-top:20%;
+	font-size:40px;
+}
 .bgs li {
 	padding-left:80px;
 	position:relative;

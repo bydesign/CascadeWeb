@@ -194,7 +194,7 @@ function Dispatch(doc) {
 	this.styleMode = LAYOUT, // LAYOUT = 0, DECORATION = 1, TEXT = 2
 	this.selectedRule,
 	this.selectedElement,
-	this.selectedBackground,
+	this.selectedDecoration,
 	this.$selectedElement,
 	this.rulesDict = {};
 	
@@ -222,8 +222,8 @@ function Dispatch(doc) {
 		this.selectedElement = el;
 		this.$selectedElement = $(el);
 	});
-	this.listen('selectBackground', function(bg) {
-		this.selectedBackground = bg;
+	this.listen('selectBackground', function(dec) {
+		this.selectedDecoration = dec;
 	});
 	this.listen('changeStyleMode', function(mode) {
 		this.styleMode = mode;
@@ -402,6 +402,7 @@ Gradient.prototype = {
 };
 
 function Shadow(settings) {
+	this.id = settings['id'],
 	this.posX = settings['posX'],
 	this.posY = settings['posY'],
 	this.blur = settings['blur'],
@@ -703,6 +704,8 @@ function PropertiesModule(dispatch) {
 	this.template = _.template( $("#propertiesTemplate").html() );
 	this.backgrounds = [];
 	this.shadows = [];
+	this.textShadows = [];
+	this.decorations = [];
 	
 	var that = this,
 		dispatch = this.dispatch;
@@ -721,9 +724,14 @@ PropertiesModule.prototype = {
 		var disp = this.dispatch,
 			allRules = disp.rules,
 			rules = disp.getElementRules(),
-			selBg = disp.selectedBackground;
+			selBg = disp.selectedDecoration,
+			rule = this.dispatch.getSelectedRule();
 			
-		this.getBackgrounds();
+		this.decorations = [];
+		this.backgrounds = this.parseBgImages(rule.get('background-image'), rule);
+		this.shadows = this.parseShadows(rule.get('box-shadow'));
+		this.textShadows = this.parseShadows(rule.get('text-shadow'));
+		
 		var $rendered = $(this.template( {
 			rules: rules,
 			styles: allRules[disp.selectedRule].style,
@@ -731,6 +739,7 @@ PropertiesModule.prototype = {
 			properties: disp.StyleAttributes[disp.styleMode].properties,
 			backgrounds: this.backgrounds,
 			shadows: this.shadows,
+			textShadows: this.textShadows,
 			bgId: (selBg != undefined) ? selBg.id : undefined,
 		} ));
 		
@@ -765,8 +774,8 @@ PropertiesModule.prototype = {
 			var $this = $(this),
 				isSelected = $this.hasClass('selected'),
 				id = Number( $this.attr('id').substr(3) ),
-				selBg = disp.selectedBackground;
-			var selected = (selBg != undefined && id == selBg.id) ? undefined : that.backgrounds[id];
+				selBg = disp.selectedDecoration;
+			var selected = (selBg != undefined && id == selBg.id) ? undefined : that.decorations[id];
 			disp.call('selectBackground', selected);
 		}).end().find('.bgs select').change(function() {
 			var $this = $(this),
@@ -784,12 +793,12 @@ PropertiesModule.prototype = {
 		this.$el.html($rendered);
 	},
 	update: function() {
-		var bg = this.dispatch.selectedBackground,
+		var bg = this.dispatch.selectedDecoration,
 			selectedClass = 'selected',
 			$el = this.$el;
 		$el.find('ul.bgs li.selected').removeClass(selectedClass);
 		if (bg != undefined) {
-			$el.find('#bgi'+bg.id).addClass(selectedClass);
+			$el.find('#dec'+bg.id).addClass(selectedClass);
 		}
 	},
 	removeBg: function(i) {
@@ -813,37 +822,18 @@ PropertiesModule.prototype = {
 			'background-size': sizeArr.join(','),
 		});
 	},
-	getBackgrounds: function() {
-		this.backgrounds = [];
-		var rule = this.dispatch.getSelectedRule();
-		var bgStr = rule.get('background-image');
-		if (bgStr == null) return; 
-		var bgs = this.parseBgImages(bgStr);
-		for (var i=0, len=bgs.length; i<len; i++) {
-			this.backgrounds.push(new Background({
-				id: i,
-				image: bgs[i],
-				repeat: rule.getBgProp('background-repeat', i),
-				attachment: rule.getBgProp('background-attachment', i),
-				positionX: rule.getBgProp('background-position-x', i),
-				positionY: rule.getBgProp('background-position-y', i),
-				origin: rule.getBgProp('background-origin', i),
-				clip: rule.getBgProp('background-clip', i),
-				size: rule.getBgProp('background-size', i),
-			}));
-		}
-		this.shadows = this.parseShadows(rule.get('box-shadow'));
-		console.log(this.shadows);
-	},
 	parseShadows: function(str) {
+		if (str == null) return [];
 		var shadowArr = [],
 			shadows = str.reverse().split(/,(?=[a-z])/g),	// reverse string to mimic regex lookbehind
-			unitCount = 0;
+			unitCount = 0,
+			decLen = this.decorations.length;
 		for (var i=0, len=shadows.length; i<len; i++) {
 			var settings = {};
 			var shad = $.trim( shadows[i].reverse() );
 			var colorParts = shad.split(/[\(\)]/g);	// see if rgb color exists
 			var parts, color;
+			settings['id'] = i + decLen;
 			if (colorParts.length > 1) {
 				parts = $.trim(colorParts[2]).split(' ');
 				settings['color'] = new Color(colorParts[1].split(', '));
@@ -862,26 +852,31 @@ PropertiesModule.prototype = {
 			if (parts.length > 3) settings['spread'] = parts[3];
 			shadowArr.push(new Shadow(settings));
 		}
+		this.decorations.push.apply(this.decorations, shadowArr);
 		return shadowArr;
 	},
-	parseBgImages: function(str) {
+	parseBgImages: function(str, rule) {
+		if (str == null) return [];
 		var backgrounds = this.split(str),
 			obs = [];
-			matchRegex = /([a-z-]+)\((.*)\)$/;
+			matchRegex = /([a-z-]+)\((.*)\)$/,
+			decLen = this.decorations.length;
 		if (str == null) return null;
 		for (var i=0, len=backgrounds.length; i<len; i++) {
 			var bg = backgrounds[i],
-				type = bg.type;
+				type = bg.type,
+				image;
 			if (type == 'url') {
-				var image = new ImageUrl(bg[type][0]);
-				obs.push(image);
+				image = new ImageUrl(bg[type][0]);
+				//obs.push(image);
 				
 			} else if (type.indexOf('linear-gradient') > -1) {
 				var parts = bg[type],
 					start = parts[0],
 					colors = this.getColors( parts.slice(1, parts.length) ),
 					name = (type.indexOf('repeating') > -1) ? 'repeating-linear-gradient': 'linear-gradient';
-				obs.push( new Gradient(name, start, colors, undefined) );
+				//obs.push( new Gradient(name, start, colors, undefined) );
+				image = new Gradient(name, start, colors, undefined);
 				
 			} else if (type.indexOf('radial-gradient') > -1) {
 				var parts = bg[type],
@@ -889,9 +884,22 @@ PropertiesModule.prototype = {
 					end = parts[1],
 					colors = this.getColors( parts.slice(2, parts.length) ),
 					name = (type.indexOf('repeating') > -1) ? 'repeating-radial-gradient': 'radial-gradient';
-				obs.push( new Gradient(name, start, colors, end) );
+				//obs.push( new Gradient(name, start, colors, end) );
+				image = new Gradient(name, start, colors, end)
 			}
+			obs.push(new Background({
+				id: i + decLen,
+				image: image,
+				repeat: rule.getBgProp('background-repeat', i),
+				attachment: rule.getBgProp('background-attachment', i),
+				positionX: rule.getBgProp('background-position-x', i),
+				positionY: rule.getBgProp('background-position-y', i),
+				origin: rule.getBgProp('background-origin', i),
+				clip: rule.getBgProp('background-clip', i),
+				size: rule.getBgProp('background-size', i),
+			}));
 		}
+		this.decorations.push.apply(this.decorations, obs);
 		return obs;
 	},
 	getColors: function(arr) {
