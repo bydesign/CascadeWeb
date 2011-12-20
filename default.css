@@ -264,6 +264,9 @@ li:hover .sheet {
 .bgControls {
 	padding-top:4px;
 }
+.fontSearch {
+	width:260px;
+}
 
 .controls, .box, .pad {
 	position:absolute;

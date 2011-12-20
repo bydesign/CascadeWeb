@@ -710,10 +710,12 @@ function FontsModule(dispatch) {
 	this.template = _.template( $("#fontsTemplate").html() );
 	this.fonts = [];
 	this.$el;
+	this.results = [];
 	var that = this;
 	this.providers = {
 		google: {
 			getList: function() {
+				// https://www.googleapis.com/webfonts/v1/webfonts?key=AIzaSyB5M-9WhC6ZrGC9X53kUAZ-eSgaoKYAf4k
 				var api_key = 'AIzaSyB5M-9WhC6ZrGC9X53kUAZ-eSgaoKYAf4k';
 				$.getJSON('https://www.googleapis.com/webfonts/v1/webfonts?key='+api_key+'&callback=?', function(data, status) {
 					that.fonts = data.items;
@@ -735,11 +737,28 @@ FontsModule.prototype = {
 	},
 	render: function() {
 		this.$el = $('#fontsModule');
-		
+		var timer;
+		var that = this;
+		this.$search = $('#fontSearch').keyup(function(evt) {
+			if (timer != undefined) {
+				clearTimeout(timer);
+			}
+			var el = this;
+			timer = setTimeout(function() { that.search($(el).val()); }, 100);
+		});
 		var $rendered = $(this.template({
-			fonts: this.fonts.slice(0,10),
+			fonts: this.results,
 		}));
 		this.$el.html($rendered);
+	},
+	search: function(query) {
+		var results = [],
+			reg = new RegExp(query, 'i');;
+		for (var i=0, fonts=this.fonts, len=fonts.length; i<len; i++) {
+			if (fonts[i].family.search(reg) != -1) results.push(fonts[i]);
+		}
+		this.results = results;
+		this.render();
 	},
 };
 
