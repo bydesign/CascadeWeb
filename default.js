@@ -706,6 +706,43 @@ SearchModule.prototype = {
 	},
 };
 
+function FontsModule(dispatch) {
+	this.template = _.template( $("#fontsTemplate").html() );
+	this.fonts = [];
+	this.$el;
+	var that = this;
+	this.providers = {
+		google: {
+			getList: function() {
+				var api_key = 'AIzaSyB5M-9WhC6ZrGC9X53kUAZ-eSgaoKYAf4k';
+				$.getJSON('https://www.googleapis.com/webfonts/v1/webfonts?key='+api_key+'&callback=?', function(data, status) {
+					that.fonts = data.items;
+				});
+			},
+			getCode: function(fonts) {
+				console.log('getCode: ' + fonts);
+			},
+		},
+		typekit: {
+			// nothing to see here yet
+		}
+	};
+}
+FontsModule.prototype = {
+	openProvider: function(provider) {
+		var prov = this.providers[provider];
+		prov.getList();
+	},
+	render: function() {
+		this.$el = $('#fontsModule');
+		
+		var $rendered = $(this.template({
+			fonts: this.fonts.slice(0,10),
+		}));
+		this.$el.html($rendered);
+	},
+};
+
 function PropertiesModule(dispatch) {
 	this.dispatch = dispatch;
 	this.$el = $('#propertiesModule');
@@ -726,6 +763,9 @@ function PropertiesModule(dispatch) {
 	dispatch.listen('selectBackground', function() {
 		that.update();
 	});
+	
+	this.fonts = new FontsModule(dispatch);
+	this.fonts.openProvider('google');
 }
 PropertiesModule.prototype = {
 	render: function() {
@@ -801,9 +841,19 @@ PropertiesModule.prototype = {
 			var $this = $(this),
 				id = Number( $this.parent().attr('id').substr(3) );
 			that.removeBg(id);
+		}).end().find('#decoAdd').click(function() {
+			$rendered.find('#decoOptions').toggle();
+		}).end().find('#decoOptions > li').click(function() {
+			that.addDecoration($(this).text());
+		});
+		$rendered.click(function(evt) {
+			if ($(evt.target).attr('id') != 'decoAdd') {
+				$(this).find('#decoOptions:visible').hide();
+			}
 		});
 		
 		this.$el.html($rendered);
+		this.fonts.render();
 	},
 	update: function() {
 		var bg = this.dispatch.selectedDecoration,
@@ -813,6 +863,43 @@ PropertiesModule.prototype = {
 		if (bg != undefined) {
 			$el.find('#dec'+bg.id).addClass(selectedClass);
 		}
+	},
+	addDecoration: function(type) {
+		var deco,
+			disp = this.dispatch;
+		if (type == 'background-image') {
+			console.log('add bg image');
+		
+		} else if (type == 'linear-gradient') {
+			console.log('add linear grad');
+			
+		} else if (type == 'radial-gradient') {
+			console.log('add rad grad');
+			
+		} else if (type == 'box-shadow') {
+			console.log('add box shadow');
+			deco = new Shadow({
+				id: this.decorations.length,
+				posX: '2px',
+				posY: '2px',
+				blur: '5px',
+				color: new Color([0,0,0]),
+				type: 'box-shadow',
+			});
+			this.shadows.push(deco);
+			disp.call('modifyStyle', 'box-shadow', this.shadows.join(','));
+			
+		} else if (type == 'text-shadow') {
+			console.log('add text shadow');
+			
+		}
+		console.log(deco);
+		disp.call('selectBackground', deco);
+		this.decorations.push(deco);
+		this.render();
+		console.log(deco.id);
+		console.log(disp.selectedDecoration);
+		console.log(this.decorations[deco.id]);
 	},
 	removeBg: function(i) {
 		this.backgrounds.splice(i,1);

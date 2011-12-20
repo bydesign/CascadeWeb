@@ -106,7 +106,16 @@
 						</li>
 					</ul>
 					<% } else if (curMode == 1) { %>
-					<p><a href="#" class="btn">Add</a></p>
+					<div class="decoAdd">
+						<p><a href="#" class="btn" id="decoAdd">Add</a></p>
+						<ul class="addOptions" id="decoOptions">
+							<li>background-image</li>
+							<li>linear-gradient</li>
+							<li>radial-gradient</li>
+							<li>box-shadow</li>
+							<li>text-shadow</li>
+						</ul>
+					</div>
 					<ul class="bgs">
 						<% _.each(backgrounds, function(bg) { %>
 						<li id="dec<%=bg.id%>"<% if(bg.id==bgId) { %> class="selected"<%}%>>
@@ -176,10 +185,7 @@
 					<% } else if (curMode == 2) { %>
 					<ul class="props">
 						<li><span>font-family:</span>
-							<ul class="inlineBtns" id="font-family">
-								<li<% if (styles['font-family'] == 'Helvetica, Arial, sans-serif') { %> class="active"<% } %>>Helvetica, Arial, sans-serif<span class="remove"></span></li>
-								<li<% if (styles['font-family'] == 'Georgia, Times, serif') { %> class="active"<% } %>>Georgia, Times, serif<span class="remove"></span></li>
-							</ul>
+							<div id="fontsModule"></div>
 						</li>
 						<li><span>font-weight:</span>
 							<ul class="inlineBtns" id="font-weight">
@@ -238,6 +244,15 @@
 				</div>
 			</div>
 			</script>
+			
+			<script type="text/template" id="fontsTemplate">
+				<ul class="fonts">
+				<% _.each(fonts, function(font) { %>
+					<li><%=font.family %></li>
+				<% }); %>
+				</ul>
+			</script>
+			
 			</div>
 		</section>
 		<div class="holder" id="pageHolder">

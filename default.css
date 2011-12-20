@@ -204,7 +204,7 @@ li:hover .sheet {
 .thumbBox {
 	width:50%;
 	height:50%;
-	margin-top:25%;
+	margin-top:15%;
 	margin-left:25%;
 	background-color:#ccc;
 	overflow:hidden;
@@ -315,6 +315,30 @@ li:hover .sheet {
 .props li {
 	padding-bottom:10px;
 }
+.decoAdd {
+	position:relative;
+}
+.addOptions {
+	position:absolute;
+	top:4px;
+	left:0;
+	display:none;
+	background-color:#444;
+	color:#fff;
+	font-size:16px;
+	z-index:500;
+	border-radius:6px;
+	padding:5px;
+	box-shadow: 1px 1px 8px #000;
+}
+.addOptions li {
+	padding: 5px 8px;
+	border-radius:6px;
+}
+.addOptions li:hover {
+	background-color:#666;
+}
+
 .inlineBtns {
 	overflow:hidden;
 }
