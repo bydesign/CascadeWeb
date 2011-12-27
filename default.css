@@ -108,7 +108,7 @@ input.search {
 	cursor: default;
 }
 .rightnav .ct {
-	padding: 0 10px;
+	padding: 0 8px;
 }
 .coverSheet, .grid {
 	position:absolute;
@@ -342,22 +342,15 @@ li:hover .sheet {
 	background-color:#666;
 }
 
-.inlineBtns {
+.inline {
 	overflow:hidden;
 }
-.inlineBtns li {
+.inline li {
 	float:left;
-	padding: 4px 8px;
-	background-color:#666;
-	margin-right:1px;
-	color:#000;
-	cursor: pointer;
+	margin-right:2px;
 }
-.inlineBtns li.active {
-	background-color:#ccc;
-}
-.inlineBtns .remove { display:none; }
-.inlineBtns li.active:hover .remove {
+.inline .remove { display:none; }
+.inline li.active:hover .remove {
 	display:inline-block;
 	background-color:#888;
 	border-radius:10px;
@@ -365,6 +358,22 @@ li:hover .sheet {
 	line-height:10px;
 	margin-left:2px;
 	font-size:10px;
+}
+.btns li {
+	padding: 4px 8px;
+	background-color:#666;
+	color:#000;
+	cursor: pointer;
+}
+.btns li.active {
+	background-color:#ccc;
+}
+.stacked li {
+	margin-bottom:2px;
+}
+#markup {
+	width:250px;
+	margin-top:12px;
 }
 
 .handle:hover, .handle.drag {

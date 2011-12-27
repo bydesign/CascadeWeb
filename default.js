@@ -109,6 +109,8 @@ function KeyManager(selectors) {
 	// bind key event functionality
 	var that = this;
 	$(selectors).keydown(function(event) {
+		if (event.target.tagName == 'INPUT') return;
+		
 		var fns = that.listeners['down'][event.keyCode];
 		if (fns != undefined) {
 			for (var i=0; i < fns.length; i++) {
@@ -121,6 +123,8 @@ function KeyManager(selectors) {
 		document.userAction();
 		
 	}).keyup(function(event) {
+		if (event.target.tagName == 'INPUT') return;
+		
 		if (that.pressed.indexOf(event.keyCode) != -1) {
 			that.pressed.pop(that.pressed.indexOf(event.keyCode));
 		}
@@ -190,6 +194,7 @@ function Dispatch(doc) {
 		'selectBackground': [],
 		'changeStyleMode': [],
 		'search': [],
+		'modifyDom': [],
 	},
 	this.styleMode = LAYOUT, // LAYOUT = 0, DECORATION = 1, TEXT = 2
 	this.selectedRule,
@@ -248,7 +253,9 @@ Dispatch.prototype = {
 	getElementRules: function() {
 		var el = this.selectedElement;
 		if (el == undefined) return [];
+		console.log(el);
 		var matchRules = el.ownerDocument.defaultView.getMatchedCSSRules(el, '');
+		console.log(matchRules);
 		var rules = [];
 		var hasSelected = false;
 		for (var i=0, len=matchRules.length; i<len; i++) {
@@ -645,11 +652,28 @@ function SearchModule(dispatch) {
 	});
 	var Keys = dispatch.Keys;
 	Keys.press(Keys.FORWARDSLASH, function(event) {
+		console.log('search focus');
 		that.$input.focus();
+	});
+	
+	var Keys = dispatch.Keys;
+	Keys.press(Keys.J, function(event) {
+		event.preventDefault();
+		that.selectChild();
+	}).press(Keys.K, function(event) {
+		event.preventDefault();
+		that.selectParent();
+	}).press(Keys.H, function(event) {
+		event.preventDefault();
+		that.selectPrev();
+	}).press(Keys.L, function(event) {
+		event.preventDefault();
+		that.selectNext();
 	});
 }
 SearchModule.prototype = {
 	render: function() {
+		var hasFocus = this.$input.is(":focus");
 		this.parents = [];
 		var el = this.dispatch.selectedElement;
 		if (el != undefined) this.getHierarchy(el);
@@ -673,7 +697,7 @@ SearchModule.prototype = {
 			that.dispatch.call('search', query);
 		});
 		this.$el.html($rendered);
-		this.$input.focus();
+		if (hasFocus) this.$input.focus();
 	},
 	search: function(query) {
 		this.query = query;
@@ -702,6 +726,43 @@ SearchModule.prototype = {
 		var $parent = $(el).parent();
 		if ($parent.length > 0) {
 			this.getHierarchy($parent[0]);
+		}
+	},
+	selectParent: function() {
+		var disp = this.dispatch,
+			$el = disp.$selectedElement;
+			$newEl = $el.parent();
+		if ($newEl.length > 0) {
+			disp.call('selectElement', $newEl[0]);
+		}
+		
+	},
+	selectChild: function() {
+		var disp = this.dispatch,
+			$el = disp.$selectedElement;
+			$children = $el.children();
+		if ($children.length > 0) {
+			disp.call('selectElement', $children[0]);
+		}
+	},
+	selectPrev: function() {
+		var disp = this.dispatch,
+			$el = disp.$selectedElement;
+			$newEl = $el.prev();
+		if ($newEl.length == 0) {
+			$newEl = $el.siblings(':last-child');
+		}
+		if ($newEl.length > 0) {
+			disp.call('selectElement', $newEl[0]);
+		}
+	},
+	selectNext: function() {
+		var disp = this.dispatch,
+			$el = disp.$selectedElement;
+			$newEl = $el.next();
+		if ($newEl.length == 0) $newEl = $el.siblings(':first-child');
+		if ($newEl.length > 0) {
+			disp.call('selectElement', $newEl[0]);
 		}
 	},
 };
@@ -779,8 +840,14 @@ function PropertiesModule(dispatch) {
 	dispatch.listen('selectElement', renderPropertiesPanel);
 	dispatch.listen('selectRule', renderPropertiesPanel);
 	dispatch.listen('changeStyleMode', renderPropertiesPanel);
+	dispatch.listen('changeStyleMode', function() {
+		if (that.dispatch.styleMode == 3) $('#markup').focus();
+	});
 	dispatch.listen('selectBackground', function() {
 		that.update();
+	});
+	dispatch.listen('modifyDom', function(cmd, str) {
+		that.modifyDom(cmd, str);
 	});
 	
 	this.fonts = new FontsModule(dispatch);
@@ -803,7 +870,6 @@ PropertiesModule.prototype = {
 			rules: rules,
 			styles: allRules[disp.selectedRule].style,
 			curMode: disp.styleMode,
-			properties: disp.StyleAttributes[disp.styleMode].properties,
 			backgrounds: this.backgrounds,
 			shadows: this.shadows,
 			textShadows: this.textShadows,
@@ -811,6 +877,8 @@ PropertiesModule.prototype = {
 		} ));
 		
 		var that = this;
+		//console.log(this);
+		//console.log(that);
 		$rendered.find('.selectors > li').click(function() {
 			var id = Number( $(this).attr('id').replace('rule','') );
 			disp.call('selectRule', id);
@@ -838,6 +906,7 @@ PropertiesModule.prototype = {
 			}
 		}).end().find('.bgs li').click(function(evt) {
 			var tagName = evt.target.tagName;
+			console.log(that.decorations);
 			if (tagName == 'SELECT' || tagName == 'INPUT') return;
 			var $this = $(this),
 				isSelected = $this.hasClass('selected'),
@@ -850,6 +919,7 @@ PropertiesModule.prototype = {
 				id = Number( $this.parents('.bgs > li').attr('id').substr(3) ),
 				dec = that.decorations[id],
 				val = $this.val();
+				console.log(that.decorations);
 			if ($this.attr('type') == 'checkbox') val = $this.is(':checked');
 			dec.change($this.attr('name'), val);
 			if (dec.type == 'background') that.updateBgCSS();
@@ -859,11 +929,16 @@ PropertiesModule.prototype = {
 			evt.preventDefault();
 			var $this = $(this),
 				id = Number( $this.parent().attr('id').substr(3) );
+			console.log(that.decorations);
 			that.removeBg(id);
 		}).end().find('#decoAdd').click(function() {
 			$rendered.find('#decoOptions').toggle();
 		}).end().find('#decoOptions > li').click(function() {
 			that.addDecoration($(this).text());
+		}).end().find('.modifyDom').click(function(evt) {
+			evt.preventDefault();
+			disp.call('modifyDom', $(this).attr('id'), $('#markup').val());
+			//that.modifyDom($(this).attr('id'), $('#markup').val());
 		});
 		$rendered.click(function(evt) {
 			if ($(evt.target).attr('id') != 'decoAdd') {
@@ -871,9 +946,31 @@ PropertiesModule.prototype = {
 			}
 		});
 		
+		
 		this.$el.html($rendered);
 		this.fonts.render();
 	},
+	modifyDom: function(cmd, str) {
+		var $el = this.dispatch.$selectedElement,
+			$newEl = $(str);
+		if (cmd == 'inside') {
+			$newEl.appendTo($el);
+		} else if (cmd == 'before') {
+			$el.before($newEl);
+		} else if (cmd == 'after') {
+			$el.after($newEl);
+		} else if (cmd == 'wrap') {
+			$el.wrap($newEl);
+		} else if (cmd == 'remove') {
+			$el.remove();
+		} else if (cmd == 'empty') {
+			$el.empty();
+		}
+		if ($newEl.length > 0) {
+			this.dispatch.call('selectElement', $newEl[0]);
+		}
+	},
+	
 	update: function() {
 		var bg = this.dispatch.selectedDecoration,
 			selectedClass = 'selected',
@@ -910,6 +1007,16 @@ PropertiesModule.prototype = {
 			
 		} else if (type == 'text-shadow') {
 			console.log('add text shadow');
+			deco = new Shadow({
+				id: this.decorations.length,
+				posX: '1px',
+				posY: '1px',
+				blur: '0',
+				color: new Color([255,255,255]),
+				type: 'box-shadow',
+			});
+			this.textShadows.push(deco);
+			disp.call('modifyStyle', 'text-shadow', this.textShadows.join(','));
 			
 		}
 		console.log(deco);
@@ -921,8 +1028,24 @@ PropertiesModule.prototype = {
 		console.log(this.decorations[deco.id]);
 	},
 	removeBg: function(i) {
-		this.backgrounds.splice(i,1);
-		this.updateBgCSS();
+		console.log('removeBg: ' + i);
+		console.log(i);
+		console.log(this.decorations);
+		this.decorations.splice(i,1);
+		var bg = this.backgrounds[i];
+		console.log(bg);
+		if (bg.type == 'background') {
+			this.backgrounds.splice(bg.bgId,1);
+			this.updateBgCSS();
+			
+		} else if (bg.type == 'box-shadow') {
+			this.shadows.splice(bg.shadId,1);
+			this.updateBoxShadows();
+		
+		} else if (bg.type == 'text-shadow') {
+			this.textShadows.splice(bg.shadId,1);
+			this.updateTextShadows();
+		}
 		this.render();
 	},
 	updateBoxShadows: function() {
@@ -959,6 +1082,7 @@ PropertiesModule.prototype = {
 			var colorParts = shad.split(/[\(\)]/g);	// see if rgb color exists
 			var parts, color;
 			settings['id'] = i + decLen;
+			settings['shadId'] = i;
 			if (colorParts.length > 1) {
 				parts = $.trim(colorParts[2]).split(' ');
 				settings['color'] = new Color(colorParts[1].split(', '));
@@ -1015,6 +1139,7 @@ PropertiesModule.prototype = {
 			}
 			obs.push(new Background({
 				id: i + decLen,
+				bgId: i,
 				image: image,
 				repeat: rule.getBgProp('background-repeat', i),
 				attachment: rule.getBgProp('background-attachment', i),
@@ -1023,6 +1148,7 @@ PropertiesModule.prototype = {
 				origin: rule.getBgProp('background-origin', i),
 				clip: rule.getBgProp('background-clip', i),
 				size: rule.getBgProp('background-size', i),
+				type: 'background',
 			}));
 		}
 		this.decorations.push.apply(this.decorations, obs);
@@ -1115,6 +1241,7 @@ function HandleModule(dispatch) {
 	dispatch.listen('modifyStyle', updateControls);
 	dispatch.listen('modifyStyles', updateControls);
 	dispatch.listen('selectBackground', updateControls);
+	dispatch.listen('modifyDom', updateControls);
 	
 	dispatch.listen('selectElement', function() {
 		that.$doc.find('.hover').removeClass('hover');
@@ -1126,7 +1253,7 @@ function HandleModule(dispatch) {
 	
 	var $controls = this.$controls;
 	dispatch.listen('changeStyleMode', function(mode) {
-		var modeClasses = ['layoutMode', 'decorateMode', 'typeMode'];
+		var modeClasses = ['layoutMode', 'decorateMode', 'typeMode', 'htmlMode'];
 		$controls.removeClass(modeClasses.join(' '));
 		$controls.addClass(modeClasses[dispatch.styleMode]);
 	});
@@ -1934,51 +2061,6 @@ Dispatch.prototype.HandleDefs = [
 	
 ];
 
-Dispatch.prototype.StyleAttributes = [
-	{	// LAYOUT
-		handles: [
-		],
-		properties: [
-		]
-	},
-	// this one needs more thought!
-	{	// DECORATION
-		handles: [
-		],
-		properties: [
-			/*// BACKGROUND COLOR
-			'background-color',
-			
-			// BACKGROUND GRADIENT
-			
-			// BACKGROUND IMAGE
-			'background-image',
-			'background-repeat',
-			'background-attach',
-			'background-position',
-			'background-size',
-			
-			// BOX SHADOW
-			'box-shadow-color',
-			'box-shadow-h-shadow',
-			'box-shadow-v-shadow',
-			'box-shadow-blur',
-			'box-shadow-spread',
-			'box-shadow-inset',
-			
-			// BORDER IMAGE
-			'border-style',
-			'border-color',*/
-		]
-	},
-	{	// TEXT
-		handles: [
-		],
-		properties: [
-		]
-	}
-];
-
 document.sleepTimer;
 document.userAction = function() {
 	var $body = $(document).find('body'),
@@ -2031,7 +2113,7 @@ $(document).ready(function() {
 		searchModule.render();
 		
 		disp.Keys.press(disp.Keys.GRACE_ACCENT, function(event) {
-			disp.call('changeStyleMode', (disp.styleMode + 1) % 3 );
+			disp.call('changeStyleMode', (disp.styleMode + 1) % 4 );
 		});
 		
 		// do fadeout when no activity happening -- css commented due to challenges

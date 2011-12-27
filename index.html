@@ -52,13 +52,14 @@
 				<div class="tabs modes" id="modes">
 					<a href="#" id="mode0"<% if (curMode == 0) { %> class="active"<% } %>>layout</a> | 
 					<a href="#" id="mode1"<% if (curMode == 1) { %> class="active"<% } %>>decoration</a> | 
-					<a href="#" id="mode2"<% if (curMode == 2) { %> class="active"<% } %>>typography</a>
+					<a href="#" id="mode2"<% if (curMode == 2) { %> class="active"<% } %>>typography</a> | 
+					<a href="#" id="mode3"<% if (curMode == 3) { %> class="active"<% } %>>html</a>
 				</div>
 				<div class="styles">
 					<% if (curMode === 0) { %>
 					<ul class="props">
 						<li><span>display:</span>
-							<ul class="inlineBtns" id="display">
+							<ul class="btns inline" id="display">
 								<li<% if (styles['display'] == 'none') { %> class="active"<% } %>>none<span class="remove"></span></li>
 								<li<% if (styles['display'] == 'inline') { %> class="active"<% } %>>inline<span class="remove"></span></li>
 								<li<% if (styles['display'] == 'inline-block') { %> class="active"<% } %>>inline-block<span class="remove"></span></li>
@@ -68,7 +69,7 @@
 							</ul>
 						</li>
 						<li><span>position:</span>
-							<ul class="inlineBtns" id="position">
+							<ul class="btns inline" id="position">
 								<li<% if (styles['position'] == 'static') { %> class="active"<% } %>>static<span class="remove"></span></li>
 								<li<% if (styles['position'] == 'relative') { %> class="active"<% } %>>relative<span class="remove"></span></li>
 								<li<% if (styles['position'] == 'absolute') { %> class="active"<% } %>>absolute<span class="remove"></span></li>
@@ -76,28 +77,28 @@
 							</ul>
 						</li>
 						<li><span>float:</span>
-							<ul class="inlineBtns" id="float">
+							<ul class="btns inline" id="float">
 								<li<% if (styles['float'] == 'left') { %> class="active"<% } %>>left<span class="remove"></span></li>
 								<li<% if (styles['float'] == 'right') { %> class="active"<% } %>>right<span class="remove"></span></li>
 								<li<% if (styles['float'] == 'none') { %> class="active"<% } %>>none<span class="remove"></span></li>
 							</ul>
 						</li>
 						<li><span>clear:</span>
-							<ul class="inlineBtns" id="clear">
+							<ul class="btns inline" id="clear">
 								<li<% if (styles['clear'] == 'left') { %> class="active"<% } %>>left<span class="remove"></span></li>
 								<li<% if (styles['clear'] == 'right') { %> class="active"<% } %>>right<span class="remove"></span></li>
 								<li<% if (styles['clear'] == 'none') { %> class="active"<% } %>>none<span class="remove"></span></li>
 							</ul>
 						</li>
 						<li><span>visibility:</span>
-							<ul class="inlineBtns" id="visibility">
+							<ul class="btns inline" id="visibility">
 								<li<% if (styles['visibility'] == 'visible') { %> class="active"<% } %>>visible<span class="remove"></span></li>
 								<li<% if (styles['visibility'] == 'hidden') { %> class="active"<% } %>>hidden<span class="remove"></span></li>
 								<li<% if (styles['visibility'] == 'collapse') { %> class="active"<% } %>>collapse<span class="remove"></span></li>
 							</ul>
 						</li>
 						<li><span>overflow:</span>
-							<ul class="inlineBtns" id="overflow">
+							<ul class="btns inline" id="overflow">
 								<li<% if (styles['overflow'] == 'visible') { %> class="active"<% } %>>visible<span class="remove"></span></li>
 								<li<% if (styles['overflow'] == 'hidden') { %> class="active"<% } %>>hidden<span class="remove"></span></li>
 								<li<% if (styles['overflow'] == 'scroll') { %> class="active"<% } %>>scroll<span class="remove"></span></li>
@@ -189,25 +190,25 @@
 							<div id="fontsModule"></div>
 						</li>
 						<li><span>font-weight:</span>
-							<ul class="inlineBtns" id="font-weight">
+							<ul class="btns inline" id="font-weight">
 								<li<% if (styles['font-weight'] == 'normal') { %> class="active"<% } %>>normal<span class="remove"></span></li>
 								<li<% if (styles['font-weight'] == 'bold') { %> class="active"<% } %>>bold<span class="remove"></span></li>
 							</ul>
 						</li>
 						<li><span>font-style:</span>
-							<ul class="inlineBtns" id="font-style">
+							<ul class="btns inline" id="font-style">
 								<li<% if (styles['font-style'] == 'normal') { %> class="active"<% } %>>normal<span class="remove"></span></li>
 								<li<% if (styles['font-style'] == 'italic') { %> class="active"<% } %>>italic<span class="remove"></span></li>
 							</ul>
 						</li>
 						<li><span>font-variant:</span>
-							<ul class="inlineBtns" id="font-variant">
+							<ul class="btns inline" id="font-variant">
 								<li<% if (styles['font-variant'] == 'normal') { %> class="active"<% } %>>normal<span class="remove"></span></li>
 								<li<% if (styles['font-variant'] == 'small-caps') { %> class="active"<% } %>>small-caps<span class="remove"></span></li>
 							</ul>
 						</li>
 						<li><span>text-decoration:</span>
-							<ul class="inlineBtns" id="text-decoration">
+							<ul class="btns inline" id="text-decoration">
 								<li<% if (styles['text-decoration'] == 'none') { %> class="active"<% } %>>none<span class="remove"></span></li>
 								<li<% if (styles['text-decoration'] == 'underline') { %> class="active"<% } %>>underline<span class="remove"></span></li>
 								<li<% if (styles['text-decoration'] == 'line-through') { %> class="active"<% } %>>line-through<span class="remove"></span></li>
@@ -215,7 +216,7 @@
 							</ul>
 						</li>
 						<li><span>text-transform:</span>
-							<ul class="inlineBtns" id="text-transform">
+							<ul class="btns inline" id="text-transform">
 								<li<% if (styles['text-transform'] == 'normal') { %> class="active"<% } %>>normal<span class="remove"></span></li>
 								<li<% if (styles['text-transform'] == 'capitalize') { %> class="active"<% } %>>capitalize<span class="remove"></span></li>
 								<li<% if (styles['text-transform'] == 'uppercase') { %> class="active"<% } %>>uppercase<span class="remove"></span></li>
@@ -223,25 +224,32 @@
 							</ul>
 						</li>
 						<li><span>white-space:</span>
-							<ul class="inlineBtns" id="white-space">
+							<ul class="btns inline" id="white-space">
 								<li<% if (styles['white-space'] == 'normal') { %> class="active"<% } %>>normal<span class="remove"></span></li>
 								<li<% if (styles['white-space'] == 'pre') { %> class="active"<% } %>>pre<span class="remove"></span></li>
 								<li<% if (styles['white-space'] == 'nowrap') { %> class="active"<% } %>>nowrap<span class="remove"></span></li>
 							</ul>
 						</li>
 					</ul>
+					
+					<% } else if (curMode == 3) { %>
+					<div class="ct">
+						<form id="markupEdit" class="markupEdit">
+							<input id="markup" name="markup" placeholder='<div></div>' />
+						</form>
+						<ul class="btns inline">
+							<li id="inside" class="modifyDom">add inside</li>
+							<li id="before" class="modifyDom">add before</li>
+							<li id="after" class="modifyDom">add after</li>
+							<li id="wrap" class="modifyDom">wrap</li>
+						</ul>
+						<hr>
+						<ul class="btns inline">
+							<li id="remove" class="modifyDom">remove</li>
+							<li id="empty" class="modifyDom">empty</li>
+						</ul>
+					</div>
 					<% } %>
-					<ul class="props">
-					<% _.each(properties, function(prop) { %>
-						<li><label><%= prop.attr %></label> : 
-						<select name="<%= prop.attr %>" class="prop">
-							<option value="">---------</option>
-							<% _.each(prop.values, function(val) { %>
-							<option<% if(styles[prop.attr] == val) {%> selected<%}%> value="<%= val %>"><%= val %></option>
-							<% }); %>
-						</select>
-					<% }); %>
-					</ul>
 				</div>
 			</div>
 			</script>
