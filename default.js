@@ -253,9 +253,8 @@ Dispatch.prototype = {
 	getElementRules: function() {
 		var el = this.selectedElement;
 		if (el == undefined) return [];
-		console.log(el);
 		var matchRules = el.ownerDocument.defaultView.getMatchedCSSRules(el, '');
-		console.log(matchRules);
+		if (matchRules == null) return [];
 		var rules = [];
 		var hasSelected = false;
 		for (var i=0, len=matchRules.length; i<len; i++) {
@@ -960,7 +959,7 @@ PropertiesModule.prototype = {
 		} else if (cmd == 'after') {
 			$el.after($newEl);
 		} else if (cmd == 'wrap') {
-			$el.wrap($newEl);
+			$el.wrap(str);
 		} else if (cmd == 'remove') {
 			$el.remove();
 		} else if (cmd == 'empty') {
@@ -1242,6 +1241,13 @@ function HandleModule(dispatch) {
 	dispatch.listen('modifyStyles', updateControls);
 	dispatch.listen('selectBackground', updateControls);
 	dispatch.listen('modifyDom', updateControls);
+	
+	dispatch.listen('selectElement', function() {
+		
+		if (dispatch.styleMode >= 2) {
+			dispatch.$selectedElement.attr('contenteditable', 'true');
+		}
+	});
 	
 	dispatch.listen('selectElement', function() {
 		that.$doc.find('.hover').removeClass('hover');
