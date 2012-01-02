@@ -656,16 +656,16 @@ function SearchModule(dispatch) {
 	});
 	
 	var Keys = dispatch.Keys;
-	Keys.press(Keys.J, function(event) {
+	Keys.press(Keys.L, function(event) {
 		event.preventDefault();
 		that.selectChild();
-	}).press(Keys.K, function(event) {
-		event.preventDefault();
-		that.selectParent();
 	}).press(Keys.H, function(event) {
 		event.preventDefault();
+		that.selectParent();
+	}).press(Keys.K, function(event) {
+		event.preventDefault();
 		that.selectPrev();
-	}).press(Keys.L, function(event) {
+	}).press(Keys.J, function(event) {
 		event.preventDefault();
 		that.selectNext();
 	});
@@ -851,28 +851,6 @@ function PropertiesModule(dispatch) {
 	
 	this.fonts = new FontsModule(dispatch);
 	this.fonts.openProvider('google');
-	
-	var zen_editor = {
-		getSelectionRange: function() {
-			return {
-				start: 0,
-				end: 
-			};
-		},
-		getContent: function() {
-		
-		},
-		getCurrentLineRange: function() {
-		
-		},
-		getSyntax: function() {
-		
-		},
-		replaceContent: function(content, caret_pos - abbr.length, caret_pos) {
-		
-		},
-	};
-	zen_coding.runActions('expand_abbreviation', zen_editor);
 }
 PropertiesModule.prototype = {
 	render: function() {
@@ -971,12 +949,11 @@ PropertiesModule.prototype = {
 		this.fonts.render();
 	},
 	modifyDom: function(cmd, str) {
-		var $el = this.dispatch.$selectedElement;
-		if (str.substr(0,1) == '<') {
-			$newEl = $(str);
-		} else {
-			$newEl = this.parseZenStr(str);
-		}
+		var parsedStr = zen_coding.expandAbbreviation(str.replace(/\s/g,''), 'html', 'xml');
+		parsedStr = parsedStr.replace('|', '');	// remove zen_coding pipe character
+	
+		var $el = this.dispatch.$selectedElement,
+			$newEl = $(parsedStr);
 		if (cmd == 'inside') {
 			$newEl.appendTo($el);
 		} else if (cmd == 'before') {
@@ -984,7 +961,7 @@ PropertiesModule.prototype = {
 		} else if (cmd == 'after') {
 			$el.after($newEl);
 		} else if (cmd == 'wrap') {
-			$el.wrap(str);
+			$el.wrap(parsedStr);
 		} else if (cmd == 'remove') {
 			$el.remove();
 		} else if (cmd == 'empty') {
@@ -992,16 +969,6 @@ PropertiesModule.prototype = {
 		}
 		if ($newEl.length > 0) {
 			this.dispatch.call('selectElement', $newEl[0]);
-		}
-	},
-	parseZenStr: function(str) {
-		var parts = str.split('>'),
-			newStr = '',
-			tree = {};
-		for(var i=0, len=parts.length; i<len; i++) {
-			tree.push({
-				
-			});
 		}
 	},
 	
