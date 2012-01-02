@@ -851,6 +851,28 @@ function PropertiesModule(dispatch) {
 	
 	this.fonts = new FontsModule(dispatch);
 	this.fonts.openProvider('google');
+	
+	var zen_editor = {
+		getSelectionRange: function() {
+			return {
+				start: 0,
+				end: 
+			};
+		},
+		getContent: function() {
+		
+		},
+		getCurrentLineRange: function() {
+		
+		},
+		getSyntax: function() {
+		
+		},
+		replaceContent: function(content, caret_pos - abbr.length, caret_pos) {
+		
+		},
+	};
+	zen_coding.runActions('expand_abbreviation', zen_editor);
 }
 PropertiesModule.prototype = {
 	render: function() {
@@ -937,7 +959,6 @@ PropertiesModule.prototype = {
 		}).end().find('.modifyDom').click(function(evt) {
 			evt.preventDefault();
 			disp.call('modifyDom', $(this).attr('id'), $('#markup').val());
-			//that.modifyDom($(this).attr('id'), $('#markup').val());
 		});
 		$rendered.click(function(evt) {
 			if ($(evt.target).attr('id') != 'decoAdd') {
@@ -950,8 +971,12 @@ PropertiesModule.prototype = {
 		this.fonts.render();
 	},
 	modifyDom: function(cmd, str) {
-		var $el = this.dispatch.$selectedElement,
+		var $el = this.dispatch.$selectedElement;
+		if (str.substr(0,1) == '<') {
 			$newEl = $(str);
+		} else {
+			$newEl = this.parseZenStr(str);
+		}
 		if (cmd == 'inside') {
 			$newEl.appendTo($el);
 		} else if (cmd == 'before') {
@@ -967,6 +992,16 @@ PropertiesModule.prototype = {
 		}
 		if ($newEl.length > 0) {
 			this.dispatch.call('selectElement', $newEl[0]);
+		}
+	},
+	parseZenStr: function(str) {
+		var parts = str.split('>'),
+			newStr = '',
+			tree = {};
+		for(var i=0, len=parts.length; i<len; i++) {
+			tree.push({
+				
+			});
 		}
 	},
 	
@@ -1243,7 +1278,6 @@ function HandleModule(dispatch) {
 	dispatch.listen('modifyDom', updateControls);
 	
 	dispatch.listen('selectElement', function() {
-		
 		if (dispatch.styleMode >= 2) {
 			dispatch.$selectedElement.attr('contenteditable', 'true');
 		}
