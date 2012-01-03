@@ -657,17 +657,25 @@ function SearchModule(dispatch) {
 	
 	var Keys = dispatch.Keys;
 	Keys.press(Keys.L, function(event) {
-		event.preventDefault();
-		that.selectChild();
+		if (dispatch.styleMode != 3) {
+			event.preventDefault();
+			that.selectChild();
+		}
 	}).press(Keys.H, function(event) {
-		event.preventDefault();
-		that.selectParent();
+		if (dispatch.styleMode != 3) {
+			event.preventDefault();
+			that.selectParent();
+		}
 	}).press(Keys.K, function(event) {
-		event.preventDefault();
-		that.selectPrev();
+		if (dispatch.styleMode != 3) {
+			event.preventDefault();
+			that.selectPrev();
+		}
 	}).press(Keys.J, function(event) {
-		event.preventDefault();
-		that.selectNext();
+		if (dispatch.styleMode != 3) {
+			event.preventDefault();
+			that.selectNext();
+		}
 	});
 }
 SearchModule.prototype = {
@@ -840,7 +848,12 @@ function PropertiesModule(dispatch) {
 	dispatch.listen('selectRule', renderPropertiesPanel);
 	dispatch.listen('changeStyleMode', renderPropertiesPanel);
 	dispatch.listen('changeStyleMode', function() {
-		if (that.dispatch.styleMode == 3) $('#markup').focus();
+		if (that.dispatch.styleMode == 3) {
+			$('#markup').focus();
+			that.dispatch.$doc.attr('designMode', 'on').find('body').addClass('designMode');
+		} else {
+			that.dispatch.$doc.attr('designMode', 'off').find('body').removeClass('designMode');
+		}
 	});
 	dispatch.listen('selectBackground', function() {
 		that.update();
@@ -937,6 +950,9 @@ PropertiesModule.prototype = {
 		}).end().find('.modifyDom').click(function(evt) {
 			evt.preventDefault();
 			disp.call('modifyDom', $(this).attr('id'), $('#markup').val());
+		}).end().find('#domBtns input[type="button"]').click(function() {
+			// taken from http://www.quirksmode.org/dom/execCommand/
+			that.dispatch.doc.execCommand(this.id, false, $(this).val());
 		});
 		$rendered.click(function(evt) {
 			if ($(evt.target).attr('id') != 'decoAdd') {
@@ -951,7 +967,7 @@ PropertiesModule.prototype = {
 	modifyDom: function(cmd, str) {
 		var parsedStr = zen_coding.expandAbbreviation(str.replace(/\s/g,''), 'html', 'xml');
 		parsedStr = parsedStr.replace('|', '');	// remove zen_coding pipe character
-	
+		
 		var $el = this.dispatch.$selectedElement,
 			$newEl = $(parsedStr);
 		if (cmd == 'inside') {
@@ -1245,12 +1261,6 @@ function HandleModule(dispatch) {
 	dispatch.listen('modifyDom', updateControls);
 	
 	dispatch.listen('selectElement', function() {
-		if (dispatch.styleMode >= 2) {
-			dispatch.$selectedElement.attr('contenteditable', 'true');
-		}
-	});
-	
-	dispatch.listen('selectElement', function() {
 		that.$doc.find('.hover').removeClass('hover');
 		that.highlightAffectedElements();
 	});
@@ -1331,6 +1341,14 @@ function HandleModule(dispatch) {
 	$(document).mousemove(function(evt) {
 		that.mouseX = evt.pageX - offset.left,
 		that.mouseY = evt.pageY - offset.top;
+	});
+	
+	dispatch.listen('changeStyleMode', function() {
+		if (that.dispatch.styleMode == 3) {
+			that.$controls.hide();
+		} else {
+			that.$controls.show();
+		}
 	});
 }
 HandleModule.prototype = {
@@ -1525,6 +1543,8 @@ HandleModule.prototype = {
 		this.$doc.find('.'+selectClass).removeClass(selectClass);
 		var $els = this.$doc.find(disp.getSelectedRule().selector);
 		$els.not(disp.selectedElement).addClass(selectClass);
+		this.$doc.find('.active').removeClass('active');
+		disp.$selectedElement.addClass('active');
 	},
 };
 

@@ -1,31 +1,3 @@
-/**** CODESIGN STYLES ****/
-* {
-    box-sizing: border-box;
-    image-rendering: optimizeSpeed;
-    image-rendering: -webkit-optimize-contrast;
-}
-.hover, .selected {
-	outline:dashed 1px rgba(0,0,0,.5);
-	-webkit-transition: outline ease-in-out .5s;
-}
-.sleep .hover, .sleep .selected {
-	outline-color:rgba(0,0,0,0);
-}
-body.hover, html.hover {
-	outline:none;
-}
-#snapTest {
-	position:absolute;
-	top:0;
-	left:0;
-	width:12px;
-	height:12px;
-	background-color:red;
-	z-index:1000;
-	display:none;
-}
-
-
 /**** PAGE SPECIFIC STYLES ****/
 body {
 	background-color:#fff;
@@ -121,4 +93,41 @@ body {
 }
 .sidenote img {
 	max-width:250px;
+}
+
+
+/**** CODESIGN STYLES ****/
+* {
+    box-sizing: border-box;
+    image-rendering: optimizeSpeed;
+    image-rendering: -webkit-optimize-contrast;
+}
+.hover, .selected {
+	outline:dashed 1px rgba(0,0,0,.5);
+	-webkit-transition: outline ease-in-out .5s;
+}
+.sleep .hover, .sleep .selected {
+	outline-color:rgba(0,0,0,0);
+}
+body.hover, html.hover {
+	outline:none;
+}
+#snapTest {
+	position:absolute;
+	top:0;
+	left:0;
+	width:12px;
+	height:12px;
+	background-color:red;
+	z-index:1000;
+	display:none;
+}
+.designMode .active {
+	-webkit-transition: all ease-in-out .2s;
+	outline: solid 1px rgba(0, 0, 100, .4);
+	box-shadow: 0 0 5px rgb(0,0,100);
+}
+.designMode.sleep .active {
+	outline: solid 1px rgba(0, 0, 100, 0);
+	box-shadow: 0 0 5px rgba(0,0,100,0);
 }

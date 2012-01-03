@@ -251,6 +251,31 @@
 							<li id="remove" class="modifyDom">remove</li>
 							<li id="empty" class="modifyDom">empty</li>
 						</ul>
+						<hr>
+						<div id="domBtns">
+							<input type="button" value="Bold" id="bold" />
+							<input type="button" value="Italic" id="italic" />
+							<input type="button" value="Underline" id="underline" />
+							<input type="button" value="&lt;s&gt;" id="strikethrough" />
+							<input type="button" value="&lt;a&gt;" id="createLink" cmdValue="promptUser" promptText="URL of link?" />
+							<input type="button" value="unlink" id="unlink" />
+							<input type="button" value="&lt;hr /&gt;" id="inserthorizontalrule" />
+							<input type="button" value="&lt;sub&gt;" id="subscript" />
+							<input type="button" value="&lt;sup&gt;" id="superscript" />
+							<span class="separator">|</span>
+							<input type="button" value="&lt;ol&gt;" id="insertorderedlist" />
+							<input type="button" value="&lt;ul&gt;" id="insertunorderedlist" />
+							<input type="button" value="&lt;p&gt;" id="insertparagraph" />
+							<span class="separator">|</span>
+							<input type="button" value="heading" id="heading" cmdValue="promptUser" promptText="Which header?" />
+							<input type="button" value="indent" id="indent" />
+							<input type="button" value="outdent" id="outdent" />
+						</div>
+						<hr>
+						<h3>CSS Classes</h3>
+						<ul><li>classname</li></ul>
+						<h3>Attributes</h3>
+						<ul><li>attr: val</li></ul>
 					</div>
 					<% } %>
 				</div>
