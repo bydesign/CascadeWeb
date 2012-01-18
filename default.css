@@ -54,12 +54,18 @@ iframe.document {
 	height:100%;
 	border:none;
 }
-input.search {
+input.search, .showColor {
 	position:absolute;
 	top: 5px;
+	font-size: 18px;
+}
+input.search {
 	left: 70%;
 	right: 10px;
-	font-size: 18px;
+}
+.showColor {
+	left: 70%;
+	margin-left:-110px;
 }
 .queryLen {
 	position:absolute;
@@ -92,6 +98,41 @@ input.search {
 }
 .hierarchy li:last-child {
 	background-color:rgba(255,255,255,.2);
+}
+.colorModule {
+	position:absolute;
+	top: 35px;
+	bottom:0;
+	right:300px;
+	overflow:auto;
+	z-index:1000;
+	background-color:#333;
+	width:200px;
+	font-size: 12px;
+	-webkit-user-select: none;
+	user-select: none;
+	cursor: default;
+}
+.colorModule .ct {
+	padding: 24px 8px 0;
+}
+.colorModule input[type="number"] {
+	width:100px;
+}
+.closePalette {
+    position:absolute;
+    top:5px;
+    left:5px;
+    border-radius:10px;
+    background-color:#666;
+    padding: 0 3px;
+}
+input[type="color"] {
+    text-indent: -1000em;
+    width:20px;
+    height:20px;
+    border:solid 2px #fff;
+    cursor:pointer;
 }
 .rightnav {
 	position:absolute;

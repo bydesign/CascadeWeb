@@ -94,6 +94,9 @@ body {
 .sidenote img {
 	max-width:250px;
 }
+h1 {
+    color:#CC0000;
+}
 
 
 /**** CODESIGN STYLES ****/

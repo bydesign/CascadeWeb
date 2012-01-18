@@ -20,6 +20,7 @@
 			<div id="searchModule">
 			<script type="text/template" id="searchTemplate">
 			<div>
+				<a href="#" id="showColor" class="showColor">Color palette</a>
 				<form method="post" action="." id="searchForm">
 					<% if(queryLen != undefined) { %><span class="queryLen"><%=queryLen %> element<% if(queryLen > 1){%>s<%}%> found</span><% } %>
 					<input type="search" class="search" id="searchInput" placeholder="div.classname > span" value="<%= query %>">
@@ -35,6 +36,19 @@
 			</script>
 			</div>
 		</header>
+		<section class="colorModule" id="colorModule">
+			<script type="text/template" id="colorTemplate">
+			<div class="ct">
+			    <a href="#" class="closePalette" id="closePalette">x</a>
+				<label for="h" title="Hue">H: </label><input type="number" min="0" max="360" class="colorVal" name="h" id="h" value="<%=color.hue %>" /><br>
+				<label for="s" title="Saturation">S: </label><input type="number" min="0" max="100" class="colorVal" name="s" id="s" value="<%=color.sat %>" /><br>
+				<label for="l" title="Lightness">L: </label><input type="number" min="0" max="100" class="colorVal" name="l" id="l" value="<%=color.light %>" /><br>
+				<label for="a" title="Alpha">A: </label><input type="number" min="0.0" max="1.0" class="colorVal" name="a" id="a" value="<%=color.alpha %>" /> 
+				    <input type="checkbox" class="colorVal" name="useAlpha" id="useAlpha" <% if (color.alpha != undefined) { %>checked<% } %> />
+			</div>
+			</script>
+		</section>
+		
 		<section class="rightnav">
 			<div class="ct" id="propertiesModule">
 				<input class="newStyle" type="text" placeholder="new style">
@@ -111,6 +125,7 @@
 					</ul>
 					<% } else if (curMode == 1) { %>
 					<div class="decoAdd">
+					    <p><label for="background-color">background-color:</label> <input type="color" name="background-color" value="<%=styles['background-color']%>" style="background-color:<%=styles['background-color']%>;" />
 						<p><a href="#" class="btn" id="decoAdd">Add</a></p>
 						<ul class="addOptions" id="decoOptions">
 							<li>background-image</li>
@@ -166,7 +181,7 @@
 								<div class="thumbBox" style="box-shadow:<%=shad %>;"></div>
 							</div> 
 							<div class="bgControls">
-								<label>color:</label> <input type="color" name="color" value="<%=shad.color.hex %>" /><br>
+								<label>color:</label> <input type="color" name="box-shadow-color" value="<%=shad.color %>" style="background-color:<%=shad.color %>;" /><br>
 								<input type="checkbox" name="inset" <% if (shad.inset) { %> checked<%}%> /> <label>inset</label>
 							</div>
 						</li>
@@ -180,7 +195,7 @@
 								<div class="thumbText" style="text-shadow:<%=shad %>;">a</div>
 							</div> 
 							<div class="bgControls">
-								<label>color:</label> <input type="color" name="color" value="<%=shad.color.hex %>" />
+								<label>color:</label> <input type="color" name="text-shadow-color" value="<%=shad.color %>" style="background-color:<%=shad.color %>;" />
 							</div>
 						</li>
 						<% }); %>
@@ -232,6 +247,9 @@
 								<li<% if (styles['white-space'] == 'pre') { %> class="active"<% } %>>pre<span class="remove"></span></li>
 								<li<% if (styles['white-space'] == 'nowrap') { %> class="active"<% } %>>nowrap<span class="remove"></span></li>
 							</ul>
+						</li>
+						<li><label for="color">color:</label>
+							<input type="color" name="color" value="<%=styles['color'] %>" style="background-color:<%=styles['color']%>;" />
 						</li>
 					</ul>
 					

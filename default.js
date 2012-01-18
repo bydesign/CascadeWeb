@@ -598,8 +598,14 @@ function Color(arg) {
 	this.red = Number(rgba[0]),
 	this.green = Number(rgba[1]),
 	this.blue = Number(rgba[2]);
+	
 	if (rgba.length > 3) this.alpha = Number(rgba[3]);
 	this.hex = this.toHex();
+	
+	var hsl = this.rgbToHsl(this.red,this.green,this.blue);
+	this.hue = Math.round( hsl[0]*360 );
+	this.sat = Math.round( hsl[1]*100 );
+	this.light = Math.round( hsl[2]*100 );
 }
 
 Color.prototype = {
@@ -629,6 +635,190 @@ Color.prototype = {
 		if (isNaN(n)) return "00";
 		n = Math.max(0,Math.min(n,255));
 		return "0123456789ABCDEF".charAt((n-n%16)/16) + "0123456789ABCDEF".charAt(n%16);
+	},
+	setHsl: function(hsla) {
+	    if (hsla.h != undefined) this.hue = hsla.h;
+	    if (hsla.s != undefined) this.sat = hsla.s;
+	    if (hsla.l != undefined) this.light = hsla.l;
+	    if (hsla.a != undefined) this.alpha = hsla.a;
+	    
+	    var rgb = this.hslToRgb(this.hue, this.sat, this.light);
+	    this.red = Math.round(rgb[0]);
+	    this.green = Math.round(rgb[1]);
+	    this.blue = Math.round(rgb[2]);
+	},
+	
+	// two functions below taken from:
+	// http://mjijackson.com/2008/02/rgb-to-hsl-and-rgb-to-hsv-color-model-conversion-algorithms-in-javascript
+	/**
+	 * Converts an RGB color value to HSL. Conversion formula
+	 * adapted from http://en.wikipedia.org/wiki/HSL_color_space.
+	 * Assumes r, g, and b are contained in the set [0, 255] and
+	 * returns h, s, and l in the set [0, 1].
+	 *
+	 * @param   Number  r       The red color value
+	 * @param   Number  g       The green color value
+	 * @param   Number  b       The blue color value
+	 * @return  Array           The HSL representation
+	 */
+	rgbToHsl: function(r, g, b){
+		r /= 255, g /= 255, b /= 255;
+		var max = Math.max(r, g, b), min = Math.min(r, g, b);
+		var h, s, l = (max + min) / 2;
+	
+		if(max == min){
+			h = s = 0; // achromatic
+		}else{
+			var d = max - min;
+			s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+			switch(max){
+				case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+				case g: h = (b - r) / d + 2; break;
+				case b: h = (r - g) / d + 4; break;
+			}
+			h /= 6;
+		}
+	
+		return [h, s, l];
+	},
+	
+	/**
+	 * Converts an HSL color value to RGB. Conversion formula
+	 * adapted from http://en.wikipedia.org/wiki/HSL_color_space.
+	 * Assumes h, s, and l are contained in the set [0, 1] and
+	 * returns r, g, and b in the set [0, 255].
+	 *
+	 * @param   Number  h       The hue
+	 * @param   Number  s       The saturation
+	 * @param   Number  l       The lightness
+	 * @return  Array           The RGB representation
+	 */
+	hslToRgb: function(h, s, l){
+		var r, g, b;
+	
+		if(s == 0){
+			r = g = b = l; // achromatic
+		}else{
+			function hue2rgb(p, q, t){
+				if(t < 0) t += 1;
+				if(t > 1) t -= 1;
+				if(t < 1/6) return p + (q - p) * 6 * t;
+				if(t < 1/2) return q;
+				if(t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+				return p;
+			}
+	
+			var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+			var p = 2 * l - q;
+			r = hue2rgb(p, q, h + 1/3);
+			g = hue2rgb(p, q, h);
+			b = hue2rgb(p, q, h - 1/3);
+		}
+	
+		return [r * 255, g * 255, b * 255];
+	},
+};
+
+function ColorModule(dispatch) {
+	this.dispatch = dispatch,
+	this.$doc = dispatch.$doc,
+	this.$el = $('#colorModule'),
+	this.template = _.template( $("#colorTemplate").html() ),
+	this.currentColor = new Color('red'),
+	this.$hue,
+	this.$sat,
+	this.$light,
+	this.$alpha,
+	this.$input;
+	
+	var that = this;
+	dispatch.listen('changeStyleMode', function() {
+        $('input[type="color"]').each(function() {
+            var $this = $(this);
+            
+        }).focus(function() {
+            var $this = $(this),
+                str = $this.val().replace('rgb(', '').replace(')', ''),
+                parts = str.split(','),
+                arr = [
+                    Number(parts[0]),
+                    Number(parts[1]),
+                    Number(parts[2]),
+                ];
+            that.setColor(new Color(arr), $this.attr('name'));
+            that.show();
+            that.$input = $this;
+        });
+	});
+	
+	this.render();
+	this.hide();
+	
+	// build color palette from styles
+	
+	// connect to color picker inputs
+	
+	// 
+	
+	$('#showColor').click(function(evt) {
+		evt.preventDefault();
+		this.$el.toggle();
+	});
+	
+}
+ColorModule.prototype = {
+	render: function() {
+		var col = this.currentColor;
+		var $rendered = $(this.template( {
+			color: this.currentColor,
+		} ));
+		var that = this;
+		$rendered.find('#closePalette').click(function(evt) {
+		    evt.preventDefault();
+		    that.hide();
+		}).find('input').change(function() {
+		    that.getColor();
+		});
+        $rendered.find('input.colorVal').change(function() {
+            that.update();
+        });
+        this.$hue = $rendered.find('#h'),
+        this.$sat = $rendered.find('#s'),
+        this.$light = $rendered.find('#l'),
+        this.$alpha = $rendered.find('#a'),
+		this.$el.html($rendered);
+	},
+	show: function() {
+		this.$el.show();
+	},
+	hide: function() {
+		this.$el.hide();
+	},
+	update: function() {
+        var col = this.currentColor;
+        var hsla = {
+            h: Number( this.$hue.val() ) / 360,
+            s: Number( this.$sat.val() ) / 100,
+            l: Number( this.$light.val() ) / 100,
+        };
+        if (this.$alpha.is(':checked')) hsla.a = Number( this.$alpha.val() );
+        
+	    col.setHsl(hsla);
+	    var colStr = col.toString();
+	    this.$input.val(colStr).css('background-color', colStr).change();
+	},
+	setColor: function(color) {
+	    this.currentColor = color;
+	    this.render();
+	},
+	getColor: function() {
+	    var hsl = [
+	        Number( $('#h').val() ),
+	        Number( $('#s').val() ),
+	        Number( $('#l').val() ),
+	    ];
+	    var a = Number( $('#a').val() );
+	    this.$input.val( this.currentColor );
 	},
 };
 
@@ -864,6 +1054,8 @@ function PropertiesModule(dispatch) {
 	
 	this.fonts = new FontsModule(dispatch);
 	this.fonts.openProvider('google');
+	
+	this.color = new ColorModule(dispatch);
 }
 PropertiesModule.prototype = {
 	render: function() {
@@ -889,8 +1081,6 @@ PropertiesModule.prototype = {
 		} ));
 		
 		var that = this;
-		//console.log(this);
-		//console.log(that);
 		$rendered.find('.selectors > li').click(function() {
 			var id = Number( $(this).attr('id').replace('rule','') );
 			disp.call('selectRule', id);
@@ -898,7 +1088,8 @@ PropertiesModule.prototype = {
 			evt.preventDefault();
 			var mode = Number( $(this).attr('id').replace('mode','') );
 			disp.call('changeStyleMode', mode);
-		}).end().find('select.prop').change(function() {
+		}).end().find('select.prop, input').change(function() {
+		    console.log('input changed');
 			var attr = $(this).attr('name'),
 				val = $(this).val();
 			disp.call('modifyStyle', attr, val);
