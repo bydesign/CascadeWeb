@@ -134,6 +134,11 @@ input[type="color"] {
     border:solid 2px #fff;
     cursor:pointer;
 }
+.slider {
+    height:300px;
+    float:left;
+    margin: 10px;
+}
 .rightnav {
 	position:absolute;
 	top: 35px;

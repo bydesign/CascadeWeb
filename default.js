@@ -729,6 +729,11 @@ function ColorModule(dispatch) {
 	this.$sat,
 	this.$light,
 	this.$alpha,
+	this.$useAlpha,
+	this.$hueSlider,
+	this.$satSlider,
+	this.$lightSlider,
+	this.$alphaSlider,
 	this.$input;
 	
 	var that = this;
@@ -786,7 +791,75 @@ ColorModule.prototype = {
         this.$sat = $rendered.find('#s'),
         this.$light = $rendered.find('#l'),
         this.$alpha = $rendered.find('#a'),
+        this.$useAlpha = $rendered.find('#useAlpha'),
+        this.$hueSlider = $rendered.find('#hueSlider'),
+        this.$satSlider = $rendered.find('#satSlider'),
+        this.$lightSlider = $rendered.find('#lightSlider'),
+        this.$alphaSlider = $rendered.find('#alphaSlider'),
 		this.$el.html($rendered);
+		
+		this.$hueSlider.slider({
+			orientation: "vertical",
+			range: "min",
+			min: 0,
+			max: 360,
+			value: that.currentColor.hue,
+			start: function( event, ui ) {
+			},
+			slide: function( event, ui ) {
+				that.$hue.val( ui.value ).change();
+			},
+			stop: function( event, ui ) {
+			    $(event.target).slider("option", "step", 1);
+			},
+		});
+		this.$satSlider.slider({
+			orientation: "vertical",
+			range: "min",
+			min: 0,
+			max: 100,
+			value: that.currentColor.sat,
+			slide: function( event, ui ) {
+				that.$sat.val( ui.value ).change();
+			}
+		});
+		this.$lightSlider.slider({
+			orientation: "vertical",
+			range: "min",
+			min: 0,
+			max: 100,
+			value: that.currentColor.light,
+			slide: function( event, ui ) {
+				that.$light.val( ui.value ).change();
+			}
+		});
+		this.$alphaSlider.slider({
+			orientation: "vertical",
+			range: "min",
+			step: 0.01,
+			min: 0.0,
+			max: 1.0,
+			value: that.currentColor.alpha || 1.0,
+			slide: function( event, ui ) {
+				that.$alpha.val( ui.value ).change();
+			}
+		});
+		this.$hueSlider.keydown(16, function() {
+                $(this).slider("option", "step", 30)
+            }).keyup(16, function() {
+                $(this).slider("option", "step", 1)
+            });
+		this.$satSlider.add(this.$lightSlider)
+		    .keydown(16, function() {
+                $(this).slider("option", "step", 10)
+            }).keyup(16, function() {
+                $(this).slider("option", "step", 1)
+            });
+		this.$alphaSlider.keydown(16, function() {
+                $(this).slider("option", "step", 0.1)
+            }).keyup(16, function() {
+                $(this).slider("option", "step", 0.01)
+            });
 	},
 	show: function() {
 		this.$el.show();
@@ -801,7 +874,9 @@ ColorModule.prototype = {
             s: Number( this.$sat.val() ) / 100,
             l: Number( this.$light.val() ) / 100,
         };
-        if (this.$alpha.is(':checked')) hsla.a = Number( this.$alpha.val() );
+        if (this.$useAlpha.is(':checked')) {
+            hsla.a = Number( this.$alpha.val() );
+        }
         
 	    col.setHsl(hsla);
 	    var colStr = col.toString();
@@ -1089,7 +1164,6 @@ PropertiesModule.prototype = {
 			var mode = Number( $(this).attr('id').replace('mode','') );
 			disp.call('changeStyleMode', mode);
 		}).end().find('select.prop, input').change(function() {
-		    console.log('input changed');
 			var attr = $(this).attr('name'),
 				val = $(this).val();
 			disp.call('modifyStyle', attr, val);
