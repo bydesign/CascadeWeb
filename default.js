@@ -743,6 +743,7 @@ function ColorModule(dispatch) {
 	this.$el = $('#colorModule'),
 	this.template = _.template( $("#colorTemplate").html() ),
 	this.currentColor = new Color('red'),
+	this.prevColor,
 	this.$hue,
 	this.$sat,
 	this.$light,
@@ -769,6 +770,7 @@ function ColorModule(dispatch) {
                     Number(parts[2]),
                 ];
             that.setColor(new Color(arr), $this.attr('name'));
+            that.prevColor = new Color(arr);
             that.$input = $this;
             that.update();
             that.show();
@@ -815,6 +817,8 @@ ColorModule.prototype = {
         this.$satSlider = $rendered.find('#satSlider'),
         this.$lightSlider = $rendered.find('#lightSlider'),
         this.$alphaSlider = $rendered.find('#alphaSlider'),
+        this.$curCol = $rendered.find('#curCol'),
+        this.$prevCol = $rendered.find('#prevCol'),
 		this.$el.html($rendered);
 		
 		this.$hueSlider.slider({
@@ -903,10 +907,11 @@ ColorModule.prototype = {
             this.$alpha.prop('disabled', true);
         }
 	    col.setHsl(hsla);
-	    console.log(this.$satSlider);
         this.$satSlider.css('background-image', this.getSatGrad(col));
         this.$lightSlider.css('background-image', this.getLightGrad(col));
         this.$alphaSlider.css('background-image', this.getAlphaGrad(col));
+        this.$curCol.css('background-color', col.toString());
+        this.$prevCol.css('background-color', this.prevColor.toString());
 	    var colStr = col.toString();
 	    this.$input.val(colStr).css('background-color', colStr).change();
 	},

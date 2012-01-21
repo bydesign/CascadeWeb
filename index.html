@@ -43,18 +43,26 @@
 			<div class="ct">
 			    <a href="#" class="closePalette" id="closePalette">x</a>
 			    
-			    <div class="sliders">
-			        <div id="hueSlider" class="hueSlider slider"></div>
-			        <div id="satSlider" class="satSlider slider"></div>
-			        <div id="lightSlider" class="lightSlider slider"></div>
-			        <div id="alphaSlider" class="alphaSlider slider"></div>
+			    <div class="curPrev">
+                    <div class="curCol" id="curCol"></div>
+                    <div class="prevCol" id="prevCol"></div>
 			    </div>
 			    
-				<label for="h" title="Hue">H: </label><input type="number" min="0" max="360" class="colorVal" name="h" id="h" value="<%=color.hue %>" /><br>
-				<label for="s" title="Saturation">S: </label><input type="number" min="0" max="100" class="colorVal" name="s" id="s" value="<%=color.sat %>" /><br>
-				<label for="l" title="Lightness">L: </label><input type="number" min="0" max="100" class="colorVal" name="l" id="l" value="<%=color.light %>" /><br>
-				<label for="a" title="Alpha">A: </label><input type="number" min="0.0" max="1.0" class="colorVal" name="a" id="a" value="<%=color.alpha || 1.0 %>" /> 
-				    <input type="checkbox" class="colorVal" name="useAlpha" id="useAlpha" <% if (color.alpha != undefined) { %>checked<% } %> />
+			    <div class="sliders">
+			        <div id="hueSlider" class="hueSlider slider" title="Hue"></div>
+			        <div id="satSlider" class="satSlider slider" title="Saturation"></div>
+			        <div id="lightSlider" class="lightSlider slider" title="Lightness"></div>
+			        <div id="alphaSlider" class="alphaSlider slider" title="Alpha"></div>
+			    </div>
+			    
+			    <div class="colorInputs">
+                    <input type="number" min="0" max="360" class="colorVal" name="h" id="h" value="<%=color.hue %>" />
+                    <input type="number" min="0" max="100" class="colorVal" name="s" id="s" value="<%=color.sat %>" />
+                    <input type="number" min="0" max="100" class="colorVal" name="l" id="l" value="<%=color.light %>" />
+                    <input type="number" min="0.0" max="1.0" class="colorVal" name="a" id="a" value="<%=color.alpha || 1.0 %>" /> 
+                    
+                    <input type="checkbox" class="colorVal useAlpha" name="useAlpha" id="useAlpha" <% if (color.alpha != undefined) { %>checked<% } %> />
+                </div>
 			</div>
 			</script>
 		</section>

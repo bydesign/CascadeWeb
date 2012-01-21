@@ -114,10 +114,36 @@ input.search {
 	cursor: default;
 }
 .colorModule .ct {
-	padding: 24px 8px 0;
+	padding: 124px 8px 0;
 }
-.colorModule input[type="number"] {
-	width:100px;
+.curPrev {
+    position:absolute;
+    top:24px;
+    left:0;
+    height:100px;
+    width:200px;
+    background-image:url(layout/grid.png);
+}
+.curCol, .prevCol {
+    position:absolute;
+    height:100px;
+    width:100px;
+    top:0;
+    left:0;
+}
+.prevCol {
+    left:100px;
+}
+.colorInputs input {
+    float:left;
+    width:30px;
+    margin-right:8px;
+}
+.colorInputs input.useAlpha {
+    float:right;
+}
+.colorInputs input:first-child {
+    clear:left;
 }
 .closePalette {
     position:absolute;
@@ -137,7 +163,7 @@ input[type="color"] {
 .slider {
     height:300px;
     float:left;
-    margin: 10px;
+    margin: 15px;
 }
 .rightnav {
 	position:absolute;
