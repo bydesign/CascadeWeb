@@ -53,7 +53,7 @@
 				<label for="h" title="Hue">H: </label><input type="number" min="0" max="360" class="colorVal" name="h" id="h" value="<%=color.hue %>" /><br>
 				<label for="s" title="Saturation">S: </label><input type="number" min="0" max="100" class="colorVal" name="s" id="s" value="<%=color.sat %>" /><br>
 				<label for="l" title="Lightness">L: </label><input type="number" min="0" max="100" class="colorVal" name="l" id="l" value="<%=color.light %>" /><br>
-				<label for="a" title="Alpha">A: </label><input type="number" min="0.0" max="1.0" class="colorVal" name="a" id="a" value="<%=color.alpha || 1.0 %>" <% if(!color.hasAlpha()) { %>disabled="disabled"<% } %> /> 
+				<label for="a" title="Alpha">A: </label><input type="number" min="0.0" max="1.0" class="colorVal" name="a" id="a" value="<%=color.alpha || 1.0 %>" /> 
 				    <input type="checkbox" class="colorVal" name="useAlpha" id="useAlpha" <% if (color.alpha != undefined) { %>checked<% } %> />
 			</div>
 			</script>

@@ -858,7 +858,6 @@ ColorModule.prototype = {
 			step: 0.01,
 			min: 0.0,
 			max: 1.0,
-			// disabled: !col.hasAlpha(),   // doesn't seem to work?
 			value: col.alpha || 1.0,
 			slide: function( event, ui ) {
 				that.$alpha.val( ui.value ).change();
