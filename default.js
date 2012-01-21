@@ -609,18 +609,27 @@ function Color(arg) {
 }
 
 Color.prototype = {
-	toString: function() {
-		var vals = [
-			this.red,
-			this.green,
-			this.blue
-		];
-		var space = 'rgb';
-		if (this.alpha != undefined) {
-			vals.push(this.alpha);
-			space = 'rgba';
-		}
+	toString: function(rgba) {
+	    var vals = [],
+	        space = 'rgb';
+	    if (rgba == undefined) {
+	        vals = [
+                this.red,
+                this.green,
+                this.blue
+		    ];
+		    if (this.hasAlpha()) {
+		        vals.push(this.alpha);
+                space = 'rgba';
+		    }
+	    } else {
+            vals = rgba;
+            if (rgba.length > 3) space = 'rgba';
+	    }
 		return space + '(' + vals.join(',') + ')';
+	},
+	hasAlpha: function() {
+	    return this.alpha != undefined;
 	},
 	toHex: function() {
 		var hexVals = [
@@ -775,7 +784,7 @@ ColorModule.prototype = {
 	render: function() {
 		var col = this.currentColor;
 		var $rendered = $(this.template( {
-			color: this.currentColor,
+			color: col,
 		} ));
 		var that = this;
 		$rendered.find('#closePalette').click(function(evt) {
@@ -803,7 +812,7 @@ ColorModule.prototype = {
 			range: "min",
 			min: 0,
 			max: 360,
-			value: that.currentColor.hue,
+			value: col.hue,
 			start: function( event, ui ) {
 			},
 			slide: function( event, ui ) {
@@ -818,7 +827,7 @@ ColorModule.prototype = {
 			range: "min",
 			min: 0,
 			max: 100,
-			value: that.currentColor.sat,
+			value: col.sat,
 			slide: function( event, ui ) {
 				that.$sat.val( ui.value ).change();
 			}
@@ -828,7 +837,7 @@ ColorModule.prototype = {
 			range: "min",
 			min: 0,
 			max: 100,
-			value: that.currentColor.light,
+			value: col.light,
 			slide: function( event, ui ) {
 				that.$light.val( ui.value ).change();
 			}
@@ -839,11 +848,14 @@ ColorModule.prototype = {
 			step: 0.01,
 			min: 0.0,
 			max: 1.0,
-			value: that.currentColor.alpha || 1.0,
+			// disabled: !col.hasAlpha(),   // doesn't seem to work?
+			value: col.alpha || 1.0,
 			slide: function( event, ui ) {
 				that.$alpha.val( ui.value ).change();
 			}
 		});
+		if (!col.hasAlpha()) this.$alphaSlider.slider('option', 'disabled', true);
+		
 		this.$hueSlider.keydown(16, function() {
                 $(this).slider("option", "step", 30)
             }).keyup(16, function() {
@@ -876,11 +888,24 @@ ColorModule.prototype = {
         };
         if (this.$useAlpha.is(':checked')) {
             hsla.a = Number( this.$alpha.val() );
+            this.$alphaSlider.slider('option', 'disabled', false);
+            this.$alpha.prop('disabled', false);
+        } else {
+            this.$alphaSlider.slider('option', 'disabled', true);
+            this.$alpha.prop('disabled', true);
         }
-        
 	    col.setHsl(hsla);
+        this.$satSlider.css('background-image:-webkit-linear-gradient', getSatGrad(col));
+        this.$lightSlider.css('background-image:-webkit-linear-gradient', getLightGrad(col));
 	    var colStr = col.toString();
+	    console.log(colStr);
 	    this.$input.val(colStr).css('background-color', colStr).change();
+	},
+	getSatGrad: function(col) {
+	    return '';
+	},
+	getLightGrad: function(col) {
+	    return '';
 	},
 	setColor: function(color) {
 	    this.currentColor = color;
