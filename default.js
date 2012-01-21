@@ -603,9 +603,9 @@ function Color(arg) {
 	this.hex = this.toHex();
 	
 	var hsl = this.rgbToHsl(this.red,this.green,this.blue);
-	this.hue = Math.round( hsl[0]*360 );
-	this.sat = Math.round( hsl[1]*100 );
-	this.light = Math.round( hsl[2]*100 );
+	this.hue = hsl[0];
+	this.sat = hsl[1];
+	this.light = hsl[2];
 }
 
 Color.prototype = {
@@ -652,9 +652,9 @@ Color.prototype = {
 	    if (hsla.a != undefined) this.alpha = hsla.a;
 	    
 	    var rgb = this.hslToRgb(this.hue, this.sat, this.light);
-	    this.red = Math.round(rgb[0]);
-	    this.green = Math.round(rgb[1]);
-	    this.blue = Math.round(rgb[2]);
+	    this.red = rgb[0];
+	    this.green = rgb[1];
+	    this.blue = rgb[2];
 	},
 	
 	// two functions below taken from:
@@ -687,6 +687,9 @@ Color.prototype = {
 			}
 			h /= 6;
 		}
+		h = Math.round(h*360);
+		s = Math.round(s*100);
+		l = Math.round(l*100);
 	
 		return [h, s, l];
 	},
@@ -694,7 +697,8 @@ Color.prototype = {
 	/**
 	 * Converts an HSL color value to RGB. Conversion formula
 	 * adapted from http://en.wikipedia.org/wiki/HSL_color_space.
-	 * Assumes h, s, and l are contained in the set [0, 1] and
+	 * Assumes his contained in the set [0, 360] and 
+	 * s and l are contained in the set [0, 100] and
 	 * returns r, g, and b in the set [0, 255].
 	 *
 	 * @param   Number  h       The hue
@@ -703,6 +707,9 @@ Color.prototype = {
 	 * @return  Array           The RGB representation
 	 */
 	hslToRgb: function(h, s, l){
+	    h /= 360;
+	    s /= 100;
+	    l /= 100;
 		var r, g, b;
 	
 		if(s == 0){
@@ -723,8 +730,10 @@ Color.prototype = {
 			g = hue2rgb(p, q, h);
 			b = hue2rgb(p, q, h - 1/3);
 		}
-	
-		return [r * 255, g * 255, b * 255];
+	    r = Math.round(r*255);
+	    g = Math.round(g*255);
+	    b = Math.round(b*255);
+		return [r, g, b];
 	},
 };
 
@@ -760,8 +769,9 @@ function ColorModule(dispatch) {
                     Number(parts[2]),
                 ];
             that.setColor(new Color(arr), $this.attr('name'));
-            that.show();
             that.$input = $this;
+            that.update();
+            that.show();
         });
 	});
 	
@@ -854,7 +864,6 @@ ColorModule.prototype = {
 				that.$alpha.val( ui.value ).change();
 			}
 		});
-		if (!col.hasAlpha()) this.$alphaSlider.slider('option', 'disabled', true);
 		
 		this.$hueSlider.keydown(16, function() {
                 $(this).slider("option", "step", 30)
@@ -882,9 +891,9 @@ ColorModule.prototype = {
 	update: function() {
         var col = this.currentColor;
         var hsla = {
-            h: Number( this.$hue.val() ) / 360,
-            s: Number( this.$sat.val() ) / 100,
-            l: Number( this.$light.val() ) / 100,
+            h: Number( this.$hue.val() ),
+            s: Number( this.$sat.val() ),
+            l: Number( this.$light.val() ),
         };
         if (this.$useAlpha.is(':checked')) {
             hsla.a = Number( this.$alpha.val() );
@@ -895,17 +904,31 @@ ColorModule.prototype = {
             this.$alpha.prop('disabled', true);
         }
 	    col.setHsl(hsla);
-        this.$satSlider.css('background-image:-webkit-linear-gradient', getSatGrad(col));
-        this.$lightSlider.css('background-image:-webkit-linear-gradient', getLightGrad(col));
+	    console.log(this.$satSlider);
+        this.$satSlider.css('background-image', this.getSatGrad(col));
+        this.$lightSlider.css('background-image', this.getLightGrad(col));
+        this.$alphaSlider.css('background-image', this.getAlphaGrad(col));
 	    var colStr = col.toString();
-	    console.log(colStr);
 	    this.$input.val(colStr).css('background-color', colStr).change();
 	},
 	getSatGrad: function(col) {
-	    return '';
+	    var rgb1 = col.hslToRgb(col.hue, 100, col.light);
+	    var rgb2 = col.hslToRgb(col.hue, 0, col.light);
+	    return '-webkit-linear-gradient(top,' + col.toString(rgb1) + ',' + col.toString(rgb2) + ')';
 	},
 	getLightGrad: function(col) {
-	    return '';
+	    var rgb1 = col.hslToRgb(col.hue, col.sat, 100);
+	    var rgb2 = col.hslToRgb(col.hue, col.sat, 50);
+	    var rgb3 = col.hslToRgb(col.hue, col.sat, 0);
+	    var cols = [col.toString(rgb1), col.toString(rgb2), col.toString(rgb3)];
+	    return '-webkit-linear-gradient(top,' + cols.join(',') + ')';
+	},
+	getAlphaGrad: function(col) {
+	    var rgb1 = col.hslToRgb(col.hue, col.sat, col.light);
+	    rgb1.push(1);
+	    var rgb2 = col.hslToRgb(col.hue, col.sat, col.light);
+	    rgb2.push(0);
+	    return '-webkit-linear-gradient(top,' + col.toString(rgb1) + ',' + col.toString(rgb2) + '), url(layout/grid.png)';
 	},
 	setColor: function(color) {
 	    this.currentColor = color;
